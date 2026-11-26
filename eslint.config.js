@@ -147,6 +147,23 @@ const brandCastBans = [
   },
 ];
 
+// Tests build loan blocks through `mortgageBlock()` too (#480), so every block goes through
+// the one constructor, which a later `kind` discriminant will rely on. Other brands may
+// still be cast in tests.
+const BLOCK_TYPES = "/^(MortgageBlock|PlainLoan|DevelopmentLoan)$/";
+const blockCastMessage =
+  "No loan-block casts (#480): build the block with mortgageBlock().";
+const blockCastBans = [
+  {
+    selector: `TSAsExpression > TSTypeReference.typeAnnotation[typeName.name=${BLOCK_TYPES}]`,
+    message: blockCastMessage,
+  },
+  {
+    selector: `TSAsExpression > TSUnionType.typeAnnotation > TSTypeReference[typeName.name=${BLOCK_TYPES}]`,
+    message: blockCastMessage,
+  },
+];
+
 // Only src/lib/money.ts touches decimal.js directly (DR-075): one Decimal configuration.
 const decimalPath = {
   name: "decimal.js",
@@ -203,22 +220,23 @@ export default tseslint.config(
     rules: restrictedSyntax(),
   },
   // Every test gets the pinned clock from a setup file (src/__tests__/setup/clock.ts,
-  // #458); a test sets another day with setClock.
+  // #458); a test sets another day with setClock. Tests build loan blocks with
+  // mortgageBlock() (#480).
   {
     files: TEST_FILES,
     ignores: SETUP_FILES,
-    rules: restrictedSyntax(dayMockBans),
+    rules: restrictedSyntax(dayMockBans, blockCastBans),
   },
   // src/lib tests also reach lib/day by a relative path (`../day`).
   {
     files: ["src/lib/**/__tests__/**/*.{ts,tsx}", "src/lib/**/*.test.{ts,tsx}"],
-    rules: restrictedSyntax(dayMockBansFor(LIB_DAY_MODULE)),
+    rules: restrictedSyntax(dayMockBansFor(LIB_DAY_MODULE), blockCastBans),
   },
   // ui/state tests get the errorLog and Tauri core mocks from a setup file
   // (src/__tests__/setup/mocks.ts, #458); a test changes their behaviour on the mock.
   {
     files: ["src/{ui,state}/**/__tests__/**/*.{ts,tsx}"],
-    rules: restrictedSyntax(sharedMockBans, dayMockBans),
+    rules: restrictedSyntax(sharedMockBans, dayMockBans, blockCastBans),
   },
   // Production code: no brand casts and no non-null assertions (ADR 0074); a missing
   // value gets a real guard or the checked `at()` from lib/arrays.

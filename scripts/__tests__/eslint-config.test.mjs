@@ -103,6 +103,29 @@ describe("test bans in eslint.config.js", () => {
     },
   );
 
+  // #480: tests build loan blocks with mortgageBlock(), never a cast.
+  const BLOCK_CAST = [
+    "const a = {} as MortgageBlock;",
+    "const b = {} as unknown as DevelopmentLoan;",
+    "const c = {} as PlainLoan | undefined;",
+    "const d = mortgageBlock({});",
+    "",
+  ].join("\n");
+  it.each([
+    "src/engine/__tests__/x.test.ts",
+    "src/engine/__tests__/support/x.ts",
+    "src/lib/__tests__/x.test.ts",
+    "src/ui/__tests__/x.test.tsx",
+    "src/state/__tests__/x.test.ts",
+    "src/data/__tests__/x.test.ts",
+  ])("reject loan-block casts in %s", async (file) => {
+    const [result] = await eslint.lintText(BLOCK_CAST, { filePath: file });
+    const casts = result.messages.filter((m) =>
+      m.message.startsWith("No loan-block casts"),
+    );
+    expect(casts.map((m) => m.line)).toEqual([1, 2, 3]);
+  });
+
   it("keep each block's own bans: a lib/day mock in a state test", async () => {
     const [result] = await eslint.lintText(
       'import { vi } from "vitest";\nvi.mock("../../lib/day");\n',
