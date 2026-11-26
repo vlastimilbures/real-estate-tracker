@@ -109,7 +109,7 @@ function missReason(
 
 /** True when the successor has taken over the payment due `due` in grid row `row`:
  *  drawn in an earlier row, or in that row and started before the payment falls due
- *  (D-47). */
+ *  (ADR 0027). */
 function replacedAt(
   link: ChainLink,
   row: number,

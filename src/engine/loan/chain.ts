@@ -1,4 +1,4 @@
-// One block's schedule and a property's refinance chain (D-27, D-43, D-47).
+// One block's schedule and a property's refinance chain (ADR 0027).
 import { ZERO, type Decimal } from "../../lib/money";
 import { isOnOrBefore } from "../dates";
 import { drawMonth, dueDate } from "../loanTerm";
@@ -28,7 +28,7 @@ import { lastPaymentMonth } from "./queries";
 // Public schedule API
 // ---------------------------------------------------------------------------
 
-/** One block's schedule and its event outcomes; raises on an invalid loan (D-17). */
+/** One block's schedule and its event outcomes; raises on an invalid loan (ADR 0017). */
 function blockSchedule(
   block: MortgageBlock,
   assumptions: Assumptions,
@@ -43,7 +43,7 @@ function blockSchedule(
  * rows) until the first grid month on/after `startDate`, where it draws
  * `initialPrincipal` and then amortizes. Plain loans reproduce the parity targets
  * byte-for-byte.
- * An invalid loan raises an EngineInputError (D-17).
+ * An invalid loan raises an EngineInputError (ADR 0017).
  * @internal test seam: one loan's schedule; the app runs `propertySchedules`.
  */
 export function buildSchedule(
@@ -76,11 +76,11 @@ export function effectiveMaturity(
 }
 
 // ---------------------------------------------------------------------------
-// Refinance chains (D-27, D-43, D-47)
+// Refinance chains (ADR 0027)
 // ---------------------------------------------------------------------------
 
 /**
- * Splice `next` into the chain's rows from its draw month `d` (D-47). The owner's
+ * Splice `next` into the chain's rows from its draw month `d` (ADR 0027). The owner's
  * payment in month d is still paid when due on/before the successor's start, and the
  * draw row carries it; otherwise the owner pays off its balance before month d plus
  * the tranches it drew in month d (ADR 0138 §1). The owner never draws in month d
@@ -121,7 +121,7 @@ function spliceSuccessor(
   const late = handoverPrepayments(current.outcomes, owner, { d, kept, owed });
   const row = handoverRow(drawRow, own, kept);
   const prepaid = row.prepaid.plus(late.applied);
-  // The rest of the handover's net new debt (D-47, DR-092) is the refinance difference.
+  // The rest of the handover's net new debt (ADR 0027) is the refinance difference.
   const drawn = handoverDrawn(drawRow, next, own);
   const netNew = row.endBalance
     .minus(carriedIn)
@@ -218,7 +218,7 @@ function handoverDrawn(
 /**
  * The owner's balance going into the handover month `d` (`before`, what the successor
  * pays off unless the owner's month-d row is kept) and the balance carried into the
- * merged row: the handover's net new debt (DR-092) is what the successor draws, less
+ * merged row: the handover's net new debt is what the successor draws, less
  * the predecessor balance it pays off, plus anything the kept row itself drew. In grid
  * month 1 that is the row's opening balance before its tranches: the owner's row there
  * is never itself a handover, as two blocks starting within a month are refused
@@ -260,7 +260,7 @@ function replacedOutcome(
 }
 
 /** A block cut at its successor's start: its tranches, prepayments and recasts dated
- *  after it are dropped, the events reported (D-47, DR-126, ADR 0109). */
+ *  after it are dropped, the events reported (ADR 0027, ADR 0109). */
 function cutAt(
   block: MortgageBlock,
   next: MortgageBlock,
@@ -280,7 +280,7 @@ function cutAt(
 /**
  * Drop each block's tranches dated after its successor's start: the successor replaces
  * the block from that date, so they are never drawn, even one in the successor's draw
- * month that the kept draw row would otherwise carry (D-47, DR-126). Its prepayments
+ * month that the kept draw row would otherwise carry (ADR 0027). Its prepayments
  * and recasts dated after that start go too, and are reported (ADR 0109).
  */
 function untilSuccessor(links: ChainLink[]): {
@@ -314,14 +314,14 @@ export const EMPTY_PROPERTY_SCHEDULE: PropertySchedule = Object.freeze({
 /**
  * One property's schedule on the baseDate grid, following its refinance chain: each
  * successor block starting after baseDate replaces its predecessor from the grid month
- * it draws in (D-27, D-47), with the handovers it made. Blocks on the same start
- * overlap and raise DUPLICATE_BLOCK_START (D-43). No block ⇒ no rows.
+ * it draws in (ADR 0027), with the handovers it made. Blocks on the same start
+ * overlap and raise DUPLICATE_BLOCK_START (ADR 0027). No block ⇒ no rows.
  */
 export function propertySchedule(
   blocks: MortgageBlock[],
   assumptions: Assumptions,
 ): PropertySchedule {
-  assertLoanRows(blocks); // D-37
+  assertLoanRows(blocks); // ADR 0037
   assertBlockStarts(blocks);
   const { chain, dropped } = untilSuccessor(
     chainLinks(blocks, assumptions.baseDate),
@@ -353,14 +353,14 @@ function publicOutcome(o: Outcome): LoanEventOutcome {
 
 /**
  * `propertySchedule` for every property keyed by propertyId (no rows if no debt), built
- * once so the snapshot, projection and KPIs can share it (DR-042).
+ * once so the snapshot, projection and KPIs can share it.
  */
 export function propertySchedules(
   mortgages: MortgageBlock[],
   propertyIds: string[],
   assumptions: Assumptions,
 ): Map<string, PropertySchedule> {
-  assertAssumptions(assumptions); // D-37
+  assertAssumptions(assumptions); // ADR 0037
   const result = new Map<string, PropertySchedule>();
   for (const pid of propertyIds) {
     const propBlocks = mortgages.filter((b) => b.propertyId === pid);

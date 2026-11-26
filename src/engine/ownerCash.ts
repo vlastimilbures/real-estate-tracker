@@ -1,5 +1,5 @@
 // The owner's cash outside net cash flow, by projection year (SPEC §4.6, #117):
-// acquisitions out, net refinance cash in (D-47), prepayments and their fees out
+// acquisitions out, net refinance cash in (ADR 0027), prepayments and their fees out
 // (ADR 0109), and the debt service paid before a future buy turns on (ADR 0124).
 // Net cash flow minus it is the owner's flow the cumulative cash flow and IRR sum.
 import { ZERO, type Decimal } from "../lib/money";
@@ -59,7 +59,7 @@ export function acquisitionOutflows(
 }
 
 /**
- * Net refinance cash by projection year (D-47): a successor's initial principal − the
+ * Net refinance cash by projection year (ADR 0027): a successor's initial principal − the
  * predecessor balance it pays off, in the year of its handover month; its tranches are
  * new debt, also one drawn in the handover month (ADR 0176). Positive for a
  * cash-out refinance, negative for a pay-down. All zero without successors (the seed
@@ -95,7 +95,7 @@ export interface DebtServicePaid {
  * date runs its schedule while the property's rows are still empty (years before
  * tStart), so its interest, principal, prepaid and fees are owner cash outside the rows.
  * The same months and fields as the rows (`yearSlice`); draws are the bank's money and
- * arrive as the turn-on year's carried-in debt (DR-092). Zero for an all-owned portfolio.
+ * arrive as the turn-on year's carried-in debt. Zero for an all-owned portfolio.
  */
 export function prePurchaseDebtService(
   properties: Property[],
@@ -130,7 +130,7 @@ export function prePurchaseDebtService(
  * Cash outside net cash flow by projection year (index 0..N) for `properties` (the
  * active ones): acquisitions out (down payment and the principal repaid before
  * baseDate, less a later first loan's principal in; `acquisitionOutflows`), net
- * refinance cash in (D-47), prepayments and their fees out (ADR 0109; read from `rows`,
+ * refinance cash in (ADR 0027), prepayments and their fees out (ADR 0109; read from `rows`,
  * the projection of the same properties), and the debt service paid before a future
  * buy turns on (ADR 0124; `prePurchase`, computed here unless the caller has it).
  */

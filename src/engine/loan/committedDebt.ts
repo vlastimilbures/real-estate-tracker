@@ -19,7 +19,7 @@ import { afterSuccessor, chainLinks, replacedByMonth } from "./blockChain";
  * loan has not drawn it, plus the tranches still ahead. It follows the schedule's
  * grid, so committed debt = balance + this never drifts from the schedule: an item
  * lands in the first grid month on/after its date, and one dated on/before baseDate
- * is opening debt (D-44). Before its own draw month a property's first loan counts: on a flat owned at
+ * is opening debt (ADR 0024). Before its own draw month a property's first loan counts: on a flat owned at
  * baseDate it pays the developer, and a future buy's acquisition loan is already netted
  * by the down payment (ADR 0119 §3; a development loan always is, ADR 0168). A future
  * buy's later first plain loan pays its initial principal to the owner as cash (ADR 0119

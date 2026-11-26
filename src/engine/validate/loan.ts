@@ -1,4 +1,4 @@
-// One mortgage block's checks (D-17, D-36, D-37) and the loan asserts: the one path into
+// One mortgage block's checks (ADR 0017, ADR 0036, ADR 0037) and the loan asserts: the one path into
 // checkMortgage.
 import type { Decimal } from "../../lib/money";
 import {
@@ -74,10 +74,10 @@ function checkDrawDate(
   report: LoanReport,
 ): void {
   if (badDate(date)) report("INVALID_DATE", "draws", i);
-  // A draw on the start date itself belongs in the initial principal (D-42).
+  // A draw on the start date itself belongs in the initial principal (ADR 0024).
   else if (isOnOrBefore(date, start)) report("DRAW_BEFORE_START", "draws", i);
   // A later draw lands on the final payment, which would repay it in one shot
-  // (DR-074, ADR 0129 §3).
+  // (ADR 0129 §3).
   else if (lastDraw && isAfter(date, lastDraw))
     report("DRAW_AFTER_SCHEDULE_END", "draws", i);
   // A draw in the last two payment months is not modelled (ADR 0226 §1).
@@ -161,7 +161,7 @@ const INSTALMENT_INPUTS: ReadonlySet<string | undefined> = new Set([
 
 /**
  * ADR 0264 §1: why a plain loan with an explicit term cannot be saved, or undefined. Its
- * instalment must pay more than its first month's interest, as D-17 asks of a loan
+ * instalment must pay more than its first month's interest, as ADR 0017 asks of a loan
  * without a term; at 0 % it must be above 0. A development loan is not checked (its
  * entered instalment is not used), nor a block with another problem on the fields the
  * rule reads. A write-time rule: `blockIssues` does not report it, so a stored loan
@@ -192,9 +192,9 @@ function blockErrors(
 }
 
 /**
- * Raise an EngineInputError when a loan the engine is about to compute has a D-17
+ * Raise an EngineInputError when a loan the engine is about to compute has a ADR 0017
  * problem, instead of letting it become a NaN term, an endless schedule or vanished
- * debt (DR-014, DR-018, DR-043). Every D-17 problem of the block is listed, and a
+ * debt. Every ADR 0017 problem of the block is listed, and a
  * non-finite principal or instalment (ADR 0251 §2).
  */
 export function assertLoanInputs(block: MortgageBlock): void {
@@ -202,7 +202,7 @@ export function assertLoanInputs(block: MortgageBlock): void {
 }
 
 /**
- * Raise the D-37 data problems of every block of a property, before the block chain
+ * Raise the ADR 0037 data problems of every block of a property, before the block chain
  * is chosen (a block with an invalid start date would otherwise just drop out).
  */
 export function assertLoanRows(blocks: MortgageBlock[]): void {

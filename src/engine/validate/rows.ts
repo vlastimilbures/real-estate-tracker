@@ -1,5 +1,5 @@
 // The portfolio rows' checks: properties, mortgages, valuations, leases and holding
-// costs, with orphans and duplicates across rows (D-37, D-38).
+// costs, with orphans and duplicates across rows (ADR 0037, ADR 0038).
 import type { Decimal } from "../../lib/money";
 import { isAfter } from "../dates";
 import { COST_KEYS } from "../figures";
@@ -124,8 +124,8 @@ function checkHoldingCosts(p: Portfolio, on: ReporterFor): void {
   for (const h of p.holdingCosts) {
     const report = on("holdingCost", h.id, h.propertyId);
     checkFields(h, [], HOLDING_COST_FIELDS, report);
-    checkCostRanges(h, "", report); // D-54 (DR-127): the defaults' bounds
-    if (owners.has(h.propertyId)) report("DUPLICATE_HOLDING_COST"); // DR-071
+    checkCostRanges(h, "", report); // the defaults' bounds (ADR 0036)
+    if (owners.has(h.propertyId)) report("DUPLICATE_HOLDING_COST"); // one row per property
     owners.add(h.propertyId);
   }
 }
@@ -159,7 +159,7 @@ export function checkPortfolio(
 
 /**
  * The portfolio rows' problems only (validateInputs without the assumptions), for
- * entry points that write portfolio rows: CSV import and restore (P5b).
+ * entry points that write portfolio rows: CSV import and restore.
  */
 export function validatePortfolio(
   portfolio: Portfolio,

@@ -72,10 +72,10 @@ function snapshotDebt(
   asOf: Date,
   schedule: AmortizationRow[],
 ): { debt: Decimal; monthlyInstalment: Decimal; rate: Decimal } {
-  // The last grid row dated on/before asOf (D-21: a clamped month-end grid date
-  // counts, DR-070).
+  // The last grid row dated on/before asOf (ADR 0021: a clamped month-end grid date
+  // counts).
   const month = lastGridMonthOnOrBefore(assumptions.baseDate, asOf);
-  // Grid month 0 is baseDate itself: a loan drawn after it is not debt yet (D-33).
+  // Grid month 0 is baseDate itself: a loan drawn after it is not debt yet (ADR 0033).
   const debt =
     month === 0
       ? openingDebt(blocks, assumptions)
@@ -87,7 +87,7 @@ function snapshotDebt(
     : { debt, monthlyInstalment: st.instalment, rate: st.ratePa };
 }
 
-/** Rent in force at `asOf` (no upcoming fallback — DR-045) and holding costs. */
+/** Rent in force at `asOf` (no upcoming fallback) and holding costs. */
 function snapshotIncome(
   property: Property,
   portfolio: Portfolio,
@@ -114,7 +114,7 @@ function snapshotIncome(
 
 /**
  * One property's snapshot at `asOf`. Pass its `schedule` (the rows from `propertySchedules`
- * on the same inputs) to reuse it; an omitted one is built here (DR-042, DR-118).
+ * on the same inputs) to reuse it; an omitted one is built here.
  */
 // eslint-disable-next-line max-params -- public API with app and test callers (#480)
 export function propertySnapshot(
@@ -124,8 +124,8 @@ export function propertySnapshot(
   asOf: IsoDate = assumptions.baseDate,
   schedule?: AmortizationRow[],
 ): PropertySnapshot {
-  const v = assertInputs(portfolio, assumptions); // D-37
-  assertAsOf(asOf, assumptions.baseDate); // D-19: no snapshot before the projection start
+  const v = assertInputs(portfolio, assumptions); // ADR 0037
+  assertAsOf(asOf, assumptions.baseDate); // ADR 0019: no snapshot before the projection start
   const rows =
     schedule ??
     propertySchedule(forProperty(portfolio.mortgages, property.id), assumptions)
@@ -151,7 +151,7 @@ function weightedRateNumerator(rated: RatedSnapshot[]): Decimal {
 
 /**
  * `propertySnapshot` on validated inputs and an as-of date the caller has already
- * checked (DR-128), with the rate `portfolioSnapshot` weights by the debt (ADR 0177).
+ * checked, with the rate `portfolioSnapshot` weights by the debt (ADR 0177).
  */
 function snapshotProperty(
   property: Property,
@@ -226,7 +226,7 @@ function portfolioStocks(st: ReturnType<typeof stocksOf>) {
 
 /**
  * Portfolio snapshot at `asOf`. Pass `schedules` (the rows from `propertySchedules` on the
- * same inputs) to reuse them; omitted ones are built here (DR-042, DR-118).
+ * same inputs) to reuse them; omitted ones are built here.
  * @internal test seam: tests pin it; the app runs `portfolioOutputs`.
  */
 export function portfolioSnapshot(
@@ -235,8 +235,8 @@ export function portfolioSnapshot(
   asOf: IsoDate = assumptions.baseDate,
   schedules?: Map<string, AmortizationRow[]>,
 ): PortfolioSnapshot {
-  const v = assertInputs(portfolio, assumptions); // D-37
-  // D-19, checked once so an empty portfolio raises too (ADR 0075, DR-131).
+  const v = assertInputs(portfolio, assumptions); // ADR 0037
+  // ADR 0019, checked once so an empty portfolio raises too (ADR 0075).
   assertAsOf(asOf, assumptions.baseDate);
   const built =
     schedules ??
@@ -252,7 +252,7 @@ export function portfolioSnapshot(
 
 /**
  * `portfolioSnapshot` on validated inputs, an as-of date the caller has already checked
- * (`assertAsOf`) and the rows of every property's schedule (DR-128).
+ * (`assertAsOf`) and the rows of every property's schedule.
  */
 export function snapshotPortfolio(
   v: ValidInputs,

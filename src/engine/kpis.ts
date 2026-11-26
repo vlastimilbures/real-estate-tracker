@@ -27,12 +27,12 @@ import type {
 import { yearsToMonths } from "./units";
 import { activeProperties } from "./selectors";
 
-/** An IRR, or why there is none (DR-158). */
+/** An IRR, or why there is none. */
 type IrrResult =
   { rate: Decimal; reason: null } | { rate: null; reason: IrrNoRateReason };
 
 /**
- * IRR via bisection on the decimal NPV (DR-158, ADR 0079). NOT_UNIQUE when an NPV scan
+ * IRR via bisection on the decimal NPV (ADR 0079). NOT_UNIQUE when an NPV scan
  * over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes would
  * wrongly flag a vector with a future purchase). Otherwise the root is bracketed in
  * [−90 %, +100 %], then the upper bound widens in steps to +1000 %; a bracket end at the
@@ -40,7 +40,7 @@ type IrrResult =
  */
 export function irrResult(cashflows: Decimal[]): IrrResult {
   // Horner's rule in the discount factor v = 1/(1+rate): one multiply-add per cash flow
-  // instead of a `pow` each (DR-041). Only the NPV's sign and the tolerance test are
+  // instead of a `pow` each. Only the NPV's sign and the tolerance test are
   // read, so the result is the same bisection midpoint (irr-equivalence.test.ts).
   const npv = (rate: Decimal): Decimal => {
     const v = ONE.div(ONE.plus(rate));
@@ -51,7 +51,7 @@ export function irrResult(cashflows: Decimal[]): IrrResult {
   if (signChanges(cashflows) > 1 && npvRootsOnGrid(npv) > 1) {
     return { rate: null, reason: "NOT_UNIQUE" };
   }
-  // All-zero flows: every rate is a root, so there is no IRR (DR-061).
+  // All-zero flows: every rate is a root, so there is no IRR.
   if (cashflows.every((cf) => cf.isZero())) {
     return { rate: null, reason: "NO_ROOT" };
   }
@@ -135,9 +135,9 @@ function bisect(
 /**
  * Net-worth growth. A multiple or a growth rate needs a *positive* opening equity base, so
  * both multiples and both CAGRs are null when equity0 ≤ 0 — no growth base, shown as "—"
- * (D-34, ADR 0126). A CAGR also needs a positive end: a negative base to the power 1/N is
+ * (ADR 0034, ADR 0126). A CAGR also needs a positive end: a negative base to the power 1/N is
  * NaN (ADR 0017), so it is null when the end net worth ≤ 0. `greaterThan`, because
- * `isPositive()` is also true for ZERO (DR-107). Real CAGR is taken off the CPI-deflated
+ * `isPositive()` is also true for ZERO. Real CAGR is taken off the CPI-deflated
  * net worth — identical to (1+cagr)/(1+infl)−1 under constant inflation, so parity holds.
  * The real multiple divides that same deflated net worth by equity0 (CPI₀ = 1, so equity0
  * is already in base-date Kč; ADR 0087).
@@ -219,7 +219,7 @@ function firstDebtFreeYear(proj: ProjectionYear[]): ProjectionYear | null {
   return seenDebt ? at(proj, from) : null;
 }
 
-/** The levered IRR KPIs, each with the reason it has no value (DR-158). */
+/** The levered IRR KPIs, each with the reason it has no value. */
 function leveredIrr(
   nominalVector: Decimal[],
   realVector: Decimal[],
@@ -306,7 +306,7 @@ export function projectionAndKpis(
   portfolio: Portfolio,
   assumptions: Assumptions,
 ): { projection: PortfolioYear[]; kpis: PortfolioKPIs } {
-  const v = assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // ADR 0037
   const built = propertySchedules(
     portfolio.mortgages,
     portfolio.properties.map((p) => p.id),
@@ -318,8 +318,7 @@ export function projectionAndKpis(
 /**
  * The portfolio projection and its KPIs on an engine run (validated inputs and their
  * schedules): the one run sequence behind `projectionAndKpis` and `portfolioOutputs`, so
- * each schedule is built once and the projection is not rebuilt for the KPIs (DR-042,
- * #291).
+ * each schedule is built once and the projection is not rebuilt for the KPIs (#291).
  */
 export function runPortfolio(run: EngineRun): {
   projection: PortfolioYear[];

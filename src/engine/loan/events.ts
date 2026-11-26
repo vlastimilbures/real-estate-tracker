@@ -64,7 +64,7 @@ export function paidTerms(
  * How payment `p` is paid: the agreed instalment, else the instalment in force,
  * re-amortized over the payments left to the maturity in force (constant maturity)
  * when `trigger` fires or a prepayment owes it; the payment at that maturity clears
- * the balance (D-40).
+ * the balance (ADR 0021).
  */
 export function paymentTerms(
   terms: TermState,
@@ -193,7 +193,7 @@ export function clampPrepayment(
 /**
  * What an event sees on top of the balance it settles against: the late tranches
  * (after the last payment due by baseDate, on/before baseDate) dated on or before the
- * event. They join grid month 1 (D-41), so only the late settle counts them; every
+ * event. They join grid month 1 (ADR 0024), so only the late settle counts them; every
  * other settle sees none (ADR 0129 §1).
  */
 type SeenTranches = (date: Date) => Decimal;

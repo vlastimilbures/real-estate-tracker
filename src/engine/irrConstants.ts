@@ -1,22 +1,21 @@
-// The levered IRR's search settings (DR-076, DR-158, ADR 0079). Values are unchanged
-// from the literals they replaced; changing one moves outputs and needs an approved
-// decision.
+// The levered IRR's search settings (ADR 0079). Changing one moves outputs and needs
+// an approved decision.
 import { D } from "../lib/money";
 
 /** IRR bisection bracket: annual rates from −90 % to +100 %. */
 export const IRR_BRACKET_LOW = D(-0.9);
 export const IRR_BRACKET_HIGH = D(1);
 /** The widest bracket's upper bound, +1000 %: with no root up to it the IRR has none
- *  (DR-158, ADR 0079). The "no IRR" note names it (#441). */
+ *  (ADR 0079). The "no IRR" note names it (#441). */
 export const IRR_BRACKET_MAX = D(10);
 /** Upper bounds tried in turn when [LOW, HIGH] brackets no root, up to IRR_BRACKET_MAX
- *  (DR-158, ADR 0079). */
+ *  (ADR 0079). */
 export const IRR_BRACKET_EXTENSIONS = [
   ...[2, 4, 8].map((x) => D(x)),
   IRR_BRACKET_MAX,
 ];
-/** Rates the NPV sign scan checks for more than one root over [−90 %, +1000 %]
- *  (DR-158): dense around typical returns, sparse in the tails. */
+/** Rates the NPV sign scan checks for more than one root over [−90 %, +1000 %]:
+ * dense around typical returns, sparse in the tails. */
 export const IRR_SCAN_GRID = [
   ...steps(-0.9, -0.1, 0.1),
   ...steps(-0.05, 0.3, 0.025),

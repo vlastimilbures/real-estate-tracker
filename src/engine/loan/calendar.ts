@@ -1,4 +1,4 @@
-// The payment calendar of the loan schedule and its tranche bucketing (D-21).
+// The payment calendar of the loan schedule and its tranche bucketing (ADR 0021).
 import { ZERO, type Decimal } from "../../lib/money";
 import { firstGridMonthOnOrAfter, isAfter, isOnOrBefore } from "../dates";
 import { drawMonth, dueDate, paymentsDueBy } from "../loanTerm";
@@ -11,7 +11,7 @@ import type {
 } from "../types";
 
 /**
- * Payment number carried by grid month 0 (D-21): the payments due by baseDate for a
+ * Payment number carried by grid month 0 (ADR 0021): the payments due by baseDate for a
  * running loan, or −drawMonth for a future loan (drawn in grid month drawMonth, first
  * payment the month after). Grid month m then carries payment `offset + m`.
  */
@@ -26,7 +26,7 @@ export function lastPaymentDue(block: MortgageBlock, baseDate: Date): Date {
   return dueDate(block, paymentsDueBy(block, baseDate));
 }
 
-/** The rate of payment `p`, read on its due date EDATE(start, p) (D-21). */
+/** The rate of payment `p`, read on its due date EDATE(start, p) (ADR 0021). */
 export function rateOfPayment(
   p: number,
   block: MortgageBlock,
@@ -83,7 +83,7 @@ export function bucketDraws(
 }
 
 /** A development loan's tranches after the last payment due by baseDate and on/before
- *  baseDate: grid month 1 draws them, the baseDate debt counts them (D-41, D-44). */
+ *  baseDate: grid month 1 draws them, the baseDate debt counts them (ADR 0024). */
 export function lateTranches(
   block: MortgageBlock,
   baseDate: Date,

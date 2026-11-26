@@ -1,5 +1,5 @@
 // The rate a loan block pays (SPEC §4.4): its fixation end and the fixation- and
-// shock-aware rate in force on a payment's due date (D-21, ADR 0162).
+// shock-aware rate in force on a payment's due date (ADR 0021, ADR 0162).
 import type { Decimal } from "../lib/money";
 import { addYears, isAfter, isOnOrBefore } from "./dates";
 import type { Assumptions, IsoDate, MortgageBlock } from "./types";
@@ -22,8 +22,8 @@ export function rateFixedUntil(block: MortgageBlock, baseDate: Date): Date {
 /**
  * True when the block's fixation ended on or before `baseDate`: every payment from
  * baseDate on is at the assumed reset rate, so the owner should enter the refix terms
- * as a new block (D-30). A floating (0-year) block has no fixation to end (ADR 0162).
- * The engine reports it; the wording is UI (P7).
+ * as a new block (ADR 0030). A floating (0-year) block has no fixation to end (ADR 0162).
+ * The engine reports it; the wording is UI.
  */
 export function fixationExpired(block: MortgageBlock, baseDate: Date): boolean {
   return block.fixationYears > 0 && isOnOrBefore(blockEndDate(block), baseDate);
@@ -32,7 +32,7 @@ export function fixationExpired(block: MortgageBlock, baseDate: Date): boolean {
 /**
  * The interest rate in force for a block at `date`, fixation- and shock-aware.
  * Schedules pass the payment's due date EDATE(start, k), so the payment due on the
- * fixation end is still at the fixed rate (D-21):
+ * fixation end is still at the fixed rate (ADR 0021):
  *   • on/before `rateFixedUntil` → the block's own entered rate;
  *   • after it → `postFixationResetRatePa`.
  * For a floating block `rateFixedUntil` is baseDate (or its later start), so the
@@ -40,8 +40,8 @@ export function fixationExpired(block: MortgageBlock, baseDate: Date): boolean {
  * A scenario `rateShock` elevates the post-fixation rate by `deltaPa` for the first
  * `durationYears` after that date (a temporary spike at refix), then it reverts to
  * `postFixationResetRatePa`. Only payments due after baseDate are shocked: a what-if
- * never reprices history or the opening balance (DR-117). With no `rateShock` this is exactly the legacy 2-state
- * rate, so the amortization targets are unchanged. The schedule re-amortizes the
+ * never reprices history or the opening balance. With no `rateShock` there are two
+ * states: the fixed rate, then the reset rate. The schedule re-amortizes the
  * instalment on every change this returns.
  */
 export function rateAt(

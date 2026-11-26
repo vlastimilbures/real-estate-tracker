@@ -1,4 +1,4 @@
-// The one-pass engine run the app's recompute path uses (DR-042). The separate public
+// The one-pass engine run the app's recompute path uses. The separate public
 // calls each rebuild every loan schedule (and the KPIs rebuild the projection); this
 // builds the schedules once and shares them. The results are exactly those of the
 // separate calls, and its steps run in the same order as before, so the same error is
@@ -55,8 +55,8 @@ export function portfolioOutputs(
   const rows = scheduleRows(built);
   // Validated after the schedules are built, as `portfolioSnapshot` on them would: the
   // order decides which error is raised first.
-  const v = assertInputs(portfolio, assumptions); // D-37
-  assertAsOf(asOf, assumptions.baseDate); // D-19
+  const v = assertInputs(portfolio, assumptions); // ADR 0037
+  assertAsOf(asOf, assumptions.baseDate); // ADR 0019
   const snapshot = snapshotPortfolio(v, asOf, rows);
   const { projection, kpis } = runPortfolio({ inputs: v, schedules: built });
   return {

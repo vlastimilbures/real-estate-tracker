@@ -1,7 +1,7 @@
-// Real terms (D-23, DR-031): money in prices of the projection start (baseDate), deflated
+// Real terms (ADR 0023): money in prices of the projection start (baseDate), deflated
 // by the cumulative CPI index `cpiIndex` — the same index the real KPIs use, so a scenario's
 // inflation shock reaches every real figure. With no shock the index is (1+inflation)^t.
-// Also: the snapshot read off a projection year (DR-054, D-62), so an as-of date inside the
+// Also: the snapshot read off a projection year (ADR 0019), so an as-of date inside the
 // horizon shows the projected year the charts plot.
 import { ONE, powYears, type Decimal } from "../lib/money";
 import { at } from "./arrays";
@@ -22,13 +22,13 @@ import { monthsToYears, yearsToMonths } from "./units";
  * Price index at `asOf` (baseDate = 1): the yearly index of the last whole projection
  * year, compounded at the next year's rate for the remaining months (months/12), with
  * months on the grid so baseDate + N years gives year N's index. On or before baseDate
- * it is 1. Raises the D-37 / D-38 problems of the assumptions first (ADR 0075, DR-115),
+ * it is 1. Raises the ADR 0037 / ADR 0038 problems of the assumptions first (ADR 0075),
  * and a RangeError for a date after baseDate + horizonYears: the as-of resolver keeps
  * every date inside the window, so a later one is a caller bug (ADR 0150).
  */
 export function cpiAt(assumptions: Assumptions, asOf: Date): Decimal {
   const valid = assertAssumptions(assumptions);
-  // Months on the D-21 month-end grid, as value growth counts them (DR-182, ADR 0080).
+  // Months on the ADR 0021 month-end grid, as value growth counts them (ADR 0080).
   const months = lastGridMonthOnOrBefore(assumptions.baseDate, asOf);
   if (months <= 0) return ONE;
   if (months > yearsToMonths(assumptions.horizonYears))

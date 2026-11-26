@@ -1,4 +1,4 @@
-// Branded boundary types for the engine API (D-25, ADR 0074): `IsoDate`, `Rate` and
+// Branded boundary types for the engine API (ADR 0025, ADR 0074): `IsoDate`, `Rate` and
 // `Money`. A brand is a compile-time tag only — at runtime an IsoDate is a plain `Date`
 // and a Rate or Money a plain `Decimal`, so branding never changes a computed number.
 // Values get a brand only through the constructors below (dates: `utc` / `isoDate` /

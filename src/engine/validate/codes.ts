@@ -54,9 +54,9 @@ type CostField =
 /**
  * @internal Each entity's fields an error can name (ADR 0251 §4), exported for tests.
  * The assumptions name a default both bare (NON_FINITE_NUMBER) and as `defaults.<key>`
- * (its range): parked as P3. An extra default key the type does not name is reported
+ * (its range), a known mismatch left as it is. An extra default key the type does not name is reported
  * as given (`Object.keys(a.defaults)`), outside this list: unreachable from the app, and
- * its fix belongs with P3.
+ * it is left as it is too.
  */
 export const VALIDATION_FIELDS = {
   assumptions: [
@@ -142,9 +142,9 @@ export interface EngineValidationError {
   index?: number | undefined;
 }
 
-/** The gates that raise a code: "data" is corrupt data (D-37) and "range" the ranges
- *  (D-38, ADR 0128), raised at every entry point by `assertInputs` / `assertAssumptions`;
- *  "loan" is an invalid loan (D-17, D-36), raised by `assertLoanInputs`. A code with no
+/** The gates that raise a code: "data" is corrupt data (ADR 0037) and "range" the ranges
+ *  (ADR 0038, ADR 0128), raised at every entry point by `assertInputs` / `assertAssumptions`;
+ *  "loan" is an invalid loan (ADR 0017, ADR 0036), raised by `assertLoanInputs`. A code with no
  *  gate is raised on its own path: `assertBlockStarts`, `assertAsOf`, or a write-time
  *  rule (LEASE_OVERLAP). INSTALMENT_BELOW_INTEREST and ZERO_RATE_ZERO_INSTALMENT keep the
  *  "loan" gate for a loan without a term and are also raised by a write-time rule for a
@@ -195,13 +195,13 @@ export function codesRaisedBy(...gates: Gate[]): ReadonlySet<ValidationCode> {
   );
 }
 
-/** Corrupt-data codes the engine raises on at every entry point (D-37). */
+/** Corrupt-data codes the engine raises on at every entry point (ADR 0037). */
 export const DATA_ERROR_CODES = codesRaisedBy("data");
 
 /** The codes `assertInputs` and `assertAssumptions` raise on: data and ranges. */
 export const ENTRY_ERROR_CODES = codesRaisedBy("data", "range");
 
-/** The invalid-loan codes the engine raises on (D-17, D-36). */
+/** The invalid-loan codes the engine raises on (ADR 0017, ADR 0036). */
 export const LOAN_ERROR_CODES = codesRaisedBy("loan");
 
 /** A loan's own amounts: NON_FINITE_NUMBER on one of them is also a "loan" problem, so

@@ -64,8 +64,8 @@ export function buildCpiIndex(assumptions: ValidAssumptions): Decimal[] {
   return cpi;
 }
 
-/** `buildCpiIndex` for callers outside the engine: raises the D-37 / D-38 problems of
- *  the assumptions first (ADR 0075, DR-115). */
+/** `buildCpiIndex` for callers outside the engine: raises the ADR 0037 / ADR 0038 problems of
+ *  the assumptions first (ADR 0075). */
 export function cpiIndex(assumptions: Assumptions): Decimal[] {
   return buildCpiIndex(assertAssumptions(assumptions));
 }
@@ -149,8 +149,8 @@ export function renewedLease(leases: Lease[], basis: Date): Lease | undefined {
 }
 
 /**
- * The rent of every grid month (DR-045, ADR 0080): the lease in force on the month's
- * grid date `edate(baseDate, m)` (D-21), from the first month on/after the basis date;
+ * The rent of every grid month (ADR 0080): the lease in force on the month's
+ * grid date `edate(baseDate, m)` (ADR 0021), from the first month on/after the basis date;
  * no lease in force ⇒ no rent (a gap between leases). The last lease (latest start)
  * keeps renting past its end date — treated as renewed — unless it ended before the
  * basis date. Each lease's rent is indexed from its own turn-on year.
@@ -192,7 +192,7 @@ function buildRentPlan(
 
 /**
  * Debt on a schedule at the end of grid month `m`: the baseDate debt for m = 0 (a
- * grid-month-1 draw is not debt yet, D-33, D-44), else that row's end balance.
+ * grid-month-1 draw is not debt yet, ADR 0033, ADR 0024), else that row's end balance.
  */
 function debtAtGridMonth(
   schedule: AmortizationRow[],
@@ -279,7 +279,7 @@ function buildYear0(run: PropertyRun): YearRow {
   if (run.gates.tStart > 0) return zeroYear(0, baseYear, assumptions.baseDate);
   const undrawn0 = run.undrawn(0);
   // The debt at baseDate, not grid month 1's opening balance: a loan drawn after
-  // baseDate is new debt in its year, not opening debt (D-33).
+  // baseDate is new debt in its year, not opening debt (ADR 0033).
   const balance0 = debtAtGridMonth(b.schedule, run.blocks, assumptions, 0);
   return {
     ...zeroYear(0, baseYear, assumptions.baseDate),
@@ -288,7 +288,7 @@ function buildYear0(run: PropertyRun): YearRow {
 }
 
 /**
- * Value for projection year `t`, the snapshot's value at the year's date (D-32): the
+ * Value for projection year `t`, the snapshot's value at the year's date (ADR 0032): the
  * same anchored value (`valueAnchor`), grown by whole completed months / 12 from a later
  * anchor (a valuation dated after the basis, or the purchase date of a future buy). On
  * the baseDate anchor the growth is exactly `t` years, the parity path.
@@ -368,7 +368,7 @@ function propertyYear(run: PropertyRun, t: number): YearRow {
   const rc = computeRentAndCosts(run, t);
   const slice = yearSlice(b.schedule, t);
   // In a later turn-on year the debt the property comes online with is new to it
-  // (the years before are empty), so it counts as drawn (DR-092).
+  // (the years before are empty), so it counts as drawn.
   const turnsOn = t === tStart && tStart > 0;
   const carriedIn = turnsOn
     ? debtAtGridMonth(b.schedule, run.blocks, assumptions, yearsToMonths(t - 1))
@@ -422,18 +422,18 @@ export function propertyProjection(
   assumptions: Assumptions,
   schedule: PropertySchedule,
 ): PropertyYear[] {
-  const v = assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // ADR 0037
   return projectProperty(property, v, schedule);
 }
 
 /** Every property's `propertyProjection` by id, inactive ones included, validating the
- *  portfolio once (DR-128). Pass `schedules` to reuse them (DR-042). */
+ *  portfolio once. Pass `schedules` to reuse them. */
 export function propertyProjections(
   portfolio: Portfolio,
   assumptions: Assumptions,
   schedules?: Map<string, PropertySchedule>,
 ): Map<string, PropertyYear[]> {
-  const v = assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // ADR 0037
   const built =
     schedules ??
     propertySchedules(
@@ -449,7 +449,7 @@ export function propertyProjections(
   );
 }
 
-/** `propertyProjection` on validated inputs (DR-128). */
+/** `propertyProjection` on validated inputs. */
 function projectProperty(
   property: Property,
   v: ValidInputs,
@@ -522,8 +522,8 @@ function activeMonthsInYear(firstGridMonth: number, t: number): number {
 }
 
 /**
- * Projection year `t`'s period (D-22): grid months 12(t−1)+1 … 12t, i.e. the dates
- * (periodStart, periodEnd], on the month-end-clamped grid (D-21). Year 0 is baseDate.
+ * Projection year `t`'s period (ADR 0022): grid months 12(t−1)+1 … 12t, i.e. the dates
+ * (periodStart, periodEnd], on the month-end-clamped grid (ADR 0021). Year 0 is baseDate.
  */
 function yearPeriod(baseDate: Date, t: number) {
   return {
@@ -548,14 +548,14 @@ function zeroYear(year: number, calendarYear: number, baseDate: Date): YearRow {
 
 /**
  * Portfolio projection = element-wise sum of property projections by year. Pass
- * `schedules` (from `propertySchedules` on the same inputs) to reuse them (DR-042).
+ * `schedules` (from `propertySchedules` on the same inputs) to reuse them.
  */
 export function portfolioProjection(
   portfolio: Portfolio,
   assumptions: Assumptions,
   schedules?: Map<string, PropertySchedule>,
 ): PortfolioYear[] {
-  const v = assertInputs(portfolio, assumptions); // D-37
+  const v = assertInputs(portfolio, assumptions); // ADR 0037
   const built =
     schedules ??
     propertySchedules(
@@ -567,7 +567,7 @@ export function portfolioProjection(
 }
 
 /**
- * `portfolioProjection` on an engine run (validated inputs and their schedules, DR-128):
+ * `portfolioProjection` on an engine run (validated inputs and their schedules):
  * the portfolio is checked once per public call, not again per property. Also returns
  * the debt service paid before a future buy turns on (ADR 0124), so the KPIs reuse it
  * (#291).

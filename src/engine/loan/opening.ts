@@ -1,4 +1,4 @@
-// A loan's opening state at baseDate: the catch-up from startDate (D-30, ADR 0109).
+// A loan's opening state at baseDate: the catch-up from startDate (ADR 0030, ADR 0109).
 import { ZERO, type Decimal } from "../../lib/money";
 import { isAfter, isOnOrBefore } from "../dates";
 import { isDevLoan } from "../loanBlock";
@@ -40,8 +40,8 @@ export interface Opening {
 /**
  * Opening state of a loan already running at baseDate: we simulate month-by-month on
  * the loan's OWN cadence (`dueDate(block, k)`) for the payments due by baseDate
- * (`paymentsDueBy`, D-21), so tranches, interest-only months, a fixation that already
- * ended (D-30) and events dated on/before baseDate (ADR 0109) are all seen. Every
+ * (`paymentsDueBy`, ADR 0021), so tranches, interest-only months, a fixation that already
+ * ended (ADR 0030) and events dated on/before baseDate (ADR 0109) are all seen. Every
  * running loan takes this path, plain ones too (ADR 0235). Returns the balance, the
  * instalment and the maturity in force at baseDate, which the baseDate-anchored
  * schedule opens from.
@@ -53,7 +53,7 @@ export function simulateToBaseDate(
   const { baseDate } = assumptions;
   const steps = paymentsDueBy(block, baseDate);
   // Only tranches up to the last payment due: a later one (still on/before
-  // baseDate) belongs to the next payment period, grid month 1 (D-41, DR-016).
+  // baseDate) belongs to the next payment period, grid month 1 (ADR 0024).
   const drawsByStep = bucketDraws(block.draws ?? [], block.startDate, (d) =>
     isOnOrBefore(d, lastPaymentDue(block, baseDate)),
   );
@@ -114,7 +114,7 @@ export function simulateToBaseDate(
 
 /**
  * Opening state of a plain loan at baseDate: its payments due so far replayed month
- * by month (ADR 0235), with the reset from the true fixation end (D-30, DR-100) and
+ * by month (ADR 0235), with the reset from the true fixation end (ADR 0030) and
  * the events (ADR 0109). A plain loan has no tranches, so nothing is counted.
  */
 export function plainOpening(
@@ -130,10 +130,10 @@ export function plainOpening(
 
 /**
  * Debt outstanding at baseDate on one block: 0 for a loan drawn after baseDate, even
- * when it draws in grid month 1 (D-33, DR-106); else the balance the schedule opens
- * from, plus a tranche dated after the last payment due and on/before baseDate (D-41).
+ * when it draws in grid month 1 (ADR 0033); else the balance the schedule opens
+ * from, plus a tranche dated after the last payment due and on/before baseDate (ADR 0024).
  * A tranche dated after baseDate is new debt in the month it lands, not opening debt,
- * even when it lands in grid month 1 (D-44, DR-121).
+ * even when it lands in grid month 1 (ADR 0024).
  */
 export function openingBalance(
   block: MortgageBlock,

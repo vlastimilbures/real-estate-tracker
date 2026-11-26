@@ -1,9 +1,9 @@
 // Financing exposure (ADR 0103, #31); the upcoming events built on it are in
 // ./upcomingEvents. Read off the same schedules the projection uses, so every balance
 // matches the amortization table:
-//   • fixation end = blockEndDate; its payment is still fixed (D-21), so the balance at
+//   • fixation end = blockEndDate; its payment is still fixed (ADR 0021), so the balance at
 //     fixation end is the end balance of grid month fixationYears*12 − paymentOffset;
-//   • a loan is a property's block chain (D-27), its payoff the schedule's last payment.
+//   • a loan is a property's block chain (ADR 0027), its payoff the schedule's last payment.
 // Dates are modelled from the entered data, not lender deadlines (the wording is UI).
 import { ZERO, type Decimal } from "../lib/money";
 import { blockEndDate } from "./loanRate";
@@ -87,7 +87,7 @@ export interface PropertyLoan {
   loan: LoanExposure;
   /** The chain blocks' fixation ends, as on the Dashboard (none for a floating block). */
   resets: FixationReset[];
-  /** Ids of the blocks driving the schedule, in order (D-27). */
+  /** Ids of the blocks driving the schedule, in order (ADR 0027). */
   chain: string[];
   /** Each chain block with tranches that no successor has replaced by as-of (ADR 0167). */
   drawdowns: Drawdown[];
