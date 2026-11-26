@@ -1,5 +1,5 @@
-// The property actions of the portfolio store (#465). A write checks the loaded portfolio
-// with the property in place inside the queued op, then writes (UX-047).
+// The property actions of the portfolio store. A write checks the loaded portfolio with
+// the property in place inside the queued op, then writes.
 import {
   insertPropertyWithCosts,
   deleteProperty,

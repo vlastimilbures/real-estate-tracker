@@ -10,7 +10,7 @@ import { enPlural } from "./plural";
 import { APP_NAME } from "./appName";
 
 /** The input-rule texts, one per ValidationCode; a rule that names a limit takes it as
- *  an argument (#441), so callers read them through `inputRuleText`. */
+ *  an argument, so callers read them through `inputRuleText`. */
 type InputRuleTexts = {
   [K in ValidationCode]: K extends "INVALID_RECAST_MATURITY"
     ? (years: string, n: number) => string
@@ -21,7 +21,7 @@ export const en = {
   common: {
     /** The disclosure that holds a panel's longer explanation (ADR 0214). */
     aboutThis: "About this",
-    /** A KPI with no value, e.g. a levered IRR (UX-079). */
+    /** A KPI with no value, e.g. a levered IRR. */
     notApplicable: "n/a",
     /** The development tranches not drawn yet, beside the drawn debt (ADR 0169). */
     undrawnDebt: (amount: string) => `+${amount} to draw`,
@@ -30,10 +30,10 @@ export const en = {
     completedValue: (amount: string) => `completed value ${amount}`,
     irrNotUnique:
       "No unique IRR: the cash flows break even at more than one rate",
-    /** The engine's IRR search range, formatted (#441). */
+    /** The engine's IRR search range, formatted. */
     irrNoRoot: (low: string, high: string) =>
       `No IRR between ${low} and ${high}`,
-    /** Unit shown inside year-count fields (UX-034). */
+    /** Unit shown inside year-count fields. */
     yearsSuffix: "yrs",
     asOfGroup: "As of date",
     plusYears: (n: number) => `+${n}y`,
@@ -43,7 +43,7 @@ export const en = {
     /** Screen-reader name of a table's edit/delete column (ADR 0157). */
     actions: "Actions",
     searchPlaceholder: "Search…",
-    /** Short word for thousands on chart axes (UX-034). */
+    /** Short word for thousands on chart axes. */
     thousandsShort: "k",
     /** A yes/no value shown as text, e.g. the CSV preview's garage flag (ADR 0250). */
     yes: "Yes",
@@ -104,9 +104,8 @@ export const en = {
     tryAgain: "Try again",
   },
 
-  // Startup failures from the data layer (P5a), keyed by DataError code.
-  // Engine input rules (D-17, D-27, D-36, D-37, D-42, D-54), shown when an import or a
-  // restore is refused. Keyed by the engine's ValidationCode.
+  // Engine input rules (ADR 0017, ADR 0024, ADR 0027, ADR 0036, ADR 0037), shown when an
+  // import or a restore is refused. Keyed by the engine's ValidationCode.
   inputRules: {
     INVALID_DATE: "Not a valid date",
     NON_FINITE_NUMBER: "Not a finite number",
@@ -152,8 +151,8 @@ export const en = {
       "A prepayment or maturity change must be dated before the loan's last payment",
     INVALID_RECAST:
       "A maturity change needs either a new maturity date or a new instalment above zero, not both",
-    /** `years` = the longest loan term the forms accept, formatted; `n` = it as a count
-     *  (#441). Read through `inputRuleText` (src/ui/model/inputRule.ts). */
+    /** `years` = the longest loan term the forms accept, formatted; `n` = it as a count.
+     *  Read through `inputRuleText` (src/ui/model/inputRule.ts). */
     INVALID_RECAST_MATURITY: (years: string, n: number) =>
       `The new maturity must be after the next payment and after a development loan's completion, and at most ${years} ${enPlural(n, ["year", "years"])} after the loan start (or the contract term, if longer)`,
     RECAST_INSTALMENT_BEFORE_COMPLETION:
@@ -162,7 +161,7 @@ export const en = {
       "This lease overlaps another lease of the same property. Leases cannot overlap: end the earlier lease before the later one starts",
   } satisfies InputRuleTexts,
 
-  // A write the database refused (P7a, DR-133). Shown in place of SQLite's raw text.
+  // A write the database refused. Shown in place of SQLite's raw text.
   writeErrors: {
     duplicatePropertyName: "A property with this name already exists",
     duplicateValuationDate:
@@ -180,6 +179,8 @@ export const en = {
       `This value would break the scenario “${name}”. ${rule}. Change the value or edit the scenario first`,
   },
 
+  // The data layer's failures, keyed by DataError code: on the startup screen and for a
+  // write it refused.
   dataErrors: {
     DB_INTEGRITY:
       "The database file failed its integrity check. Nothing was changed.",
@@ -201,7 +202,7 @@ export const en = {
       "Details are in the app log: ~/Library/Logs/com.bures.realestate-tracker/app.log",
   },
 
-  // The startup error screen (#115, ADR 0153).
+  // The startup error screen (ADR 0153).
   boot: {
     partialFailed: (reached: number, stoppedAt: number) =>
       `The database upgrade failed at version ${stoppedAt}, and that step was rolled back. The steps before it went through, so the database is now at version ${reached}, and the previous app version no longer opens it.`,
@@ -230,7 +231,7 @@ export const en = {
   errorBoundary: {
     title: "Something went wrong on this screen",
     tryAgain: "Try again",
-    // Stored data that breaks an engine rule (UX-049)
+    // Stored data that breaks an engine rule
     invalidDataTitle: "Some saved data breaks a rule the calculations need",
     invalidDataBody:
       "Correct the record below; the numbers on this screen come back once it is valid.",
@@ -279,14 +280,14 @@ export const en = {
     settings: "Settings",
   },
 
-  // Native macOS menu items the app adds (UX-076); View ▸ pages reuse `nav`.
+  // Native macOS menu items the app adds; View ▸ pages reuse `nav`.
   menu: {
     about: `About ${APP_NAME}`,
     settings: "Settings…",
     newProperty: "New Property…",
   },
 
-  // Chart cards: the toggle that shows a chart as a table (UX-075).
+  // Chart cards: the toggle that shows a chart as a table.
   charts: {
     table: "Table",
     surfaceLabel: (title: string) =>
@@ -480,14 +481,14 @@ export const en = {
       `${n} ${enPlural(n, ["needs attention", "need attention"])}`,
     useDefaults: (n: number) =>
       `${n} ${enPlural(n, ["uses", "use"])} portfolio defaults`,
-    /** `months` = the stale threshold, formatted; `n` = it as a count (#441). */
+    /** `months` = the stale threshold, formatted; `n` = it as a count. */
     valuationStaleGroup: (months: string, n: number) =>
       `The valuation in use is more than ${months} ${enPlural(n, ["month", "months"])} old. Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.`,
     noValuationGroup:
       "No valuation is recorded, so the purchase price, grown at the appreciation rate since the purchase date, stands in as the market value.",
     leaseEndedGroup:
       "The lease ended and no next lease is entered. The snapshot counts no rent after the end date; the projection assumes the lease is renewed.",
-    /** `months` = the window, formatted; `n` = it as a count (#441). */
+    /** `months` = the window, formatted; `n` = it as a count. */
     leaseEndingGroup: (months: string, n: number) =>
       `The lease ends within ${months} ${enPlural(n, ["month", "months"])} and no next lease is entered. The projection assumes it is renewed.`,
     fixationEndedGroup: (rate: string) =>
@@ -633,7 +634,7 @@ export const en = {
     tranches: (n: number) => `${n} ${enPlural(n, ["tranche", "tranches"])}`,
     totalLoan: (total: string) => `Total loan ${total}`,
     ioUntil: (d: string) => `IO→${d}`,
-    // Mortgage form hints and the instalment "Calc" button (DR-059)
+    // Mortgage form hints and the instalment "Calc" button
     instalmentHint: (years: string, amount: string) =>
       `Amortizing instalment over ${years} ≈ ${amount}`,
     instalmentHintDev: (base: string) =>
@@ -938,7 +939,7 @@ export const en = {
     combinedTitle: (level: string, parts: string) => `${level}: ${parts}`,
     addedScenario: (name: string) => `Added “${name}”`,
     duplicatedScenario: (name: string) => `Duplicated “${name}”`,
-    /** The saved name of a duplicate (#169, ADR 0187). */
+    /** The saved name of a duplicate (ADR 0187). */
     copyName: (name: string) => `${name} (copy)`,
     alreadySaved: (name: string) => `Already saved: “${name}”`,
     addedCompareFull: (name: string, max: number) =>
@@ -1269,7 +1270,7 @@ export const en = {
     exportToExcel: "Export to Excel",
     exported: (name: string) => `Exported ${name}`,
     exportFailed: (detail: string) => `Export failed (${detail})`,
-    // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.
+    // Excel sheet names: ≤ 31 characters, none of []:*?/\.
     sheetNames: {
       projection: "Projection",
       amortization: "Amortization",
@@ -1298,7 +1299,7 @@ export const en = {
       draws:
         "Check the marked rows: a date as dd.mm.yyyy and an amount above 0",
     },
-    /** A bounded whole-number field (UX-068, ADR 0075). */
+    /** A bounded whole-number field (ADR 0075). */
     positiveAmount:
       "Enter an amount above 0, e.g. 500 000 (a space between thousands)",
     /** The one range message: forms, CSV import and restore (ADR 0259). */
@@ -1344,10 +1345,10 @@ export const en = {
     unknownPlaceholder: "unknown",
   },
 
-  // Projection grid headers, on screen and in the Excel export (UX-062,
-  // src/ui/model/projection.ts).
+  // Projection grid headers, on screen and in the Excel export
+  // (src/ui/model/projection.ts).
   projGrid: {
-    /** One-letter "year" prefix for "Y5 · 2031" labels (UX-032). */
+    /** One-letter "year" prefix for "Y5 · 2031" labels. */
     yearPrefix: "Y",
     year: "Year",
     opening: "opening",

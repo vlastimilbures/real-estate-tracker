@@ -1,5 +1,5 @@
-// The store's write runner (DR-085, ADR 0228, ADR 0253): the queue, the reload after each
-// write and the refusals after a failed read-back (#465).
+// The store's write runner (ADR 0228, ADR 0253): the queue, the reload after each write
+// and the refusals after a failed read-back.
 import type { Sql } from "../../data/sql";
 import { EngineInputError } from "../../engine";
 import { toWriteError } from "../writeError";
@@ -50,14 +50,14 @@ function keepRefused({ set, get }: StoreAccess, target: WriteTarget): void {
   set({ status: { ...status, refused: [...status.refused, target] } });
 }
 
-/** Persist via `op`, then reload portfolio + assumptions so the engine recomputes.
- *  Never throws: a failure is returned to the caller as `{ ok: false }`, which shows
- *  it where the edit was started; a caller with no place of its own puts it in the
- *  banner with showError (ADR 0261). A success clears the banner. On failure we still reload so the
- *  in-memory state matches what actually reached disk. Multi-statement writes are
- *  atomic (`Sql.transaction`, D-14), so a failed op leaves the DB unchanged, and a
- *  resolved op has committed: a failed reload after it returns `{ ok: true }` and
- *  stops on the error screen (ADR 0228). A write queued behind that is refused. */
+/** Persist via `op`, then reload portfolio + assumptions so the engine recomputes. Never
+ *  throws: a failure is returned to the caller as `{ ok: false }`, which shows it where
+ *  the edit was started; a caller with no place of its own puts it in the banner with
+ *  showError (ADR 0261). A success clears the banner. On failure we still reload so the
+ *  in-memory state matches what actually reached disk. Multi-statement writes are atomic
+ *  (`Sql.transaction`, ADR 0014), so a failed op leaves the DB unchanged, and a resolved
+ *  op has committed: a failed reload after it returns `{ ok: true }` and stops on the
+ *  error screen (ADR 0228). A write queued behind that is refused. */
 async function mutateNow(
   store: StoreAccess,
   markChanged: (sql: Sql) => Promise<void>,
@@ -97,9 +97,9 @@ async function mutateNow(
 /** The write runner's steps, one per store. */
 export type WriteRunner = ReturnType<typeof createWriteRunner>;
 
-/** The store's write path (DR-085, ADR 0228, ADR 0253): every write runs in the one
- *  queue, then reloads. `enqueue` is for reads that wait in it; `writesSoFar` counts the
- *  data writes so far. */
+/** The store's write path (ADR 0228, ADR 0253): every write runs in the one queue, then
+ *  reloads. `enqueue` is for reads that wait in it; `writesSoFar` counts the data writes
+ *  so far. */
 export function createWriteRunner(
   set: SetState,
   get: () => PortfolioState,
@@ -118,11 +118,11 @@ export function createWriteRunner(
   ): Promise<MutationResult> =>
     write(() => mutateNow(store, markChanged, target, op, changesData));
 
-  /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged
-   *  (after reloading in-memory state from the DB). For operations whose callers
-   *  show their own typed errors (DR-047: pages no longer touch the raw `sql`). Once
-   *  `op` has resolved it has committed: a failed reload stops on the error screen and
-   *  `op`'s result still returns (ADR 0228). */
+  /** Run `op` in the mutation queue, then reload; rethrow its failure unchanged (after
+   *  reloading in-memory state from the DB). For operations whose callers show their own
+   *  typed errors (pages never touch the raw `sql`). Once `op` has resolved it has
+   *  committed: a failed reload stops on the error screen and `op`'s result still returns
+   *  (ADR 0228). */
   function exclusive<T>(
     target: WriteTarget,
     op: (sql: Sql) => Promise<T>,

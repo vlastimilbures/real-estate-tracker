@@ -1,5 +1,5 @@
-// The store's pre-write rule checks (#465): pure, they throw before anything is written
-// so a form shows the rule (UX-047). The store reads their inputs inside the queued op.
+// The store's pre-write rule checks: pure, they throw before anything is written so a
+// form shows the rule. The store reads their inputs inside the queued op.
 import {
   EngineInputError,
   instalmentBelowInterestErrors,
@@ -37,12 +37,12 @@ export function withRow<T extends { id: string }>(rows: T[], row: T): T[] {
 }
 
 /** Throw the engine input rules broken by the rows `ids` of the candidate portfolio
- *  (D-17, D-27, D-37, D-42, D-54), and the write-time instalment (ADR 0264) and lease
- *  overlap (ADR 0163) rules, so a form shows the rule before anything is written
- *  (UX-047). Problems in other rows are not this edit's to report: a stored overlap or
- *  a stored loan below its interest does not block other edits.
- *  `overlapIds` (default `ids`) narrows the overlap rule to the rows that can add one.
- *  Then the out-of-range values the edit adds to the `stored` portfolio (ADR 0245). */
+ *  (ADR 0017, ADR 0024, ADR 0027, ADR 0036, ADR 0037), and the write-time instalment
+ *  (ADR 0264) and lease overlap (ADR 0163) rules, so a form shows the rule before
+ *  anything is written. Problems in other rows are not this edit's to report: a stored
+ *  overlap or a stored loan below its interest does not block other edits. `overlapIds`
+ *  (default `ids`) narrows the overlap rule to the rows that can add one. Then the
+ *  out-of-range values the edit adds to the `stored` portfolio (ADR 0245). */
 function assertRows(
   stored: Portfolio,
   candidate: Portfolio,
@@ -72,7 +72,7 @@ export function checkEdit(
   if (stored) assertRows(stored, edit(stored), ids, overlapIds);
 }
 
-/** Engine rules of the assumptions themselves (horizon, rates, shocks, D-38), then an
+/** Engine rules of the assumptions themselves (horizon, rates, shocks, ADR 0038), then an
  *  out-of-range horizon the edit adds to the `stored` assumptions (ADR 0245). */
 function assertAssumptionRules(
   p: Portfolio,

@@ -1,6 +1,6 @@
-// The portfolio store's whole-database actions (#465): CSV preview and import, restore,
-// the sample, and the backup export. They never throw: each resolves with a Result whose
-// failure is a typed ActionError for the caller to show (see PortfolioState, #467).
+// The portfolio store's whole-database actions: CSV preview and import, restore, the
+// sample, and the backup export. They never throw: each resolves with a Result whose
+// failure is a typed ActionError for the caller to show (see PortfolioState).
 import { READ_FAILURES } from "../../data/errors";
 import { logFailure, type FailureSite } from "../diagnostics";
 import { clearSample, loadSample } from "../../data/seed";
@@ -62,7 +62,7 @@ function csvActions({
   requireSql,
 }: StoreCtx): Pick<WholeDbActions, "previewCsv" | "importCsv"> {
   return {
-    // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
+    // Loaded on first use: keeps the CSV parser out of the startup bundle.
     previewCsv: async (batch) => {
       try {
         return success(
@@ -87,7 +87,7 @@ function csvActions({
               return await importCsv(sql, batch);
             } catch (e) {
               // Known here, where the class is loaded, so it stays out of the
-              // startup bundle (P9). Nothing was written (ADR 0229 §2).
+              // startup bundle. Nothing was written (ADR 0229 §2).
               if (e instanceof CsvImportProblemsError) plan.refused = e.preview;
               throw e;
             }

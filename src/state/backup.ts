@@ -1,7 +1,6 @@
-// The UI's door to Backup & Restore (ADR 0072, DR-163): the backup file types and
-// errors, and the restore-file pick checked against the app's input rules (the same
-// rules the store's restore action uses). Exporting and restoring go through
-// usePortfolioStore.
+// The UI's door to Backup & Restore (ADR 0072): the backup file types and errors, and the
+// restore-file pick checked against the app's input rules (the same rules the store's
+// restore action uses). Exporting and restoring go through usePortfolioStore.
 import { chooseRestoreFile as chooseWithRules } from "../data/backup";
 import { checkInputRules } from "./restoreRules";
 

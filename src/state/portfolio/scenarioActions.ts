@@ -1,5 +1,5 @@
-// The assumptions, scenario and sample-banner actions of the portfolio store (#465). The
-// rules read the store's state inside the queued op, before the write (UX-047).
+// The assumptions, scenario and sample-banner actions of the portfolio store. The rules
+// read the store's state inside the queued op, before the write.
 import type { Scenario } from "../../engine";
 import {
   upsertScenario,

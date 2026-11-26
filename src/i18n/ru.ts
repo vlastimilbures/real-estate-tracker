@@ -9,14 +9,14 @@ export const ru: Dictionary = {
   common: {
     /** The disclosure that holds a panel's longer explanation (ADR 0214). */
     aboutThis: "Об этом разделе",
-    /** A KPI with no value, e.g. a levered IRR (UX-079). */
+    /** A KPI with no value, e.g. a levered IRR. */
     notApplicable: "н/д",
     undrawnDebt: (amount) => `+${amount} к выборке`,
     completedValue: (amount) => `стоимость после завершения ${amount}`,
     irrNotUnique:
       "IRR не единственна: денежные потоки окупаются при нескольких ставках",
     irrNoRoot: (low, high) => `Нет IRR в диапазоне от ${low} до ${high}`,
-    /** Unit shown inside year-count fields (UX-034). */
+    /** Unit shown inside year-count fields. */
     yearsSuffix: "лет",
     asOfGroup: "На дату",
     plusYears: (n) => `+${n} г.`,
@@ -24,7 +24,7 @@ export const ru: Dictionary = {
     nSelected: (n) => `Выбрано: ${n}`,
     actions: "Действия",
     searchPlaceholder: "Поиск…",
-    /** Short word for thousands on chart axes (UX-034). */
+    /** Short word for thousands on chart axes. */
     thousandsShort: "тыс.",
     yes: "Да",
     no: "Нет",
@@ -175,7 +175,7 @@ export const ru: Dictionary = {
       "Подробности в журнале приложения: ~/Library/Logs/com.bures.realestate-tracker/app.log",
   },
 
-  // The startup error screen (#115, ADR 0153).
+  // The startup error screen (ADR 0153).
   boot: {
     partialFailed: (reached: number, stoppedAt: number) =>
       `Обновление базы данных не удалось на версии ${stoppedAt}, этот шаг отменён. Предыдущие шаги выполнены, поэтому база теперь в версии ${reached}, и предыдущая версия приложения её больше не откроет.`,
@@ -1178,7 +1178,7 @@ export const ru: Dictionary = {
     exportToExcel: "Экспорт в Excel",
     exported: (name) => `Экспортировано ${name}`,
     exportFailed: (detail) => `Ошибка экспорта (${detail})`,
-    // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.
+    // Excel sheet names: ≤ 31 characters, none of []:*?/\.
     sheetNames: {
       projection: "Прогноз",
       amortization: "График платежей",
@@ -1206,7 +1206,7 @@ export const ru: Dictionary = {
       draws:
         "Проверьте отмеченные строки: дата в формате dd.mm.yyyy и сумма больше 0",
     },
-    /** A bounded whole-number field (UX-068, ADR 0075). */
+    /** A bounded whole-number field (ADR 0075). */
     positiveAmount:
       "Введите сумму больше 0, например 500 000 (тысячи разделяйте пробелом)",
     intRange: (min: string, max: string) =>
@@ -1251,7 +1251,7 @@ export const ru: Dictionary = {
   },
 
   projGrid: {
-    /** One-letter "year" prefix for "Y5 · 2031" labels (UX-032). */
+    /** One-letter "year" prefix for "Y5 · 2031" labels. */
     yearPrefix: "Г",
     year: "Год",
     opening: "начало",

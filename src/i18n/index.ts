@@ -1,10 +1,10 @@
 // i18n entry point: the dictionaries. Components read them through `useT()`
 // (src/ui/hooks/useT.ts) as `t.namespace.key` (or `t.namespace.key(params)`); switching
-// language in uiStore re-renders them. This module imports no state (DR-066).
+// language in uiStore re-renders them. This module imports no state.
 //
 // Each dictionary is its own chunk, loaded on demand, so startup carries only the active
-// language (DR-009). The store loads a language before it shows it — at startup and on a
-// switch — so `getDict` is only ever asked for a loaded one.
+// language. The store loads a language before it shows it — at startup and on a switch —
+// so `getDict` is only ever asked for a loaded one.
 import type { Dictionary } from "./en";
 import type { Language } from "./types";
 

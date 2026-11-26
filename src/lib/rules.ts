@@ -1,10 +1,9 @@
-// The input rules every entry point shares, each named once (#464): the bounded field
-// ranges (ADR 0075, DR-078) the forms (src/ui/model), CSV import (src/import, ADR 0076)
-// and restore apply, so all refuse the same values, and the date floor. Every bounded
-// field is a whole number except the size, which takes one decimal place (ADR 0236).
-// A layer whose limit differs gets its own named rule here, never a silent shared one.
-// The engine reads this module (ADR 0244), so it imports nothing but ./money: no clock,
-// no display code.
+// The input rules every entry point shares, each named once: the bounded field ranges
+// (ADR 0075) the forms (src/ui/model), CSV import (src/import, ADR 0076) and restore
+// apply, so all refuse the same values, and the date floor. Every bounded field is a
+// whole number except the size, which takes one decimal place (ADR 0236). A layer whose
+// limit differs gets its own named rule here, never a silent shared one. The engine reads
+// this module (ADR 0244), so it imports nothing but ./money: no clock, no display code.
 import { ONE, type Decimal } from "./money";
 
 /** Inclusive bounds of a bounded field. */
@@ -13,7 +12,7 @@ export interface IntRange {
   max: number;
 }
 
-/** The bounded field ranges (ADR 0075, DR-078). */
+/** The bounded field ranges (ADR 0075). */
 export const INT_RANGES = {
   horizonYears: { min: 1, max: 100 },
   fixationYears: { min: 0, max: 50 },
@@ -33,20 +32,20 @@ export const CRASH_YEAR = {
 } as const satisfies IntRange;
 
 /** A whole, unsigned number of at most 9 plain digits, as the forms and CSV import take
- *  it (ADR 0075, DR-027, DR-078): a longer entry is refused instead of becoming
- *  Infinity, and 12.7, -3, 1e2 and 0x10 are refused. */
+ *  it (ADR 0075): a longer entry is refused instead of becoming Infinity, and 12.7, -3,
+ *  1e2 and 0x10 are refused. */
 export const WHOLE_DIGITS = /^\d{1,9}$/;
 
-/** New dates start on 01.01.1900 (ADR 0149 §5, DR-035, UX-052): the forms and CSV import
- *  refuse an earlier one, which is almost certainly a typo. A stored one is not checked
+/** New dates start on 01.01.1900 (ADR 0149 §5): the forms and CSV import refuse an
+ *  earlier one, which is almost certainly a typo. A stored one is not checked
  *  (ADR 0232). */
 export const DATE_FLOOR_YEAR = 1900;
 
 export const inRange = (n: number, r: IntRange): boolean =>
   n >= r.min && n <= r.max;
 
-/** A unit rate is a fraction from 0 to 1 (D-38, ADR 0128 §1): vacancy, cost shares, an
- *  interest rate, a value haircut. Negative zero is outside, as `Decimal.isNegative`
+/** A unit rate is a fraction from 0 to 1 (ADR 0038, ADR 0128 §1): vacancy, cost shares,
+ *  an interest rate, a value haircut. Negative zero is outside, as `Decimal.isNegative`
  *  says (the engine and CSV import have always refused it). Finite values only: a
  *  non-finite one is each layer's own rule. */
 export const outsideUnitRate = (d: Decimal): boolean =>
@@ -80,7 +79,7 @@ export type BoundedField = keyof typeof INT_RANGES;
 
 /** One stored value outside INT_RANGES, or finer than its field accepts: not a whole
  *  number (ADR 0180 §2), or for the size more than one decimal place (ADR 0236). The one
- *  shape restore, the store and the Data check read (#464).
+ *  shape restore, the store and the Data check read.
  *  Not an engine rule: the engine itself is open-ended. A restore warns and asks instead
  *  of refusing (ADR 0148); the store refuses only a value a write adds (ADR 0245). */
 export interface RangeProblem {

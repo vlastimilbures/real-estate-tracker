@@ -1,9 +1,9 @@
-// One engine model per data version (#469). The store replaces `portfolio` and
-// `assumptions` on every write, so a model keyed on the two objects is never stale: each
-// hook reads from it, a page that needs several views builds the loan schedules once, and
-// a revisit with unchanged data costs nothing. A pure memo layer over engine calls: no
-// clock, no IO (the hooks resolve "today"). A throw is not kept, so the next read throws
-// again, as a throwing useMemo did.
+// One engine model per data version. The store replaces `portfolio` and `assumptions` on
+// every write, so a model keyed on the two objects is never stale: each hook reads from
+// it, a page that needs several views builds the loan schedules once, and a revisit with
+// unchanged data costs nothing. A pure memo layer over engine calls: no clock, no IO (the
+// hooks resolve "today"). A throw is not kept, so the next read throws again, as a
+// throwing useMemo did.
 import { timed } from "../lib/perf";
 import {
   acquisitionSummary,
@@ -74,7 +74,7 @@ export interface PropertyEngineOutput {
   acquisition: AcquisitionSummary;
 }
 
-/** Stored data that breaks an engine rule, reported instead of thrown (DR-146). */
+/** Stored data that breaks an engine rule, reported instead of thrown. */
 export interface InvalidPropertyData {
   invalid: EngineInputError;
 }
@@ -83,7 +83,7 @@ export interface ScenarioResult {
   id: string;
   name: string;
   projection: ProjectionYear[];
-  /** The projection in real terms, deflated by this scenario's CPI (D-23, UX-055). */
+  /** The projection in real terms, deflated by this scenario's CPI (ADR 0023). */
   realProjection: ProjectionYear[];
   kpis: PortfolioKPIs;
 }
@@ -126,7 +126,7 @@ function lazy<T>(compute: () => T): () => T {
   return () => (box ??= { value: compute() }).value;
 }
 
-/** `run()`, or the engine's input error when the stored data breaks a rule (DR-146). */
+/** `run()`, or the engine's input error when the stored data breaks a rule. */
 function reported<T>(run: () => T): T | InvalidPropertyData {
   try {
     return run();
@@ -177,7 +177,7 @@ function scheduleStore(portfolio: Portfolio, assumptions: Assumptions) {
 
 /** Each override field's content: an equal new overrides object is the same run. Keyed by
  *  every field of the type, so a new override field does not compile until it is listed;
- *  a per-field test pins that each field re-runs the compare (#147). */
+ *  a per-field test pins that each field re-runs the compare. */
 const OVERRIDE_FIELDS: Record<
   keyof ScenarioOverrides,
   (o: ScenarioOverrides) => unknown
@@ -221,7 +221,7 @@ function scenarioRun(
 }
 
 /** The compare: a scenario that breaks a rule is left out (ADR 0123); each run is kept
- *  by its overrides' content, and names are attached by id after the runs (DR-055). */
+ *  by its overrides' content, and names are attached by id after the runs. */
 function compareOf(
   portfolio: Portfolio,
   assumptions: Assumptions,
@@ -240,7 +240,7 @@ function compareOf(
   );
 }
 
-/** What a property's output reads that does not depend on the as-of date (#174). */
+/** What a property's output reads that does not depend on the as-of date. */
 interface PropertyFixed {
   property: Property;
   blocks: MortgageBlock[];
@@ -311,7 +311,7 @@ function outputsOf(
         }
       : portfolio;
   const input = filtered === portfolio ? portfolio : keptRows(filtered);
-  // One pass: schedules and projection are built once and shared (DR-042).
+  // One pass: schedules and projection are built once and shared.
   const out = timed("engine-recompute", () =>
     portfolioOutputs(
       input,

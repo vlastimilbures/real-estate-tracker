@@ -18,7 +18,7 @@ function groupThousands(intDigits: string): string {
 function fmtFixed(value: Numeric, dp: number): { neg: boolean; body: string } {
   const d = D(value);
   const fixed = d.abs().toFixed(dp); // round-half-up via Decimal
-  // The sign follows the rounded value: −0.0004 shows as "0,0", not "−0,0" (DR-110).
+  // The sign follows the rounded value: −0.0004 shows as "0,0", not "−0,0".
   const neg = d.isNegative() && !D(fixed).isZero();
   const [int = "", frac] = fixed.split(".");
   const body = groupThousands(int) + (frac ? `,${frac}` : "");
@@ -26,7 +26,8 @@ function fmtFixed(value: Numeric, dp: number): { neg: boolean; body: string } {
 }
 
 // Display-only number helpers. They live here, not in lib/money, so the engine (which may
-// import only lib/money and lib/rules, ADR 0244) cannot reach a float conversion (CLAUDE.md §5, #154).
+// import only lib/money and lib/rules, ADR 0244) cannot reach a float conversion
+// (CLAUDE.md §5).
 
 /** Round a Decimal to whole CZK (display helper). */
 export function roundCzk(value: Numeric): Decimal {
@@ -93,7 +94,7 @@ export interface CzkAxisUnit {
  */
 export function pickCzkAxisUnit(
   values: readonly number[],
-  /** The UI language's short word for thousands (UX-034); Czech "tis." by default. */
+  /** The UI language's short word for thousands; Czech "tis." by default. */
   thousands = "tis.",
 ): CzkAxisUnit {
   let maxAbs = 0;
@@ -169,7 +170,7 @@ export function fmtPp(value: Numeric, dp = 1): string {
 
 /** A difference with "+" on a gain, by any formatter above. The sign follows the printed
  *  value: a gain whose text equals the formatted zero stays bare, and a loss is signed by
- *  `fmt` itself (DR-110, ADR 0178). */
+ *  `fmt` itself (ADR 0178). */
 export function fmtSigned(
   value: Numeric,
   fmt: (value: Decimal) => string,
@@ -185,7 +186,7 @@ export function fmtMultiple(value: Numeric, dp = 2): string {
   return neg ? `${MINUS}${body}x` : `${body}x`;
 }
 
-/** DSCR display cap (SPEC, D-35): above 99× a tiny debt service would show an absurd
+/** DSCR display cap (SPEC, ADR 0035): above 99× a tiny debt service would show an absurd
  *  multiple, so it reads ">99,00x". Display only; the engine value is unchanged. */
 const DSCR_CAP = 99;
 export function fmtDscr(value: Numeric): string {
@@ -194,7 +195,7 @@ export function fmtDscr(value: Numeric): string {
     : fmtMultiple(value);
 }
 
-// --- spreadsheet cells (D-10) ---------------------------------------------------
+// --- spreadsheet cells (ADR 0010) ---------------------------------------------------
 // The number an exported cell holds is rounded exactly as the matching fmt* helper
 // rounds it for the screen, and stays a number so Excel can still sum it.
 

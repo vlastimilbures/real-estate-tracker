@@ -1,5 +1,5 @@
-// What a failed whole-database action tells the UI (#467): a typed value the UI
-// translates (ui/components/restoreFailure.ts), like a failed write's WriteError.
+// What a failed whole-database action tells the UI: a typed value the UI translates
+// (ui/components/restoreFailure.ts), like a failed write's WriteError.
 import {
   BackupExportError,
   BackupReadError,
@@ -37,7 +37,7 @@ export type ActionError =
   | { kind: "planRefused"; preview: CsvImportPreview };
 
 /** The typed failure for `e`. A refused CSV plan is converted where the CSV import is
- *  loaded, so its class stays out of the startup bundle (P9). */
+ *  loaded, so its class stays out of the startup bundle. */
 export function toActionError(e: unknown): ActionError {
   if (e instanceof RestoreError)
     return {

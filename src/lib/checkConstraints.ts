@@ -1,5 +1,5 @@
-// Every named CHECK constraint of the current schema, with what a failed write on it means
-// (#470). One list: src/data/schema.ts takes each table's checks from it and
+// Every named CHECK constraint of the current schema, with what a failed write on it
+// means. One list: src/data/schema.ts takes each table's checks from it and
 // src/ui/model/writeError.ts its constraint-name map. It sits in lib because ui/model may
 // not import data at runtime (ADR 0072); lib imports nothing, so the rules are written
 // as literals and type-checked where writeError.ts reads them (they are engine

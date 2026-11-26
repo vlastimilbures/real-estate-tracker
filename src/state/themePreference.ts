@@ -1,6 +1,6 @@
-// The stored appearance preference (moved from src/ui/theme.ts, ADR 0072, DR-165): the
-// UI store persists it, and main.tsx reads it before first paint. Free of React and
-// store imports so that pre-paint read does not pull in the store.
+// The stored appearance preference (ADR 0072): the UI store persists it, and main.tsx
+// reads it before first paint. Free of React and store imports so that pre-paint read
+// does not pull in the store.
 
 /** Appearance: explicit light/dark, or follow the OS ("system"). */
 export type Theme = "light" | "dark" | "system";

@@ -1,6 +1,6 @@
-// The row actions of the portfolio store (#465): valuations, leases, mortgage blocks and
-// holding costs. Each write checks the loaded portfolio with the row in place inside the
-// queued op, then writes (UX-047).
+// The row actions of the portfolio store: valuations, leases, mortgage blocks and holding
+// costs. Each write checks the loaded portfolio with the row in place inside the queued
+// op, then writes.
 import type { Sql } from "../../data/sql";
 import { dayBefore, openPredecessor, type Portfolio } from "../../engine";
 import {

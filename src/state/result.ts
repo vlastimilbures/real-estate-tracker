@@ -1,4 +1,4 @@
-// What a store action returns (#467): it never throws; the caller branches on `ok`.
+// What a store action returns: it never throws; the caller branches on `ok`.
 
 /** A success, with its `value` unless `T` is `void`, or a failure with its `error`. */
 export type Result<T, E> =

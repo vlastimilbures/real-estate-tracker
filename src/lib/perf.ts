@@ -1,4 +1,4 @@
-// Performance marks and measures (P9): User Timing entries, plus an optional sink that
+// Performance marks and measures: User Timing entries, plus an optional sink that
 // receives every measure and reported mark (the desktop app prints them to stderr,
 // src-tauri/src/perf.rs). Timing is off until `enablePerf` is called (ADR 0233: the
 // release build measures only when started with RTRACKER_PERF=1; platform/perfReport.ts
@@ -77,7 +77,7 @@ export function perfReport(name: string): void {
 const reported = new Set<string>();
 
 /** `perfReport(name)` the first time only in the app's lifetime: a page's first render
- *  is the cold-start end (P9); later renders of that page are not. */
+ *  is the cold-start end; later renders of that page are not. */
 export function perfReportOnce(name: string): void {
   if (reported.has(name)) return;
   reported.add(name);

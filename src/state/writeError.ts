@@ -1,4 +1,4 @@
-// What a failed write tells the UI (P7a, DR-133): a typed value the UI translates
+// What a failed write tells the UI: a typed value the UI translates
 // (ui/model/writeError.ts), never SQLite's raw text as the message.
 import {
   DataError,
@@ -15,10 +15,10 @@ import type { RangeProblem, ScenarioRangeProblem } from "../lib/rules";
 export type WriteRangeProblem = RangeProblem | ScenarioRangeProblem;
 
 export type WriteError =
-  /** Engine input rules the edit breaks, checked before writing (UX-047). `scenario`
-   *  names the saved scenario an assumptions edit would break (ADR 0128 §6); the errors
-   *  are then the scenario's. `ranges`: the out-of-range values the edit adds, then with
-   *  no engine error (ADR 0245), or a scenario's shock and crash years (ADR 0257). */
+  /** Engine input rules the edit breaks, checked before writing. `scenario` names the
+   *  saved scenario an assumptions edit would break (ADR 0128 §6); the errors are then
+   *  the scenario's. `ranges`: the out-of-range values the edit adds, then with no engine
+   *  error (ADR 0245), or a scenario's shock and crash years (ADR 0257). */
   | {
       kind: "input";
       errors: readonly EngineValidationError[];
