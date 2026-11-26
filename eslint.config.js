@@ -159,6 +159,24 @@ const blockCastBans = castBans(
   "No loan-block casts (#480): build the block with mortgageBlock().",
 );
 
+// One ResizeObserver stub for tests (#458): `stubResizeObserver()` from
+// src/__tests__/support/dom.ts, not a hand-written one per file. A test that records what
+// is observed, or calls the callback, keeps its own with a disable that says why.
+const resizeObserverMessage =
+  "Use stubResizeObserver() (src/__tests__/support/dom.ts, #458), not a hand-written ResizeObserver.";
+const resizeObserverBans = [
+  {
+    selector:
+      "AssignmentExpression[left.type='MemberExpression'][left.property.name='ResizeObserver']",
+    message: resizeObserverMessage,
+  },
+  {
+    selector:
+      "CallExpression[callee.object.name='vi'][callee.property.name='stubGlobal'][arguments.0.value='ResizeObserver']",
+    message: resizeObserverMessage,
+  },
+];
+
 // Only src/lib/money.ts touches decimal.js directly (DR-075): one Decimal configuration.
 const decimalPath = {
   name: "decimal.js",
@@ -220,18 +238,27 @@ export default tseslint.config(
   {
     files: TEST_FILES,
     ignores: SETUP_FILES,
-    rules: restrictedSyntax(dayMockBans, blockCastBans),
+    rules: restrictedSyntax(dayMockBans, blockCastBans, resizeObserverBans),
   },
   // src/lib tests also reach lib/day by a relative path (`../day`).
   {
     files: ["src/lib/**/__tests__/**/*.{ts,tsx}", "src/lib/**/*.test.{ts,tsx}"],
-    rules: restrictedSyntax(dayMockBansFor(LIB_DAY_MODULE), blockCastBans),
+    rules: restrictedSyntax(
+      dayMockBansFor(LIB_DAY_MODULE),
+      blockCastBans,
+      resizeObserverBans,
+    ),
   },
   // ui/state tests get the errorLog and Tauri core mocks from a setup file
   // (src/__tests__/setup/mocks.ts, #458); a test changes their behaviour on the mock.
   {
     files: ["src/{ui,state}/**/__tests__/**/*.{ts,tsx}"],
-    rules: restrictedSyntax(sharedMockBans, dayMockBans, blockCastBans),
+    rules: restrictedSyntax(
+      sharedMockBans,
+      dayMockBans,
+      blockCastBans,
+      resizeObserverBans,
+    ),
   },
   // Production code: no brand casts and no non-null assertions (ADR 0074); a missing
   // value gets a real guard or the checked `at()` from lib/arrays.

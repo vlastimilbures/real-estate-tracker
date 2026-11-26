@@ -17,6 +17,7 @@ import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { projectionSeries } from "../../model/projection";
 import { toChartRows, toEquityChangeRows } from "../../model/chartData";
 import { ProjectionCharts } from "../DashboardPanels";
+import { stubResizeObserver } from "../../../__tests__/support/dom";
 
 const lines: { dataKey: string; activeDot?: unknown }[] = [];
 
@@ -35,11 +36,7 @@ const realRect = HTMLElement.prototype.getBoundingClientRect;
 const realMatchMedia = window.matchMedia;
 beforeAll(() => {
   // Recharts draws nothing without a measured box; jsdom has none.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
+  stubResizeObserver();
   HTMLElement.prototype.getBoundingClientRect = () =>
     ({
       width: 480,

@@ -46,6 +46,7 @@ afterAll(() => {
 });
 beforeEach(() => {
   vi.stubGlobal("IntersectionObserver", NoObserver);
+  // eslint-disable-next-line no-restricted-syntax -- restored with IntersectionObserver by unstubAllGlobals in afterAll
   vi.stubGlobal("ResizeObserver", NoObserver);
 });
 

@@ -16,6 +16,7 @@ import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { ChartCard } from "../charts";
 import { SERIES } from "../../model/chartData";
+import { stubResizeObserver } from "../../../__tests__/support/dom";
 
 type TooltipProps = {
   content?: (p: {
@@ -46,11 +47,7 @@ const realRect = HTMLElement.prototype.getBoundingClientRect;
 const realMatchMedia = window.matchMedia;
 beforeAll(() => {
   // Recharts draws nothing without a measured box; jsdom has none.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
+  stubResizeObserver();
   HTMLElement.prototype.getBoundingClientRect = () =>
     ({
       width: 480,
