@@ -203,8 +203,9 @@ real** terms. Everything runs and stays on your Mac.
 
 - **Offline by design** — no network calls, analytics or updater. A strict Content Security
   Policy and a navigation guard keep the webview on the app.
-- **Least privilege** — the webview can use the SQL plugin, menu events and the app's own
-  commands, nothing else. File dialogs and writes run in Rust; the webview never sees a path.
+- **Least privilege** — the webview can use the SQL plugin's load and read, menu events and
+  the app's own commands, nothing else. Database writes, file dialogs and file writes run in
+  Rust; the webview never sees a path.
 - **Your data stays on your Mac:**
 
   | What                           | Location                                                              |
@@ -284,7 +285,7 @@ local gates in order.
 flowchart LR
   subgraph Rust["Tauri shell · src-tauri"]
     DB[(SQLite)]
-    CMD["Rust commands<br/>transactions · file dialogs · atomic writes"]
+    CMD["Rust commands<br/>DB writes · file dialogs · atomic writes"]
   end
   subgraph Web["Webview · src"]
     DATA["data<br/>repositories · migrations · mappers"]
@@ -308,7 +309,8 @@ flowchart LR
 ```
 
 - **The engine is pure** — typed inputs in, typed outputs out; no IO and no clock reads
-  (the base date is always a parameter). It may import only `decimal.js` and the money helpers.
+  (the base date is always a parameter). Outside the engine it imports only the money helpers
+  (`src/lib/money.ts`, which wraps `decimal.js`) and the shared input rules (`src/lib/rules.ts`).
 - **Money is never a float** — `decimal.js` everywhere, stored as decimal text in SQLite and
   rounded only for display.
 - **One-way data flow** — DB → mappers → engine → UI. Components never do financial arithmetic.
@@ -317,20 +319,20 @@ flowchart LR
 
 ### Project layout
 
-| Path                                            | What lives there                                                                                |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| [`src/engine/`](src/engine)                     | Pure financial engine: amortization, snapshot, projections, KPIs, scenarios, validation         |
-| [`src/engine/__tests__/`](src/engine/__tests__) | Parity, invariant, property-based and golden-master tests; independent mortgage reference model |
-| [`src/data/`](src/data)                         | SQLite repositories, migrations, runtime guards, mappers, seed, backup                          |
-| [`src/import/`](src/import)                     | CSV importer — pure parse/validate plus the DB write                                            |
-| [`src/state/`](src/state)                       | Zustand stores, memoised engine recompute, facades the UI uses                                  |
-| [`src/ui/`](src/ui)                             | Pages, components and pure view models (`ui/model`)                                             |
-| [`src/i18n/`](src/i18n)                         | Typed English, Czech and Russian dictionaries                                                   |
-| [`src/lib/`](src/lib)                           | Decimal money maths (PMT/FV/NPER) and display formatting                                        |
-| [`src/platform/`](src/platform)                 | Wrappers around the app's Tauri commands                                                        |
-| [`src-tauri/`](src-tauri)                       | Rust shell: DB transactions, file dialogs, atomic writes, menu, navigation guard                |
-| [`ux-capture/`](ux-capture)                     | Screenshot + axe harness for every screen                                                       |
-| [`docs/`](docs)                                 | Architecture decision records, release guide, design notes, roadmap                             |
+| Path                                            | What lives there                                                                                                        |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [`src/engine/`](src/engine)                     | Pure financial engine: annuity maths (PMT/FV/NPER), amortization, snapshot, projections, KPIs, scenarios, validation    |
+| [`src/engine/__tests__/`](src/engine/__tests__) | Parity, invariant, property-based and golden-master tests; independent mortgage and KPI reference models                |
+| [`src/data/`](src/data)                         | SQLite repositories, migrations, runtime guards, mappers, seed, backup                                                  |
+| [`src/import/`](src/import)                     | CSV importer — pure parse/validate plus the DB write                                                                    |
+| [`src/state/`](src/state)                       | Zustand stores, memoised engine recompute, facades the UI uses                                                          |
+| [`src/ui/`](src/ui)                             | Pages, components and pure view models (`ui/model`)                                                                     |
+| [`src/i18n/`](src/i18n)                         | Typed English, Czech and Russian dictionaries                                                                           |
+| [`src/lib/`](src/lib)                           | Decimal setup and powers, shared input rules, local-day helpers and display formatting                                  |
+| [`src/platform/`](src/platform)                 | Wrappers around the app's Tauri commands                                                                                |
+| [`src-tauri/`](src-tauri)                       | Rust shell: DB writes and transactions, error codes, backups, file dialogs, atomic writes, menu, navigation guard, logs |
+| [`ux-capture/`](ux-capture)                     | Screenshot + axe harness for every screen                                                                               |
+| [`docs/`](docs)                                 | Architecture decision records, release guide, design notes, roadmap                                                     |
 
 ## Documentation
 
