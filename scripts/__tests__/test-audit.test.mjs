@@ -1,6 +1,13 @@
 // `scripts/test-audit.mjs` (#458) on synthetic Vitest JSON reports.
 import { describe, expect, it } from "vitest";
-import { audit, retryCounted, rows, summary, toRerun } from "../test-audit.mjs";
+import {
+  audit,
+  retryCounted,
+  rows,
+  staleMoves,
+  summary,
+  toRerun,
+} from "../test-audit.mjs";
 
 const test = (title, assertionCalls, status = "passed", ancestors = ["s"]) => ({
   ancestorTitles: ancestors,
@@ -53,6 +60,70 @@ describe("test audit", () => {
     expect(result.unaudited).toEqual(["scripts/b.test.mjs › other"]);
     expect(result.added).toEqual(["scripts/b.test.mjs › other"]);
     expect(summary(result)).toContain("audit: FAILED");
+  });
+
+  describe("suites merged or renamed (#497)", () => {
+    const merged = report("/head", {
+      "src/merged.test.ts": [
+        test("one", 2, "passed", ["first behaviour"]),
+        test("two", 1, "passed", ["second behaviour"]),
+      ],
+      "scripts/b.test.mjs": [test("three", 4, "passed", [])],
+    });
+    const moves = new Map([
+      ["src/a.test.ts › s › one", "src/merged.test.ts › first behaviour › one"],
+      [
+        "src/a.test.ts › s › two",
+        "src/merged.test.ts › second behaviour › two",
+      ],
+    ]);
+
+    it("compares a moved test under its head key", () => {
+      expect(audit(base, merged).ok).toBe(false);
+      const result = audit(base, merged, { moves });
+      expect(result.ok).toBe(true);
+      expect(result.moved).toBe(2);
+      expect(summary(result)).toContain("moved by the map: 2");
+    });
+
+    it("still fails a moved test that lost an assertion", () => {
+      const weaker = report("/head", {
+        "src/merged.test.ts": [
+          test("one", 1, "passed", ["first behaviour"]),
+          test("two", 1, "passed", ["second behaviour"]),
+        ],
+        "scripts/b.test.mjs": [test("three", 4, "passed", [])],
+      });
+      const result = audit(base, weaker, { moves });
+      expect(result.ok).toBe(false);
+      expect(result.assertionDiffs).toEqual([
+        {
+          key: "src/merged.test.ts › first behaviour › one",
+          base: 2,
+          head: 1,
+          rerun: false,
+        },
+      ]);
+    });
+
+    it("fails a map entry that names no base test", () => {
+      const stale = new Map([...moves, ["src/a.test.ts › s › gone", "x"]]);
+      expect(staleMoves(base, stale)).toEqual(["src/a.test.ts › s › gone"]);
+      const result = audit(base, merged, { moves: stale });
+      expect(result.ok).toBe(false);
+      expect(summary(result)).toContain("  src/a.test.ts › s › gone");
+    });
+
+    it("re-runs a moved test from its base file under its base name", () => {
+      const retry = new Set(["src/merged.test.ts › first behaviour › one"]);
+      expect(toRerun(base, merged, retry, moves)).toEqual([
+        {
+          key: "src/merged.test.ts › first behaviour › one",
+          file: "src/a.test.ts",
+          fullName: "s one",
+        },
+      ]);
+    });
   });
 
   it("lists a test in a new file but fails one added to an existing file", () => {
