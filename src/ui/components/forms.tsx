@@ -17,7 +17,7 @@ type Draft = Record<string, string>;
 
 /** A button to the right of a field that patches the draft on click; without a `patch`
  *  it renders disabled (not yet computable). */
-export interface FieldAction {
+interface FieldAction {
   label: string;
   title?: string | undefined;
   patch?: Draft | undefined;

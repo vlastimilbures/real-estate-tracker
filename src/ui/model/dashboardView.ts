@@ -97,18 +97,17 @@ export function dashboardView(
   const { horizonYears, baseDate } = assumptions;
   const series = projectionSeries(projection, mode, assumptions);
   const rows = toChartRows(series);
-  const basis = asOfView(baseDate, snapshot.asOf, view.isToday);
+  const basis = asOfView({ baseDate, asOf: snapshot.asOf }, view.isToday);
   // The KPI strip: for the current snapshot this is the effective-dated engine snapshot
   // under the chosen lens; in a projection year it is that year of `series` (the rows
   // the charts plot), so the cards and the per-year charts agree.
   const s = tilesForAsOf(snapshot, series, basis, mode, assumptions);
   const lens = lensKpis(kpis, mode);
-  const check = dashboardDataCheck(
-    engine.portfolio,
-    snapshot.asOf,
+  const check = dashboardDataCheck(engine.portfolio, {
+    asOf: snapshot.asOf,
     baseDate,
     horizonYears,
-  );
+  });
   const subtitle = dashboardSubtitle(t, {
     filterActive: filter.filterActive,
     effectiveCount: filter.effectiveIds.length,

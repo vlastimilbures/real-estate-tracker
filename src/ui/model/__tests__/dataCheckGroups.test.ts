@@ -11,17 +11,13 @@ import { en } from "../../../i18n/en";
 import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { fmtCzk, fmtDate, fmtPct } from "../../../lib/format";
-import {
-  dashboardDataCheck,
-  dataCheckGroups,
-  findingText,
-  type DataCheckItem,
-} from "../dataCheck";
+import { dashboardDataCheck, type DataCheckItem } from "../dataCheck";
+import { dataCheckGroups, findingText } from "../dataCheckText";
 
 const d = en.dataCheck;
 const resetRate = assumptions.postFixationResetRatePa;
 const check = (p: Portfolio, asOf: Date, horizonYears = 30, base = BASE_DATE) =>
-  dashboardDataCheck(p, asOf, base, horizonYears);
+  dashboardDataCheck(p, { asOf, baseDate: base, horizonYears });
 const fiveYears = edate(BASE_DATE, 60); // 07.06.2031
 
 describe("dashboardDataCheck (ADR 0206)", () => {

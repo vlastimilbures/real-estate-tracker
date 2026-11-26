@@ -15,11 +15,10 @@ import { Button } from "../components/Button";
 import { useT } from "../hooks/useT";
 import {
   findingFix,
-  findingText,
-  fixLabel,
   type DataCheckFix,
   type DataCheckItem,
 } from "../model/dataCheck";
+import { findingText, fixLabel } from "../model/dataCheckText";
 
 export function PropertyDataCheckPanel({
   check,

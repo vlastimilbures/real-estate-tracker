@@ -51,7 +51,7 @@ export function rateShockReach(
 /** "hits N of M loans (refix …)", "no effect", or undefined without loans. */
 export function reachSummary(
   reach: LoanReach[],
-  t: Dictionary,
+  t: Pick<Dictionary, "scenarios">,
 ): string | undefined {
   if (reach.length === 0) return undefined;
   const hit = reach.filter((l) => l.hit);

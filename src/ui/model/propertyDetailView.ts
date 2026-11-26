@@ -175,7 +175,7 @@ export function propertyBodyView(
   // A future as-of reads the projection year the charts plot; real terms are in base-date
   // prices.
   const series = projectionSeries(out.projection, mode, assumptions);
-  const basis = asOfView(baseDate, out.asOf, view.isToday);
+  const basis = asOfView({ baseDate, asOf: out.asOf }, view.isToday);
   const chartRows = toChartRows(series);
   return {
     tiles: propertyTilesForAsOf(
@@ -261,7 +261,10 @@ export function propertyDetailView(
     ? loanWarnings(mortgages, assumptions.baseDate, checked.eventOutcomes)
     : [];
   const check = checked
-    ? dataCheckItems([property], portfolio, checked.asOf, assumptions.baseDate)
+    ? dataCheckItems([property], portfolio, {
+        asOf: checked.asOf,
+        baseDate: assumptions.baseDate,
+      })
     : null;
   return {
     body,

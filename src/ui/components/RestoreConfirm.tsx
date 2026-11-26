@@ -11,7 +11,7 @@ import {
 } from "../../state/backup";
 import { useT } from "../hooks/useT";
 import { restoreIssueText } from "../model/restoreIssue";
-import { fmtDate } from "../../lib/format";
+import { fmtDate, EMPTY } from "../../lib/format";
 import { exportedDay } from "../model/backupRecency";
 import { useFocusAfterBusy } from "../hooks/useBusyFocus";
 
@@ -47,10 +47,10 @@ export function IssueTable({
                 <code>{i.table}</code>
               </td>
               <td className="left">
-                {i.id !== undefined ? <code>{i.id}</code> : "—"}
+                {i.id !== undefined ? <code>{i.id}</code> : EMPTY}
               </td>
               <td className="left">
-                {i.column ? <code>{i.column}</code> : "—"}
+                {i.column ? <code>{i.column}</code> : EMPTY}
               </td>
               <td
                 className="left"

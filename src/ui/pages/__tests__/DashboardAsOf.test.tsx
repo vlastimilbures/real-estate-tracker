@@ -27,7 +27,7 @@ const base = assumptions.baseDate;
 
 function renderAt(asOf: IsoDate, isToday: boolean) {
   const snapshot = portfolioSnapshot(portfolio, assumptions, asOf);
-  const basis = asOfView(base, asOf, isToday);
+  const basis = asOfView({ baseDate: base, asOf }, isToday);
   const s = tilesForAsOf(snapshot, series, basis, "nominal", assumptions);
   return render(
     <KpiStrip

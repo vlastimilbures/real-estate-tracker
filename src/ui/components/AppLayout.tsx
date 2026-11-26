@@ -17,6 +17,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
 import { SkipLink } from "./SkipLink";
+import { SegmentedToggle } from "./Button";
 import { fmtDate } from "../../lib/format";
 import { APP_NAME, LANGUAGES } from "../../i18n";
 import { NAV_GROUPS, navMarked } from "../routes";
@@ -58,19 +59,12 @@ function LanguageControl({ collapsed }: { collapsed: boolean }) {
   }
 
   return (
-    <div className="segmented" role="group" aria-label={t.shell.language}>
-      {LANGUAGES.map((l) => (
-        <button
-          key={l.value}
-          type="button"
-          className={l.value === language ? "on" : ""}
-          aria-pressed={l.value === language}
-          onClick={() => setLanguage(l.value)}
-        >
-          {l.label}
-        </button>
-      ))}
-    </div>
+    <SegmentedToggle
+      options={LANGUAGES}
+      value={language}
+      onChange={setLanguage}
+      ariaLabel={t.shell.language}
+    />
   );
 }
 
@@ -101,29 +95,17 @@ function ThemeControl({ collapsed }: { collapsed: boolean }) {
   }
 
   return (
-    <div
-      className="segmented icons"
-      role="group"
-      aria-label={t.shell.appearance}
-    >
-      {THEME_OPTIONS.map((o) => {
-        const Icon = o.icon;
-        const label = t.shell[o.labelKey];
-        return (
-          <button
-            key={o.value}
-            type="button"
-            className={o.value === theme ? "on" : ""}
-            aria-pressed={o.value === theme}
-            title={label}
-            aria-label={label}
-            onClick={() => setTheme(o.value)}
-          >
-            <Icon size={16} />
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedToggle
+      className="icons"
+      options={THEME_OPTIONS.map((o) => ({
+        value: o.value,
+        label: t.shell[o.labelKey],
+        icon: o.icon,
+      }))}
+      value={theme}
+      onChange={setTheme}
+      ariaLabel={t.shell.appearance}
+    />
   );
 }
 

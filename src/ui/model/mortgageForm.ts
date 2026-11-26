@@ -32,9 +32,8 @@ import type {
   Rate,
 } from "../../engine";
 import type { Decimal } from "../../lib/money";
-import { fmtCzk } from "../../lib/format";
+import { CZK, fmtCzk } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
-import { CZK } from "../../lib/currency";
 import { INT_RANGES } from "../../lib/rules";
 
 /**
@@ -126,7 +125,7 @@ export function mortgageDraft(r: MortgageBlock | null): MortgageDraft {
  * total loan footer, or no footer until the start draw is an amount of 0 or more.
  */
 export function drawdownNotes(
-  t: Dictionary,
+  t: Pick<Dictionary, "propertyDetail">,
   fields: Record<string, string>,
   draws: readonly DrawRow[],
 ): { rows: string[][]; footer: string | null } {
@@ -146,7 +145,7 @@ export function drawdownNotes(
 
 /** Live "suggested instalment" hint from the in-progress mortgage draft. */
 export function suggestedInstalmentHint(
-  t: Dictionary,
+  t: Pick<Dictionary, "propertyDetail">,
   fields: Record<string, string>,
   draws: readonly DrawRow[] = [],
 ): string | null {
@@ -166,7 +165,7 @@ export function suggestedInstalmentHint(
  * the engine then re-amortizes at each draw and at completion).
  */
 export function instalmentFill(
-  t: Dictionary,
+  t: Pick<Dictionary, "propertyDetail">,
   draft: Record<string, string>,
 ): {
   label: string;
@@ -305,7 +304,7 @@ export function mortgageSpecs(t: Dictionary) {
 }
 
 /** The fields after the completion date: the contract maturity and the event lists. */
-function laterSpecs(t: Dictionary) {
+function laterSpecs(t: Pick<Dictionary, "propertyDetail">) {
   return [
     {
       name: "contractMaturityDate",

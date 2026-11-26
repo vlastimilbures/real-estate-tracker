@@ -48,7 +48,7 @@ function ownedAt(asOf: IsoDate, mode: Mode, isToday = false): boolean {
       purchaseDate: future.purchaseDate,
     },
     {
-      basis: asOfView(assumptions.baseDate, asOf, isToday),
+      basis: asOfView({ baseDate: assumptions.baseDate, asOf }, isToday),
       asOf,
       assumptions,
     },
@@ -81,7 +81,11 @@ describe("propertyRowsForAsOf", () => {
       portfolioSnapshot(mixed, assumptions, asOf).perProperty,
       mixed.properties,
       propertyProjections(mixed, assumptions),
-      { basis: asOfView(assumptions.baseDate, asOf, false), asOf, assumptions },
+      {
+        basis: asOfView({ baseDate: assumptions.baseDate, asOf }, false),
+        asOf,
+        assumptions,
+      },
     );
     for (const r of rows) {
       const p = mixed.properties.find((x) => x.id === r.propertyId)!;

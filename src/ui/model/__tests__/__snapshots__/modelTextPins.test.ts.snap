@@ -1,0 +1,3073 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the Data check's words > cs: every holding cost named in a cost-defaults line 1`] = `"Náklady na držbu používají výchozí hodnoty portfolia pro: Daň z nemovitých věcí /rok, Pojištění /rok, SVJ /měs, Ostatní /rok, Správa (% z vybraného nájmu), Údržba (% ze sjednaného nájmu)."`;
+
+exports[`the Data check's words > cs: mixed +2y 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "javorova",
+      "text": "Použité ocenění je staré 24 měsíců (01.06.2026). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "lipova",
+      "text": "Použité ocenění je staré 24 měsíců (01.06.2026). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "dubova",
+      "text": "Použité ocenění je staré 24 měsíců (01.06.2026). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "dev",
+      "text": "Použité ocenění je staré 24 měsíců (01.06.2026). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "javorova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "javorova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "lipova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "lipova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "dubova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "dubova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "future",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Přejít do sekce Náklady na držbu",
+      "property": "future",
+      "text": "Náklady na držbu používají výchozí hodnoty portfolia pro: Daň z nemovitých věcí /rok, Pojištění /rok, SVJ /měs, Ostatní /rok, Správa (% z vybraného nájmu), Údržba (% ze sjednaného nájmu).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "future",
+      "text": "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "dev",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Přejít do sekce Náklady na držbu",
+      "property": "dev",
+      "text": "Náklady na držbu používají výchozí hodnoty portfolia pro: Daň z nemovitých věcí /rok, Pojištění /rok, SVJ /měs, Ostatní /rok, Správa (% z vybraného nájmu), Údržba (% ze sjednaného nájmu).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "dev",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": "24 měsíců · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "24 měsíců · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "24 měsíců · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": "24 měsíců · 01.06.2026",
+            "fix": "records",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Použité ocenění je starší než 12 měsíců. Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+        "kind": "valuationStale",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Náklady na držbu používají výchozí hodnoty portfolia pro: Daň z nemovitých věcí /rok, Pojištění /rok, SVJ /měs, Ostatní /rok, Správa (% z vybraného nájmu), Údržba (% ze sjednaného nájmu).",
+        "kind": "costDefaults",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+        ],
+        "headline": "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > cs: mixed today 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "dev",
+      "text": "K 07.06.2026 neplatí žádný nájem, proto se nájemné počítá jako 0.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "javorova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "javorova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "lipova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "lipova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "dubova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "dubova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "future",
+      "text": "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "dev",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Přejít do sekce Náklady na držbu",
+      "property": "dev",
+      "text": "Náklady na držbu používají výchozí hodnoty portfolia pro: Daň z nemovitých věcí /rok, Pojištění /rok, SVJ /měs, Ostatní /rok, Správa (% z vybraného nájmu), Údržba (% ze sjednaného nájmu).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "dev",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "records",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "K 07.06.2026 neplatí žádný nájem, proto se nájemné počítá jako 0.",
+        "kind": "noLease",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+        ],
+        "headline": "Vlastní zdroje na tento nákup nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám a projekce platbu při koupi odvodí: cena minus úvěr plus zadané transakční náklady a úpravy.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Náklady na držbu používají výchozí hodnoty portfolia pro: Daň z nemovitých věcí /rok, Pojištění /rok, SVJ /měs, Ostatní /rok, Správa (% z vybraného nájmu), Údržba (% ze sjednaného nájmu).",
+        "kind": "costDefaults",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > cs: sample +5y 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "javorova",
+      "text": "Použité ocenění je staré 60 měsíců (01.06.2026). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Přejít do sekce Financování",
+      "property": "javorova",
+      "text": "Úvěr od 17.01.2021: Fixace skončila 17.01.2031 a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace 4,5 %. Zadejte podmínky nové fixace jako nový blok hypotéky.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "lipova",
+      "text": "Použité ocenění je staré 60 měsíců (01.06.2026). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Přejít do sekce Financování",
+      "property": "lipova",
+      "text": "Úvěr od 15.01.2022: Fixace skončila 15.01.2029 a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace 4,5 %. Zadejte podmínky nové fixace jako nový blok hypotéky.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Přejít do sekce Záznamy",
+      "property": "dubova",
+      "text": "Použité ocenění je staré 60 měsíců (01.06.2026). Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Přejít do sekce Financování",
+      "property": "dubova",
+      "text": "Úvěr od 12.03.2024: Fixace skončila 12.03.2031 a není zadán navazující blok, proto aplikace od té doby počítá se sazbou po skončení fixace 4,5 %. Zadejte podmínky nové fixace jako nový blok hypotéky.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "javorova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "javorova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "lipova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "lipova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "dubova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "dubova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": "60 měsíců · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "60 měsíců · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "60 měsíců · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Použité ocenění je starší než 12 měsíců. Hodnota, vlastní kapitál a LTV vycházejí z ocenění tak, jak je zadané: doba mezi jeho datem a začátkem projekce se nezhodnocuje.",
+        "kind": "valuationStale",
+      },
+      {
+        "chips": [
+          {
+            "detail": "17.01.2031",
+            "fix": "financing",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "15.01.2029",
+            "fix": "financing",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "12.03.2031",
+            "fix": "financing",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Fixace skončila a není zadán navazující blok, proto aplikace od konce fixace počítá se sazbou po skončení fixace 4,5 %. Zadejte podmínky nové fixace jako nový blok hypotéky.",
+        "kind": "fixationEnded",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > cs: sample today 1`] = `
+{
+  "attention": [],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "javorova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "javorova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "lipova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "lipova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Upravit nemovitost",
+      "property": "dubova",
+      "text": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Zadat financování",
+      "property": "dubova",
+      "text": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+    },
+  ],
+  "groups": [
+    [],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Používá zhodnocení a indexaci nájmu z předpokladů portfolia.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Vlastní zdroje vložené při koupi nejsou zadané, takže údaj „Vložené vlastní zdroje“ není znám.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > en: every holding cost named in a cost-defaults line 1`] = `"Holding costs use the portfolio defaults for: Property tax /yr, Insurance /yr, SVJ /mo, Other /yr, Management (% of collected rent), Maintenance (% of contracted rent)."`;
+
+exports[`the Data check's words > en: mixed +2y 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "javorova",
+      "text": "The valuation in use is 24 months old (01.06.2026). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "lipova",
+      "text": "The valuation in use is 24 months old (01.06.2026). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "dubova",
+      "text": "The valuation in use is 24 months old (01.06.2026). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "dev",
+      "text": "The valuation in use is 24 months old (01.06.2026). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "javorova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "javorova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "lipova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "lipova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "dubova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "dubova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "future",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Go to Holding costs",
+      "property": "future",
+      "text": "Holding costs use the portfolio defaults for: Property tax /yr, Insurance /yr, SVJ /mo, Other /yr, Management (% of collected rent), Maintenance (% of contracted rent).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "future",
+      "text": "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "dev",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Go to Holding costs",
+      "property": "dev",
+      "text": "Holding costs use the portfolio defaults for: Property tax /yr, Insurance /yr, SVJ /mo, Other /yr, Management (% of collected rent), Maintenance (% of contracted rent).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "dev",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": "24 months · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "24 months · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "24 months · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": "24 months · 01.06.2026",
+            "fix": "records",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "The valuation in use is more than 12 months old. Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+        "kind": "valuationStale",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Uses the portfolio appreciation and rent indexation.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Holding costs use the portfolio defaults for: Property tax /yr, Insurance /yr, SVJ /mo, Other /yr, Management (% of collected rent), Maintenance (% of contracted rent).",
+        "kind": "costDefaults",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+        ],
+        "headline": "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > en: mixed today 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "dev",
+      "text": "No lease is in force on 07.06.2026, so rent counts as 0.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "javorova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "javorova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "lipova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "lipova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "dubova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "dubova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "future",
+      "text": "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "dev",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Go to Holding costs",
+      "property": "dev",
+      "text": "Holding costs use the portfolio defaults for: Property tax /yr, Insurance /yr, SVJ /mo, Other /yr, Management (% of collected rent), Maintenance (% of contracted rent).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "dev",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "records",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "No lease is in force on 07.06.2026, so rent counts as 0.",
+        "kind": "noLease",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Uses the portfolio appreciation and rent indexation.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+        ],
+        "headline": "Own cash for this purchase is not recorded, so Cash invested is not known and the projection derives the down payment: the price less the loan, plus any recorded costs and works.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Holding costs use the portfolio defaults for: Property tax /yr, Insurance /yr, SVJ /mo, Other /yr, Management (% of collected rent), Maintenance (% of contracted rent).",
+        "kind": "costDefaults",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > en: sample +5y 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "javorova",
+      "text": "The valuation in use is 60 months old (01.06.2026). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Go to Financing",
+      "property": "javorova",
+      "text": "Loan from 17.01.2021: Its fixation ended on 17.01.2031 and no follow-on block is entered, so the app assumes the reset rate of 4,5 % from then on. Add the terms of the new fixation as a new mortgage block.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "lipova",
+      "text": "The valuation in use is 60 months old (01.06.2026). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Go to Financing",
+      "property": "lipova",
+      "text": "Loan from 15.01.2022: Its fixation ended on 15.01.2029 and no follow-on block is entered, so the app assumes the reset rate of 4,5 % from then on. Add the terms of the new fixation as a new mortgage block.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Go to Records",
+      "property": "dubova",
+      "text": "The valuation in use is 60 months old (01.06.2026). Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Go to Financing",
+      "property": "dubova",
+      "text": "Loan from 12.03.2024: Its fixation ended on 12.03.2031 and no follow-on block is entered, so the app assumes the reset rate of 4,5 % from then on. Add the terms of the new fixation as a new mortgage block.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "javorova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "javorova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "lipova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "lipova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "dubova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "dubova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": "60 months · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "60 months · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "60 months · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "The valuation in use is more than 12 months old. Value, equity and LTV start from it as entered: the time between its date and the projection start is not grown.",
+        "kind": "valuationStale",
+      },
+      {
+        "chips": [
+          {
+            "detail": "17.01.2031",
+            "fix": "financing",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "15.01.2029",
+            "fix": "financing",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "12.03.2031",
+            "fix": "financing",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "The fixation ended and no follow-on block is entered, so the app assumes the reset rate of 4,5 % from the fixation end on. Add the terms of the new fixation as a new mortgage block.",
+        "kind": "fixationEnded",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Uses the portfolio appreciation and rent indexation.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > en: sample today 1`] = `
+{
+  "attention": [],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "javorova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "javorova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "lipova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "lipova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Edit property",
+      "property": "dubova",
+      "text": "Uses the portfolio appreciation and rent indexation.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Record funding",
+      "property": "dubova",
+      "text": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+    },
+  ],
+  "groups": [
+    [],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Uses the portfolio appreciation and rent indexation.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Own cash paid at purchase is not recorded, so Cash invested is not known.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > ru: every holding cost named in a cost-defaults line 1`] = `"Расходы на содержание используют значения портфеля по умолчанию для: Налог на недвижимость /год, Страховка /год, SVJ /мес, Прочее /год, Управление (% от собранной аренды), Обслуживание (% от договорной аренды)."`;
+
+exports[`the Data check's words > ru: mixed +2y 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "javorova",
+      "text": "Используемой оценке 24 месяца (01.06.2026). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "lipova",
+      "text": "Используемой оценке 24 месяца (01.06.2026). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "dubova",
+      "text": "Используемой оценке 24 месяца (01.06.2026). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "dev",
+      "text": "Используемой оценке 24 месяца (01.06.2026). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "javorova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "javorova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "lipova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "lipova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "dubova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "dubova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "future",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Перейти к разделу «Расходы на содержание»",
+      "property": "future",
+      "text": "Расходы на содержание используют значения портфеля по умолчанию для: Налог на недвижимость /год, Страховка /год, SVJ /мес, Прочее /год, Управление (% от собранной аренды), Обслуживание (% от договорной аренды).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "future",
+      "text": "Собственные средства на эту покупку не указаны, поэтому показатель «Вложенные собственные средства» неизвестен, а прогноз рассчитывает первоначальный взнос: цена минус кредит плюс указанные расходы на сделку и ремонт.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "dev",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Перейти к разделу «Расходы на содержание»",
+      "property": "dev",
+      "text": "Расходы на содержание используют значения портфеля по умолчанию для: Налог на недвижимость /год, Страховка /год, SVJ /мес, Прочее /год, Управление (% от собранной аренды), Обслуживание (% от договорной аренды).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "dev",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": "24 месяца · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "24 месяца · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "24 месяца · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": "24 месяца · 01.06.2026",
+            "fix": "records",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Используемой оценке больше 12 месяцев. Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+        "kind": "valuationStale",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Расходы на содержание используют значения портфеля по умолчанию для: Налог на недвижимость /год, Страховка /год, SVJ /мес, Прочее /год, Управление (% от собранной аренды), Обслуживание (% от договорной аренды).",
+        "kind": "costDefaults",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+        ],
+        "headline": "Собственные средства на эту покупку не указаны, поэтому показатель «Вложенные собственные средства» неизвестен, а прогноз рассчитывает первоначальный взнос: цена минус кредит плюс указанные расходы на сделку и ремонт.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > ru: mixed today 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "dev",
+      "text": "На 07.06.2026 нет действующей аренды, поэтому арендная плата считается равной 0.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "javorova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "javorova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "lipova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "lipova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "dubova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "dubova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "future",
+      "text": "Собственные средства на эту покупку не указаны, поэтому показатель «Вложенные собственные средства» неизвестен, а прогноз рассчитывает первоначальный взнос: цена минус кредит плюс указанные расходы на сделку и ремонт.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "dev",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "holding",
+      "fixLabel": "Перейти к разделу «Расходы на содержание»",
+      "property": "dev",
+      "text": "Расходы на содержание используют значения портфеля по умолчанию для: Налог на недвижимость /год, Страховка /год, SVJ /мес, Прочее /год, Управление (% от собранной аренды), Обслуживание (% от договорной аренды).",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "dev",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "records",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "На 07.06.2026 нет действующей аренды, поэтому арендная плата считается равной 0.",
+        "kind": "noLease",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Future buy",
+            "propertyId": "future",
+          },
+        ],
+        "headline": "Собственные средства на эту покупку не указаны, поэтому показатель «Вложенные собственные средства» неизвестен, а прогноз рассчитывает первоначальный взнос: цена минус кредит плюс указанные расходы на сделку и ремонт.",
+        "kind": "fundingUnknown",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "holding",
+            "name": "Dev unit",
+            "propertyId": "dev",
+          },
+        ],
+        "headline": "Расходы на содержание используют значения портфеля по умолчанию для: Налог на недвижимость /год, Страховка /год, SVJ /мес, Прочее /год, Управление (% от собранной аренды), Обслуживание (% от договорной аренды).",
+        "kind": "costDefaults",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > ru: sample +5y 1`] = `
+{
+  "attention": [
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "javorova",
+      "text": "Используемой оценке 60 месяцев (01.06.2026). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Перейти к разделу «Финансирование»",
+      "property": "javorova",
+      "text": "Кредит от 17.01.2021: Фиксация закончилась 17.01.2031, а следующий блок не введён, поэтому приложение с этого момента использует ставку после фиксации 4,5 %. Добавьте условия новой фиксации как новый блок ипотеки.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "lipova",
+      "text": "Используемой оценке 60 месяцев (01.06.2026). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Перейти к разделу «Финансирование»",
+      "property": "lipova",
+      "text": "Кредит от 15.01.2022: Фиксация закончилась 15.01.2029, а следующий блок не введён, поэтому приложение с этого момента использует ставку после фиксации 4,5 %. Добавьте условия новой фиксации как новый блок ипотеки.",
+    },
+    {
+      "fix": "records",
+      "fixLabel": "Перейти к разделу «Записи»",
+      "property": "dubova",
+      "text": "Используемой оценке 60 месяцев (01.06.2026). Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+    },
+    {
+      "fix": "financing",
+      "fixLabel": "Перейти к разделу «Финансирование»",
+      "property": "dubova",
+      "text": "Кредит от 12.03.2024: Фиксация закончилась 12.03.2031, а следующий блок не введён, поэтому приложение с этого момента использует ставку после фиксации 4,5 %. Добавьте условия новой фиксации как новый блок ипотеки.",
+    },
+  ],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "javorova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "javorova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "lipova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "lipova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "dubova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "dubova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+  ],
+  "groups": [
+    [
+      {
+        "chips": [
+          {
+            "detail": "60 месяцев · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "60 месяцев · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "60 месяцев · 01.06.2026",
+            "fix": "records",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Используемой оценке больше 12 месяцев. Стоимость, собственный капитал и LTV исходят из неё в том виде, как она введена: рост за время между её датой и началом прогноза не учитывается.",
+        "kind": "valuationStale",
+      },
+      {
+        "chips": [
+          {
+            "detail": "17.01.2031",
+            "fix": "financing",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": "15.01.2029",
+            "fix": "financing",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": "12.03.2031",
+            "fix": "financing",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Фиксация закончилась, а следующий блок не введён, поэтому приложение с конца фиксации использует ставку после фиксации 4,5 %. Добавьте условия новой фиксации как новый блок ипотеки.",
+        "kind": "fixationEnded",
+      },
+    ],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the Data check's words > ru: sample today 1`] = `
+{
+  "attention": [],
+  "defaults": [
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "javorova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "javorova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "lipova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "lipova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+    {
+      "fix": "edit",
+      "fixLabel": "Изменить объект",
+      "property": "dubova",
+      "text": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+    },
+    {
+      "fix": "editFunding",
+      "fixLabel": "Указать финансирование",
+      "property": "dubova",
+      "text": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+    },
+  ],
+  "groups": [
+    [],
+    [
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "edit",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Использует рост стоимости и индексацию аренды из допущений портфеля.",
+        "kind": "growthDefault",
+      },
+      {
+        "chips": [
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Javorova",
+            "propertyId": "javorova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Lipova",
+            "propertyId": "lipova",
+          },
+          {
+            "detail": null,
+            "fix": "editFunding",
+            "name": "Byt Dubova",
+            "propertyId": "dubova",
+          },
+        ],
+        "headline": "Собственные средства, внесённые при покупке, не указаны, поэтому показатель «Вложенные собственные средства» неизвестен.",
+        "kind": "fundingUnknown",
+      },
+    ],
+  ],
+}
+`;
+
+exports[`the holding costs' read view > cs: each field's label and kind 1`] = `
+[
+  {
+    "kind": "money",
+    "label": "Daň z nemovitých věcí /rok",
+  },
+  {
+    "kind": "money",
+    "label": "Pojištění /rok",
+  },
+  {
+    "kind": "money",
+    "label": "SVJ /měs",
+  },
+  {
+    "kind": "money",
+    "label": "Ostatní /rok",
+  },
+  {
+    "kind": "pct",
+    "label": "Správa (% z vybraného nájmu)",
+  },
+  {
+    "kind": "pct",
+    "label": "Údržba (% ze sjednaného nájmu)",
+  },
+]
+`;
+
+exports[`the holding costs' read view > en: each field's label and kind 1`] = `
+[
+  {
+    "kind": "money",
+    "label": "Property tax /yr",
+  },
+  {
+    "kind": "money",
+    "label": "Insurance /yr",
+  },
+  {
+    "kind": "money",
+    "label": "SVJ /mo",
+  },
+  {
+    "kind": "money",
+    "label": "Other /yr",
+  },
+  {
+    "kind": "pct",
+    "label": "Management (% of collected rent)",
+  },
+  {
+    "kind": "pct",
+    "label": "Maintenance (% of contracted rent)",
+  },
+]
+`;
+
+exports[`the holding costs' read view > ru: each field's label and kind 1`] = `
+[
+  {
+    "kind": "money",
+    "label": "Налог на недвижимость /год",
+  },
+  {
+    "kind": "money",
+    "label": "Страховка /год",
+  },
+  {
+    "kind": "money",
+    "label": "SVJ /мес",
+  },
+  {
+    "kind": "money",
+    "label": "Прочее /год",
+  },
+  {
+    "kind": "pct",
+    "label": "Управление (% от собранной аренды)",
+  },
+  {
+    "kind": "pct",
+    "label": "Обслуживание (% от договорной аренды)",
+  },
+]
+`;
+
+exports[`the import preview's change text > cs 1`] = `
+[
+  "name",
+  "Byt A → Byt B",
+  "address",
+  "— → Praha",
+  "type",
+  "2+kk → 3+kk",
+  "size_m2",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "garage",
+  "Ne → Ano",
+  "purchase_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "purchase_price",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "appreciation_override_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "rent_index_override_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "own_cash",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "transaction_costs",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "initial_works",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "valid_to",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "market_value",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "end_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "monthly_rent",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "initial_principal",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "fixation_years",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "interest_rate_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "monthly_instalment",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "loan_term_years",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "contract_maturity_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+]
+`;
+
+exports[`the import preview's change text > en 1`] = `
+[
+  "name",
+  "Byt A → Byt B",
+  "address",
+  "— → Praha",
+  "type",
+  "2+kk → 3+kk",
+  "size_m2",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "garage",
+  "No → Yes",
+  "purchase_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "purchase_price",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "appreciation_override_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "rent_index_override_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "own_cash",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "transaction_costs",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "initial_works",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "valid_to",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "market_value",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "end_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "monthly_rent",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "initial_principal",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "fixation_years",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "interest_rate_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "monthly_instalment",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "loan_term_years",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "contract_maturity_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+]
+`;
+
+exports[`the import preview's change text > ru 1`] = `
+[
+  "name",
+  "Byt A → Byt B",
+  "address",
+  "— → Praha",
+  "type",
+  "2+kk → 3+kk",
+  "size_m2",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "garage",
+  "Нет → Да",
+  "purchase_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "purchase_price",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "appreciation_override_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "rent_index_override_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "own_cash",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "transaction_costs",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "initial_works",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "valid_to",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "market_value",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "end_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+  "monthly_rent",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "initial_principal",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "fixation_years",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "interest_rate_pa",
+  "5,1200 % → 5,1240 %",
+  "125 000 000,00 % → —",
+  "125 000 040,00 % → 125 000 045,00 %",
+  "monthly_instalment",
+  "0.0512 → 0.05124",
+  "1 250 000 Kč → —",
+  "1 250 000,40 Kč → 1 250 000,45 Kč",
+  "loan_term_years",
+  "0.0512 → 0.05124",
+  "1250000 → —",
+  "1250000.4 → 1250000.45",
+  "contract_maturity_date",
+  "01.01.2026 → 03.02.2027",
+  "— → 03.02.2027",
+]
+`;
+
+exports[`the scenario compare table > nominal: values and Δ views 1`] = `
+{
+  "delta": [
+    {
+      "cells": [
+        "—",
+        "−5,7 M Kč",
+        "0,0 M Kč",
+      ],
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        "—",
+        "−18,6 M Kč",
+        "0,0 M Kč",
+      ],
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "—",
+        "−8,9 M Kč",
+        "−7,0 M Kč",
+      ],
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "—",
+        "+0,69x",
+        "0,00x",
+      ],
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "—",
+        "+0,5 pp",
+        "0,0 pp",
+      ],
+      "label": "CAGR (nominal)",
+    },
+    {
+      "cells": [
+        "—",
+        "0,0 M Kč",
+        "−0,4 M Kč",
+      ],
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "—",
+        "+0,7 pp",
+        "0,0 pp",
+      ],
+      "label": "Levered IRR (nominal)",
+    },
+    {
+      "cells": [
+        "—",
+        "0y",
+        "+2y",
+      ],
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        "—",
+        "0y",
+        "0y",
+      ],
+      "label": "Debt-free year",
+    },
+  ],
+  "exportCells": [
+    {
+      "cells": [
+        "19214594.8670132327662780481417660606083",
+        "13468594.8670132327662780481417660606083",
+        "19214594.8670132327662780481417660606083",
+      ],
+      "kind": "money",
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        null,
+        "-18636562.09261823359864444163615868014569",
+        "0",
+      ],
+      "kind": "money",
+      "label": "Δ net worth vs Base (without cash)",
+    },
+    {
+      "cells": [
+        "93182810.46309116799322220818079340072843",
+        "74546248.37047293439457776654463472058274",
+        "93182810.46309116799322220818079340072843",
+      ],
+      "kind": "money",
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "44424223.27288347498315587028310329867364",
+        "35539378.61830677998652469622648263893891",
+        "37454346.57597592160411025939142012052143",
+      ],
+      "kind": "money",
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "4.849584969551624456260496201089295730494",
+        "5.534820009550421160128902527301490466093",
+        "4.849584969551624456260496201089295730494",
+      ],
+      "kind": "multiple",
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "0.054039336872146196791459810077636764323",
+        "0.058693183264957698576625248998363605199",
+        "0.054039336872146196791459810077636764323",
+      ],
+      "kind": "percent",
+      "label": "CAGR (nominal)",
+    },
+    {
+      "cells": [
+        "15020596.50488397469514298151542025192694",
+        "15020596.50488397469514298151542025192694",
+        "14645389.51240183435796186051697112402754",
+      ],
+      "kind": "money",
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "0.0620379267633979545812361600098938652083",
+        "0.0689874479884685816444278572134862770328",
+        "0.06175158725922236489791483649014480761265",
+      ],
+      "kind": "percent",
+      "label": "Levered IRR (nominal)",
+    },
+    {
+      "cells": [
+        2029,
+        2029,
+        2031,
+      ],
+      "kind": "int",
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        2052,
+        2052,
+        2052,
+      ],
+      "kind": "int",
+      "label": "Debt-free year",
+    },
+  ],
+  "noBase": [
+    {
+      "cells": [
+        "19,2 M Kč",
+        "13,5 M Kč",
+        "19,2 M Kč",
+      ],
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        "93,2 M Kč",
+        "74,5 M Kč",
+        "93,2 M Kč",
+      ],
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "44,4 M Kč",
+        "35,5 M Kč",
+        "37,5 M Kč",
+      ],
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "4,85x",
+        "5,53x",
+        "4,85x",
+      ],
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "5,4 %",
+        "5,9 %",
+        "5,4 %",
+      ],
+      "label": "CAGR (nominal)",
+    },
+    {
+      "cells": [
+        "15,0 M Kč",
+        "15,0 M Kč",
+        "14,6 M Kč",
+      ],
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "6,2 %",
+        "6,9 %",
+        "6,2 %",
+      ],
+      "label": "Levered IRR (nominal)",
+    },
+    {
+      "cells": [
+        "2029",
+        "2029",
+        "2031",
+      ],
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        "2052",
+        "2052",
+        "2052",
+      ],
+      "label": "Debt-free year",
+    },
+  ],
+  "values": [
+    {
+      "cells": [
+        "19,2 M Kč",
+        "13,5 M Kč",
+        "19,2 M Kč",
+      ],
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        "—",
+        "−18,6 M Kč",
+        "0,0 M Kč",
+      ],
+      "label": "Δ net worth vs Base (without cash)",
+    },
+    {
+      "cells": [
+        "93,2 M Kč",
+        "74,5 M Kč",
+        "93,2 M Kč",
+      ],
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "44,4 M Kč",
+        "35,5 M Kč",
+        "37,5 M Kč",
+      ],
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "4,85x",
+        "5,53x",
+        "4,85x",
+      ],
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "5,4 %",
+        "5,9 %",
+        "5,4 %",
+      ],
+      "label": "CAGR (nominal)",
+    },
+    {
+      "cells": [
+        "15,0 M Kč",
+        "15,0 M Kč",
+        "14,6 M Kč",
+      ],
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "6,2 %",
+        "6,9 %",
+        "6,2 %",
+      ],
+      "label": "Levered IRR (nominal)",
+    },
+    {
+      "cells": [
+        "2029",
+        "2029",
+        "2031",
+      ],
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        "2052",
+        "2052",
+        "2052",
+      ],
+      "label": "Debt-free year",
+    },
+  ],
+}
+`;
+
+exports[`the scenario compare table > real: values and Δ views 1`] = `
+{
+  "delta": [
+    {
+      "cells": [
+        "—",
+        "−5,7 M Kč",
+        "0,0 M Kč",
+      ],
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        "—",
+        "−18,6 M Kč",
+        "0,0 M Kč",
+      ],
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "—",
+        "−8,9 M Kč",
+        "−7,0 M Kč",
+      ],
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "—",
+        "+0,33x",
+        "−0,36x",
+      ],
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "—",
+        "+0,5 pp",
+        "−0,6 pp",
+      ],
+      "label": "CAGR (real)",
+    },
+    {
+      "cells": [
+        "—",
+        "0,0 M Kč",
+        "−1,5 M Kč",
+      ],
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "—",
+        "+0,7 pp",
+        "−0,6 pp",
+      ],
+      "label": "Levered IRR (real)",
+    },
+    {
+      "cells": [
+        "—",
+        "0y",
+        "+2y",
+      ],
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        "—",
+        "0y",
+        "0y",
+      ],
+      "label": "Debt-free year",
+    },
+  ],
+  "exportCells": [
+    {
+      "cells": [
+        "19214594.8670132327662780481417660606083",
+        "13468594.8670132327662780481417660606083",
+        "19214594.8670132327662780481417660606083",
+      ],
+      "kind": "money",
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        null,
+        "-8884844.65457669499663117405662065973473",
+        "-6969876.69690755337904561089168317815221",
+      ],
+      "kind": "money",
+      "label": "Δ net worth vs Base (without cash)",
+    },
+    {
+      "cells": [
+        "93182810.46309116799322220818079340072843",
+        "74546248.37047293439457776654463472058274",
+        "93182810.46309116799322220818079340072843",
+      ],
+      "kind": "money",
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "44424223.27288347498315587028310329867364",
+        "35539378.61830677998652469622648263893891",
+        "37454346.57597592160411025939142012052143",
+      ],
+      "kind": "money",
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "2.312004160397314338673818768415113880464",
+        "2.638684953346430097595990044421740406487",
+        "1.949265484659054062247582640817741438281",
+      ],
+      "kind": "multiple",
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "0.02833106036306946028435103422208464812",
+        "0.03287139830727580348939048682767180995",
+        "0.022497762739644856582223635075623020083",
+      ],
+      "kind": "percent",
+      "label": "CAGR (real)",
+    },
+    {
+      "cells": [
+        "8515770.555504995666183128327319346996371",
+        "8515770.555504995666183128327319346996371",
+        "6967704.188508707434253180875443636272653",
+      ],
+      "kind": "money",
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "0.03613456269599800516761911595153833332009",
+        "0.0429145834033839827098555375073374307249",
+        "0.02964785089905723289988026536434517765886",
+      ],
+      "kind": "percent",
+      "label": "Levered IRR (real)",
+    },
+    {
+      "cells": [
+        2029,
+        2029,
+        2031,
+      ],
+      "kind": "int",
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        2052,
+        2052,
+        2052,
+      ],
+      "kind": "int",
+      "label": "Debt-free year",
+    },
+  ],
+  "noBase": [
+    {
+      "cells": [
+        "19,2 M Kč",
+        "13,5 M Kč",
+        "19,2 M Kč",
+      ],
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        "93,2 M Kč",
+        "74,5 M Kč",
+        "93,2 M Kč",
+      ],
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "44,4 M Kč",
+        "35,5 M Kč",
+        "37,5 M Kč",
+      ],
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "2,31x",
+        "2,64x",
+        "1,95x",
+      ],
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "2,8 %",
+        "3,3 %",
+        "2,2 %",
+      ],
+      "label": "CAGR (real)",
+    },
+    {
+      "cells": [
+        "8,5 M Kč",
+        "8,5 M Kč",
+        "7,0 M Kč",
+      ],
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "3,6 %",
+        "4,3 %",
+        "3,0 %",
+      ],
+      "label": "Levered IRR (real)",
+    },
+    {
+      "cells": [
+        "2029",
+        "2029",
+        "2031",
+      ],
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        "2052",
+        "2052",
+        "2052",
+      ],
+      "label": "Debt-free year",
+    },
+  ],
+  "values": [
+    {
+      "cells": [
+        "19,2 M Kč",
+        "13,5 M Kč",
+        "19,2 M Kč",
+      ],
+      "label": "Starting equity",
+    },
+    {
+      "cells": [
+        "—",
+        "−8,9 M Kč",
+        "−7,0 M Kč",
+      ],
+      "label": "Δ net worth vs Base (without cash)",
+    },
+    {
+      "cells": [
+        "93,2 M Kč",
+        "74,5 M Kč",
+        "93,2 M Kč",
+      ],
+      "label": "Net worth (nominal)",
+    },
+    {
+      "cells": [
+        "44,4 M Kč",
+        "35,5 M Kč",
+        "37,5 M Kč",
+      ],
+      "label": "Net worth (real)",
+    },
+    {
+      "cells": [
+        "2,31x",
+        "2,64x",
+        "1,95x",
+      ],
+      "label": "Net-worth multiple",
+    },
+    {
+      "cells": [
+        "2,8 %",
+        "3,3 %",
+        "2,2 %",
+      ],
+      "label": "CAGR (real)",
+    },
+    {
+      "cells": [
+        "8,5 M Kč",
+        "8,5 M Kč",
+        "7,0 M Kč",
+      ],
+      "label": "Cumulative cash to owner",
+    },
+    {
+      "cells": [
+        "3,6 %",
+        "4,3 %",
+        "3,0 %",
+      ],
+      "label": "Levered IRR (real)",
+    },
+    {
+      "cells": [
+        "2029",
+        "2029",
+        "2031",
+      ],
+      "label": "First CF-positive year",
+    },
+    {
+      "cells": [
+        "2052",
+        "2052",
+        "2052",
+      ],
+      "label": "Debt-free year",
+    },
+  ],
+}
+`;

@@ -55,7 +55,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 function panel(
   asOf: Date,
-  check = dataCheckItems([p], portfolio, asOf, BASE_DATE),
+  check = dataCheckItems([p], portfolio, { asOf, baseDate: BASE_DATE }),
 ) {
   const onFix = vi.fn();
   const view = render(
@@ -163,8 +163,10 @@ describe("Property detail page (ADR 0223 §5)", () => {
   it("the title pill counts what needs attention and moves focus to the Data check", async () => {
     act(() => useUiStore.setState({ asOf: fiveYears }));
     render(<PropertyDetail />);
-    const n = dataCheckItems([p], portfolio, fiveYears, BASE_DATE).attention
-      .length;
+    const n = dataCheckItems([p], portfolio, {
+      asOf: fiveYears,
+      baseDate: BASE_DATE,
+    }).attention.length;
     const pill = screen.getByRole("button", { name: d.reviewPill(n) });
     expect(pill.closest(".topbar")).not.toBeNull();
     expect(pill.textContent).toBe(String(n));
@@ -174,12 +176,10 @@ describe("Property detail page (ADR 0223 §5)", () => {
 
   it("no pill when nothing needs attention", () => {
     render(<PropertyDetail />);
-    const n = dataCheckItems(
-      [p],
-      portfolio,
-      new Date(Date.UTC(2026, 9, 1)),
-      BASE_DATE,
-    ).attention.length;
+    const n = dataCheckItems([p], portfolio, {
+      asOf: new Date(Date.UTC(2026, 9, 1)),
+      baseDate: BASE_DATE,
+    }).attention.length;
     expect(n).toBe(0);
     expect(document.querySelector(".title-pill")).toBeNull();
   });

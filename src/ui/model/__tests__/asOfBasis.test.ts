@@ -77,20 +77,20 @@ describe("asOfView (ADR 0088)", () => {
   });
 
   it("today at the base date is today", () => {
-    expect(asOfView(baseDate, baseDate, true)).toEqual({
+    expect(asOfView({ baseDate, asOf: baseDate }, true)).toEqual({
       kind: "today",
     });
   });
 
   it("+5y is projection year 5, the row tilesForAsOf reads", () => {
-    const b = asOfView(baseDate, plus5, false);
+    const b = asOfView({ baseDate, asOf: plus5 }, false);
     expect(b).toEqual({ kind: "projection", year: 5, calendarYear: 2031 });
-    expect(projectionYearForAsOf(baseDate, plus5)).toBe(5);
+    expect(projectionYearForAsOf({ baseDate, asOf: plus5 })).toBe(5);
   });
 
   it("today is a projection year once the base date is ≥ 6 months back", () => {
     const today = edate(baseDate, 24);
-    expect(asOfView(baseDate, today, true)).toEqual({
+    expect(asOfView({ baseDate, asOf: today }, true)).toEqual({
       kind: "projection",
       year: 2,
       calendarYear: 2028,
@@ -101,11 +101,15 @@ describe("asOfView (ADR 0088)", () => {
     // 31 Aug → 28 Feb is six grid months (the clamped month end counts): year 1, as with a
     // mid-month base date. Calendar months said five, so year 0.
     const monthEnd = isoDate("2026-08-31");
-    expect(asOfView(monthEnd, isoDate("2027-02-28"), false)).toMatchObject({
+    expect(
+      asOfView({ baseDate: monthEnd, asOf: isoDate("2027-02-28") }, false),
+    ).toMatchObject({
       kind: "projection",
       year: 1,
     });
-    expect(asOfView(monthEnd, isoDate("2028-02-29"), false)).toMatchObject({
+    expect(
+      asOfView({ baseDate: monthEnd, asOf: isoDate("2028-02-29") }, false),
+    ).toMatchObject({
       kind: "projection",
       year: 2,
     });
@@ -113,7 +117,7 @@ describe("asOfView (ADR 0088)", () => {
 
   it("a non-today date under six months out shows the records in force", () => {
     const d = edate(baseDate, 3);
-    expect(asOfView(baseDate, d, false)).toEqual({
+    expect(asOfView({ baseDate, asOf: d }, false)).toEqual({
       kind: "snapshot",
       date: d,
     });
@@ -121,7 +125,9 @@ describe("asOfView (ADR 0088)", () => {
 
   it("the end of the window is the last projection year (ADR 0150)", () => {
     // resolveAsOf keeps every date inside the window, so there is no past-horizon basis.
-    expect(asOfView(baseDate, addYears(baseDate, 30), false)).toMatchObject({
+    expect(
+      asOfView({ baseDate, asOf: addYears(baseDate, 30) }, false),
+    ).toMatchObject({
       kind: "projection",
       year: 30,
     });
@@ -139,7 +145,7 @@ describe("as-of labels (ADR 0088)", () => {
 
   // The KPI strip names its basis once (ADR 0200 §2); the picker hint gives the period.
   it("projection year: the Projections row label, the period in the picker hint", () => {
-    const b = asOfView(baseDate, plus5, false);
+    const b = asOfView({ baseDate, asOf: plus5 }, false);
     expect(y5).toBe("Y5 · 2031");
     expect(period5).toBe("Jul 2030 – Jun 2031");
     expect(basisText(en, b)).toBe("projection year Y5 · 2031");
@@ -150,14 +156,14 @@ describe("as-of labels (ADR 0088)", () => {
   });
 
   it("today: current wording, no picker hint", () => {
-    const b = asOfView(baseDate, baseDate, true);
+    const b = asOfView({ baseDate, asOf: baseDate }, true);
     expect(basisText(en, b)).toBe("current");
     expect(asOfHint(en, b, baseDate)).toBeNull();
   });
 
   it("records in force on a date: dated wording, never today/current", () => {
     const d = edate(baseDate, 3);
-    const b = asOfView(baseDate, d, false);
+    const b = asOfView({ baseDate, asOf: d }, false);
     expect(basisText(en, b)).toBe("on 07.09.2026");
     expect(asOfHint(en, b, baseDate)).toBe(
       "Showing records in force on 07.09.2026",
@@ -177,14 +183,14 @@ describe("ownedOn (ADR 0150)", () => {
   const asOf = isoDate("2028-01-01");
 
   it("in a projection year: owned once bought by that year's end", () => {
-    expect(ownedOn(isoDate("2028-03-15"), y2, baseDate, asOf)).toBe(true);
-    expect(ownedOn(isoDate("2028-06-07"), y2, baseDate, asOf)).toBe(true);
-    expect(ownedOn(isoDate("2028-06-08"), y2, baseDate, asOf)).toBe(false);
+    expect(ownedOn(isoDate("2028-03-15"), y2, { baseDate, asOf })).toBe(true);
+    expect(ownedOn(isoDate("2028-06-07"), y2, { baseDate, asOf })).toBe(true);
+    expect(ownedOn(isoDate("2028-06-08"), y2, { baseDate, asOf })).toBe(false);
   });
 
   it("today or on a date: owned once bought by the as-of date", () => {
     const on = { kind: "snapshot", date: asOf } as const;
-    expect(ownedOn(isoDate("2028-03-15"), on, baseDate, asOf)).toBe(false);
-    expect(ownedOn(isoDate("2028-01-01"), on, baseDate, asOf)).toBe(true);
+    expect(ownedOn(isoDate("2028-03-15"), on, { baseDate, asOf })).toBe(false);
+    expect(ownedOn(isoDate("2028-01-01"), on, { baseDate, asOf })).toBe(true);
   });
 });

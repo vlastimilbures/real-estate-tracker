@@ -2,7 +2,7 @@
 // collection the forms share. Kept out of the component files so fast refresh stays
 // happy and the parsing is unit-testable.
 import { D, type Decimal } from "../../lib/money";
-import { fmtCzk, fmtDate } from "../../lib/format";
+import { fmtDate, fmtInt } from "../../lib/format";
 import {
   DATE_FLOOR_YEAR,
   inRange,
@@ -187,18 +187,13 @@ export function invalidHint(
 }
 
 /** "Must be a whole number from 1 to 10 000" (ADR 0259). */
-export function intRangeHint(
-  t: Pick<Dictionary, "forms">,
-  r: IntRange,
-): string {
-  const n = (v: number) => fmtCzk(v, { suffix: false });
-  return t.forms.intRange(n(r.min), n(r.max));
+function intRangeHint(t: Pick<Dictionary, "forms">, r: IntRange): string {
+  return t.forms.intRange(fmtInt(r.min), fmtInt(r.max));
 }
 
 /** "Must be a number from 1 to 10 000 with at most one decimal place" (ADR 0236 §1). */
 function sizeRangeHint(t: Pick<Dictionary, "forms">, r: IntRange): string {
-  const n = (v: number) => fmtCzk(v, { suffix: false });
-  return t.forms.sizeRange(n(r.min), n(r.max));
+  return t.forms.sizeRange(fmtInt(r.min), fmtInt(r.max));
 }
 
 /** A field's invalid-value message: its range when bounded, else its kind's format. */
@@ -222,7 +217,7 @@ export interface KindValue {
 }
 
 /** Any one parsed field value; null = an optional field left blank. */
-export type ParsedValue = KindValue[FieldKind] | null;
+type ParsedValue = KindValue[FieldKind] | null;
 
 /** One spec's parsed value: its kind's type, plus null when the spec has an `optional`
  *  flag that is not literally false (a plain FieldSpec may be optional, so it gets null).

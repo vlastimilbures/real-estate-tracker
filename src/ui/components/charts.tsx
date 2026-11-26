@@ -24,14 +24,16 @@ import {
 } from "react";
 import { Table2 } from "lucide-react";
 import {
+  CZK,
   fmtCzk,
   fmtCzkAxisTick,
   fmtPct,
   pickCzkAxisUnit,
   type CzkAxisUnit,
+  EMPTY,
 } from "../../lib/format";
+import { SERIES } from "../model/chartSeries";
 import {
-  SERIES,
   tipValue,
   tableValue,
   tableYear,
@@ -41,7 +43,6 @@ import {
 } from "../model/chartData";
 import { yearLabel } from "../model/projection";
 import type { ResetMarker } from "../model/financing";
-import { CZK } from "../../lib/currency";
 import { Button } from "./Button";
 import { Money } from "./figures";
 import { TableWrap } from "./layout";
@@ -326,7 +327,7 @@ function ChartTable({
                         kind === "pct" ? (
                           t.common.notApplicable
                         ) : (
-                          "—"
+                          EMPTY
                         )
                       ) : kind === "pct" ? (
                         <Pct value={v} />
@@ -383,7 +384,7 @@ export function Tip({
             {it.value === null
               ? it.kind === "pct"
                 ? t.common.notApplicable // no base (ADR 0133)
-                : "—"
+                : EMPTY
               : it.kind === "pct"
                 ? fmtPct(it.value)
                 : fmtCzk(it.value, { parens: true })}

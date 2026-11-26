@@ -3,7 +3,7 @@
 // the record it saves. Presentation only.
 import type { CostDefaults, HoldingCost } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { CZK } from "../../lib/currency";
+import { CZK } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import { moneyDraft, percentDraft, type KindValue } from "./formParse";
 
@@ -15,7 +15,9 @@ export interface HoldingCostRow {
   isDefault: boolean;
 }
 
-const FIELDS = [
+/** The six holding costs in the form's order: the field, its label and its kind. The
+ *  read view, the Data check's cost-defaults finding and its sentence read this list. */
+export const COST_FIELDS = [
   ["propertyTaxYr", "fieldPropertyTax", "money"],
   ["insuranceYr", "fieldInsurance", "money"],
   ["svjMonthly", "fieldSvjMo", "money"],
@@ -28,13 +30,28 @@ const FIELDS = [
   HoldingCostRow["kind"],
 ])[];
 
+/** A holding-cost field. */
+export type CostField = (typeof COST_FIELDS)[number][0];
+
+const COST_LABEL = Object.fromEntries(
+  COST_FIELDS.map(([field, label]) => [field, label]),
+) as Record<CostField, (typeof COST_FIELDS)[number][1]>;
+
+/** A holding cost's label, as the form and the read view show it. */
+export function costFieldLabel(
+  t: Pick<Dictionary, "propertyDetail">,
+  field: CostField,
+): string {
+  return t.propertyDetail[COST_LABEL[field]];
+}
+
 /** The six costs in the form's order. */
 export function holdingCostsView(
   holding: HoldingCost | undefined,
   defaults: CostDefaults,
   t: Pick<Dictionary, "propertyDetail">,
 ): HoldingCostRow[] {
-  return FIELDS.map(([field, label, kind]) => {
+  return COST_FIELDS.map(([field, label, kind]) => {
     const own = holding?.[field];
     return {
       label: t.propertyDetail[label],

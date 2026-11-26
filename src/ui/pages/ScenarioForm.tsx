@@ -12,7 +12,6 @@ import { isDirty } from "../model/dirty";
 import {
   parseScenarioDraft,
   scenarioWriteErrors,
-  DEFAULT_SHOCK_YEARS,
   type ScenarioDraftFields,
   type LevelKey,
 } from "../model/scenarioForm";
@@ -27,8 +26,7 @@ import { useFormSubmit } from "../hooks/useFormSubmit";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
 import { newId } from "../../lib/newId";
-
-export { DEFAULT_SHOCK_YEARS };
+import { DEFAULT_SHOCK_YEARS } from "../model/scenarios";
 
 export function ScenarioForm({
   assumptions,

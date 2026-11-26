@@ -2,7 +2,7 @@
 // only the rule and, for OUT_OF_RANGE, the allowed range (ADR 0086).
 import type { Dictionary } from "../../i18n";
 import type { RestoreIssue } from "../../state/backup";
-import { fmtCzk } from "../../lib/format";
+import { fmtInt, orDash } from "../../lib/format";
 import { inputRuleText } from "./inputRule";
 
 export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
@@ -16,8 +16,7 @@ export function restoreIssueText(t: Dictionary, i: RestoreIssue): string {
     case "OUT_OF_RANGE":
     case "BEYOND_LIMIT": {
       // A restore issue always carries its range; "—" guards a hand-built one.
-      const n = (v: number | undefined) =>
-        v === undefined ? "—" : fmtCzk(v, { suffix: false });
+      const n = (v: number | undefined) => orDash(v, fmtInt);
       // The size takes one decimal place, the other bounded fields whole numbers
       // (ADR 0236 §1), in the forms' range message (ADR 0259).
       const text =

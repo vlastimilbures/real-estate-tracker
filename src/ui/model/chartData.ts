@@ -7,22 +7,6 @@ import { yearLabel, type SeriesRow } from "./projection";
 import type { Dictionary } from "../../i18n";
 import { at } from "../../lib/arrays";
 
-// Point at the CSS tokens (not literal hex) so charts re-theme with light/dark. CSS
-// variables resolve inside SVG, so these flow straight into recharts stroke/fill/Cell
-// and the DOM legend/tooltip swatches.
-export const SERIES = {
-  petrol: "var(--series-1)",
-  brass: "var(--series-2)",
-  slate: "var(--series-3)",
-  clay: "var(--series-4)",
-  sand: "var(--series-5)",
-  positive: "var(--positive)",
-  negative: "var(--negative)",
-} as const;
-
-/** The committed-debt line's dash: drawn debt + the tranches not drawn yet (ADR 0169). */
-export const COMMITTED_DASH = "6 3";
-
 // A type alias (not interface) so it's structurally assignable to Record<string, number>
 // — the charts accept arbitrary string-keyed series for the Scenarios compare view.
 export type ChartRow = {

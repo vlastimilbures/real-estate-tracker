@@ -21,7 +21,7 @@ import {
 } from "../model/financing";
 import type { Mode } from "../model/lens";
 import type { FinancingExposure, Portfolio, PortfolioKPIs } from "../../engine";
-import { fmtDate } from "../../lib/format";
+import { fmtDate, EMPTY } from "../../lib/format";
 import { useT } from "../hooks/useT";
 import { PropertyLink } from "../components/PropertyLink";
 import "../styles/loan-outlook.css";
@@ -156,7 +156,11 @@ function FixationTimeline({
                   <td className="left">{r.date}</td>
                   <td className="left">{r.timeLeft}</td>
                   <td>
-                    {r.amount ? <Money value={r.amount} parens={false} /> : "—"}
+                    {r.amount ? (
+                      <Money value={r.amount} parens={false} />
+                    ) : (
+                      EMPTY
+                    )}
                   </td>
                 </tr>
               ))}
@@ -264,7 +268,11 @@ export function FinancingPanel(props: {
             {
               id: "balance",
               label: labels.balanceAtReset,
-              value: next ? <Money value={next.balance} parens={false} /> : "—",
+              value: next ? (
+                <Money value={next.balance} parens={false} />
+              ) : (
+                EMPTY
+              ),
             },
             {
               id: "resetting",

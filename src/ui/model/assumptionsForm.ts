@@ -11,11 +11,11 @@ import {
 } from "./formParse";
 import { INT_RANGES } from "../../lib/rules";
 import type { Assumptions } from "../../engine";
-import { CZK } from "../../lib/currency";
+import { CZK } from "../../lib/format";
 import { type Dictionary } from "../../i18n";
 
 /** The form's fields: the projection drivers, then the holding-cost defaults. */
-export function assumptionSpecs(t: Dictionary) {
+export function assumptionSpecs(t: Pick<Dictionary, "assumptions" | "common">) {
   const a = t.assumptions;
   return {
     drivers: [

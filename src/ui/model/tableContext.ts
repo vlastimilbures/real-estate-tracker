@@ -19,10 +19,12 @@ import type { TableExport } from "./xlsxExport";
  *  the date names the year and its period, as Property detail labels it (ADR 0150). */
 export function propertiesSubtitle(
   t: Dictionary,
-  count: number,
-  asOf: Date,
-  basis: AsOfBasis,
-  baseDate: Date,
+  {
+    count,
+    asOf,
+    basis,
+    baseDate,
+  }: { count: number; asOf: Date; basis: AsOfBasis; baseDate: Date },
 ): string {
   const date = fmtDate(asOf);
   return [
@@ -44,7 +46,11 @@ export function propertiesSubtitle(
 }
 
 /** The lens in words; with `baseDate`, Real names the date its Kč are in (ADR 0159). */
-export function lensLabel(t: Dictionary, mode: Mode, baseDate?: Date): string {
+export function lensLabel(
+  t: Pick<Dictionary, "projections">,
+  mode: Mode,
+  baseDate?: Date,
+): string {
   if (mode === "nominal") return t.projections.nominalKc;
   return baseDate
     ? t.projections.realTermsDated(fmtDate(baseDate))
@@ -52,7 +58,7 @@ export function lensLabel(t: Dictionary, mode: Mode, baseDate?: Date): string {
 }
 
 /** The lens as a lower-case word for running text ("real", "nominal"). */
-export function lensWord(t: Dictionary, mode: Mode): string {
+export function lensWord(t: Pick<Dictionary, "common">, mode: Mode): string {
   return mode === "real" ? t.common.realLower : t.common.nominalLower;
 }
 
@@ -70,7 +76,10 @@ export function projectionsSubtitle(
 
 /** The months a projection year runs from and to, when they are not calendar years
  *  (ADR 0211 §2). */
-export function yearSpanNote(t: Dictionary, baseDate: Date): string | null {
+export function yearSpanNote(
+  t: Pick<Dictionary, "monthsShort" | "projections">,
+  baseDate: Date,
+): string | null {
   if (!showPeriodColumn(baseDate)) return null;
   const month = (n: number) =>
     t.monthsShort[edate(baseDate, n).getUTCMonth()] ?? "";

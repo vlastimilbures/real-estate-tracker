@@ -21,7 +21,7 @@ import { pushLayer, type Layer } from "../layers";
  *   dropdown's list (ADR 0157). An open layer while it is on the page.
  * An element's own key handler (`isEscape`) hears it between `first` and `top`.
  */
-export type EscapeOrder = "tip" | "first" | "top";
+type EscapeOrder = "tip" | "first" | "top";
 
 /**
  * Which press outside closes it:
@@ -30,7 +30,7 @@ export type EscapeOrder = "tip" | "first" | "top";
  *   since a press from assistive technology may send a mousedown alone; after a
  *   pointerdown has closed it, the mousedown finds nothing left to close.
  */
-export type OutsidePress = "mousedown" | "press";
+type OutsidePress = "mousedown" | "press";
 
 export type DismissCause = "escape" | "outside";
 

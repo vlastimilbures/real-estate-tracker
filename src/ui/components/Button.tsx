@@ -3,28 +3,40 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cx } from "../../lib/cx";
 
+/**
+ * A segmented choice: one pressed button per option. An option with an icon shows only
+ * the icon, its label as the button's name and tooltip; `className` adds to "segmented".
+ */
 export function SegmentedToggle<T extends string>({
   options,
   value,
   onChange,
   ariaLabel,
+  className,
 }: {
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; icon?: LucideIcon | undefined }[];
   value: T;
   onChange: (v: T) => void;
   ariaLabel?: string | undefined;
+  className?: string | undefined;
 }) {
   return (
-    <div className="segmented" role="group" aria-label={ariaLabel}>
-      {options.map((o) => (
+    <div
+      className={cx("segmented", className)}
+      role="group"
+      aria-label={ariaLabel}
+    >
+      {options.map(({ value: v, label, icon: Icon }) => (
         <button
-          key={o.value}
+          key={v}
           type="button"
-          className={o.value === value ? "on" : ""}
-          aria-pressed={o.value === value}
-          onClick={() => onChange(o.value)}
+          className={v === value ? "on" : ""}
+          aria-pressed={v === value}
+          title={Icon && label}
+          aria-label={Icon && label}
+          onClick={() => onChange(v)}
         >
-          {o.label}
+          {Icon ? <Icon size={16} /> : label}
         </button>
       ))}
     </div>

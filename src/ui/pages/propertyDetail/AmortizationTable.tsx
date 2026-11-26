@@ -1,7 +1,7 @@
 import { Money } from "../../components/figures";
 import { TableWrap } from "../../components/layout";
 import { Pct } from "../../components/rates";
-import { fmtDate } from "../../../lib/format";
+import { fmtDate, EMPTY } from "../../../lib/format";
 import { amortizationExtras } from "../../model/propertyDetail";
 import type { AmortizationRow } from "../../../engine";
 import { useT } from "../../hooks/useT";
@@ -51,7 +51,7 @@ export function AmortizationTable({
               <tr key={row.month} className={reset ? "is-milestone" : ""}>
                 <td className="left">{row.month}</td>
                 <td className="left">
-                  {row.dueDate ? fmtDate(row.dueDate) : "—"}
+                  {row.dueDate ? fmtDate(row.dueDate) : EMPTY}
                 </td>
                 <td>
                   <Pct value={row.ratePa} dp={2} />

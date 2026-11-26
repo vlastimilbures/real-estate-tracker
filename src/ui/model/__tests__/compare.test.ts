@@ -15,7 +15,7 @@ import {
   ownRateNotes,
   type CompareResult,
 } from "../compare";
-import { SERIES } from "../chartData";
+import { SERIES } from "../chartSeries";
 import { compareResult } from "../../__tests__/support/compareResult";
 
 const base = compareResult("base");

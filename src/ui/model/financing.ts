@@ -65,7 +65,10 @@ export interface FinancingPanelModel {
   } | null;
 }
 
-function eventLabel(t: Dictionary, kind: FinancingEventKind): string {
+function eventLabel(
+  t: Pick<Dictionary, "dashboard">,
+  kind: FinancingEventKind,
+): string {
   const d = t.dashboard;
   switch (kind) {
     case "fixationEnd":
@@ -143,7 +146,7 @@ export function financingPanel(
 export const TIMELINE_ROWS = 8;
 
 /** One date on the timeline: a fixation end or another date of the window (ADR 0204). */
-export interface TimelineMark {
+interface TimelineMark {
   kind: FinancingEventKind;
   label: string;
   date: string;
@@ -182,8 +185,11 @@ const KINDS: FinancingEventKind[] = [
 ];
 
 /** Time from the as-of date to `date`, as the remaining-term text (ADR 0117). */
-function timeLeft(t: Dictionary, asOf: Date, date: Date): string {
-  const months = monthsBetween(asOf, date);
+function timeLeft(
+  t: Pick<Dictionary, "dashboard" | "propertyDetail">,
+  { from, to }: { from: Date; to: Date },
+): string {
+  const months = monthsBetween(from, to);
   return months < 1
     ? t.dashboard.financingInUnderMonth
     : t.dashboard.financingIn(remainingTermText(months, t.propertyDetail));
@@ -221,7 +227,7 @@ export function financingTimeline(
     kind,
     label: eventLabel(t, kind),
     date: fmtDate(date),
-    timeLeft: timeLeft(t, asOf, date),
+    timeLeft: timeLeft(t, { from: asOf, to: date }),
     amount,
     at: at(date),
   });
@@ -318,7 +324,7 @@ export function timelineTable(tl: FinancingTimeline) {
 
 /** Row labels of the lens: balances are nominal, so the real lens says so (ADR 0087). */
 export function financingLabels(
-  t: Dictionary,
+  t: Pick<Dictionary, "dashboard">,
   mode: Mode,
   span: ResetWindow,
   horizonYears: number,
