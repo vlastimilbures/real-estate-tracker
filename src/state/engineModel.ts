@@ -74,7 +74,7 @@ export interface PropertyEngineOutput {
   acquisition: AcquisitionSummary;
 }
 
-/** Stored data that breaks an engine rule, reported instead of thrown (DR-146). */
+/** Stored data that breaks an engine rule, reported instead of thrown. */
 export interface InvalidPropertyData {
   invalid: EngineInputError;
 }
@@ -83,7 +83,7 @@ export interface ScenarioResult {
   id: string;
   name: string;
   projection: ProjectionYear[];
-  /** The projection in real terms, deflated by this scenario's CPI (D-23, UX-055). */
+  /** The projection in real terms, deflated by this scenario's CPI (ADR 0023). */
   realProjection: ProjectionYear[];
   kpis: PortfolioKPIs;
 }
@@ -126,7 +126,7 @@ function lazy<T>(compute: () => T): () => T {
   return () => (box ??= { value: compute() }).value;
 }
 
-/** `run()`, or the engine's input error when the stored data breaks a rule (DR-146). */
+/** `run()`, or the engine's input error when the stored data breaks a rule. */
 function reported<T>(run: () => T): T | InvalidPropertyData {
   try {
     return run();
@@ -221,7 +221,7 @@ function scenarioRun(
 }
 
 /** The compare: a scenario that breaks a rule is left out (ADR 0123); each run is kept
- *  by its overrides' content, and names are attached by id after the runs (DR-055). */
+ *  by its overrides' content, and names are attached by id after the runs. */
 function compareOf(
   portfolio: Portfolio,
   assumptions: Assumptions,
@@ -311,7 +311,7 @@ function outputsOf(
         }
       : portfolio;
   const input = filtered === portfolio ? portfolio : keptRows(filtered);
-  // One pass: schedules and projection are built once and shared (DR-042).
+  // One pass: schedules and projection are built once and shared.
   const out = timed("engine-recompute", () =>
     portfolioOutputs(
       input,

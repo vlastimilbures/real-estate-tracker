@@ -1,7 +1,7 @@
 // Calendar days at the UI boundary (ADR 0149). The engine is pure (no Date.now) and keeps
 // every day as a Date at UTC midnight; "now", a picked calendar cell and a backup time
 // stamp are local moments. Each crossing between the two goes through this module, so a
-// time-zone fix is made once (DR-068, DR-072).
+// time-zone fix is made once.
 import { DATE_FLOOR_YEAR } from "./rules";
 
 // The full-year builders. Date.UTC and `new Date(y, m, d)` map years 0–99 to 1900–1999.
@@ -49,13 +49,13 @@ export function isoDay(day: Date): string {
 }
 
 /** Today: the local calendar day of `now`. The UI-boundary clock; `now` is injectable for
- *  tests (DR-072). */
+ *  tests. */
 export function todayUtc(now: Date = new Date()): Date {
   return localDay(now);
 }
 
-/** The local calendar day of `now` as YYYY-MM-DD, for file names (DR-068): a backup
- *  saved at 00:30 in Prague is dated today, not yesterday (UTC). */
+/** The local calendar day of `now` as YYYY-MM-DD, for file names: a backup saved at 00:30
+ *  in Prague is dated today, not yesterday (UTC). */
 export function localIsoDay(now: Date = new Date()): string {
   return isoDay(localDay(now));
 }

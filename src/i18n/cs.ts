@@ -9,14 +9,14 @@ export const cs: Dictionary = {
   common: {
     /** The disclosure that holds a panel's longer explanation (ADR 0214). */
     aboutThis: "O této části",
-    /** A KPI with no value, e.g. a levered IRR (UX-079). */
+    /** A KPI with no value, e.g. a levered IRR. */
     notApplicable: "n/a",
     undrawnDebt: (amount) => `+${amount} k\u00a0dočerpání`,
     completedValue: (amount) => `hodnota po dokončení ${amount}`,
     irrNotUnique:
       "IRR není jednoznačné: peněžní toky mají nulovou současnou hodnotu při více sazbách",
     irrNoRoot: (low, high) => `IRR neleží mezi ${low} a ${high}`,
-    /** Unit shown inside year-count fields (UX-034). */
+    /** Unit shown inside year-count fields. */
     yearsSuffix: "let",
     asOfGroup: "K datu",
     plusYears: (n) => `+${n} r.`,
@@ -24,7 +24,7 @@ export const cs: Dictionary = {
     nSelected: (n) => `Vybráno: ${n}`,
     actions: "Akce",
     searchPlaceholder: "Hledat…",
-    /** Short word for thousands on chart axes (UX-034). */
+    /** Short word for thousands on chart axes. */
     thousandsShort: "tis.",
     yes: "Ano",
     no: "Ne",
@@ -1170,7 +1170,7 @@ export const cs: Dictionary = {
     exportToExcel: "Exportovat do Excelu",
     exported: (name) => `Exportováno ${name}`,
     exportFailed: (detail) => `Export selhal (${detail})`,
-    // Excel sheet names (DR-152, UX-080): ≤ 31 characters, none of []:*?/\.
+    // Excel sheet names: ≤ 31 characters, none of []:*?/\.
     sheetNames: {
       projection: "Projekce",
       amortization: "Splátkový kalendář",
@@ -1198,7 +1198,7 @@ export const cs: Dictionary = {
       draws:
         "Zkontrolujte označené řádky: datum jako dd.mm.yyyy a částku nad 0",
     },
-    /** A bounded whole-number field (UX-068, ADR 0075). */
+    /** A bounded whole-number field (ADR 0075). */
     positiveAmount:
       "Zadejte částku vyšší než 0, např. 500 000 (tisíce oddělte mezerou)",
     intRange: (min: string, max: string) =>
@@ -1244,7 +1244,7 @@ export const cs: Dictionary = {
   },
 
   projGrid: {
-    /** One-letter "year" prefix for "Y5 · 2031" labels (UX-032). */
+    /** One-letter "year" prefix for "Y5 · 2031" labels. */
     yearPrefix: "R",
     year: "Rok",
     opening: "počátek",

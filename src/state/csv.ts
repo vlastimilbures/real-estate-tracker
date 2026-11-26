@@ -1,5 +1,5 @@
-// The UI's door to CSV import (ADR 0072, DR-163): parsing, templates and the import
-// result types. Writing the rows goes through usePortfolioStore's `importCsv`.
+// The UI's door to CSV import (ADR 0072): parsing, templates and the import result types.
+// Writing the rows goes through usePortfolioStore's `importCsv`.
 export {
   parseProperties,
   parseValuations,

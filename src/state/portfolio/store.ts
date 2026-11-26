@@ -84,7 +84,7 @@ function lifecycleActions(
     async refresh() {
       const sql = db.get();
       if (!sql) return;
-      // One point-in-time snapshot of every table (DR-134).
+      // One point-in-time snapshot of every table.
       const state = await loadState(sql);
       set(state);
     },

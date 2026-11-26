@@ -1,7 +1,7 @@
-// The one way the app hands a generated file to the user (DR-088, DR-112): the app's
-// `save_file` command in the app, a browser blob download only outside Tauri (dev/E2E).
-// Rust opens the save dialog, writes a temp file renamed into place and reads it back
-// (src-tauri/src/files.rs, D-64), so `saved` means the file on disk is right; a
+// The one way the app hands a generated file to the user: the app's `save_file` command
+// in the app, a browser blob download only outside Tauri (dev/E2E). Rust opens the save
+// dialog, writes a temp file renamed into place and reads it back
+// (src-tauri/src/files.rs, ADR 0064), so `saved` means the file on disk is right; a
 // cancelled dialog is `cancelled` (the user's own choice, no message).
 import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "../lib/tauri";
@@ -20,7 +20,7 @@ function download({ filename, data, mime }: SaveFileOptions): SaveOutcome {
   a.href = url;
   a.download = filename;
   a.click();
-  // Revoking in the same tick can cancel the download in some engines (DR-088).
+  // Revoking in the same tick can cancel the download in some engines.
   setTimeout(() => URL.revokeObjectURL(url), 0);
   return { kind: "downloaded", filename };
 }

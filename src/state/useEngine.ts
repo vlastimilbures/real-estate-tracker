@@ -18,10 +18,11 @@ import type { Scenario, ProjectionYear, IsoDate } from "../engine";
 
 /**
  * The as-of date the engine sees: the picked date or today, never before baseDate
- * (D-19 default max(today, baseDate); the engine rejects an earlier one). The pages pass
- * a date already resolved into the window (`resolveAsOf`, ADR 0150). UI-boundary dates are UTC midnight by construction (todayUtc,
- * DateInput, AsOfPicker); `utc` rebuilds the same day as a branded IsoDate (D-25). The
- * model keys on getTime(), so the fresh object does not trigger a recompute.
+ * (ADR 0019 default max(today, baseDate); the engine rejects an earlier one). The pages
+ * pass a date already resolved into the window (`resolveAsOf`, ADR 0150). UI-boundary
+ * dates are UTC midnight by construction (todayUtc, DateInput, AsOfPicker); `utc`
+ * rebuilds the same day as a branded IsoDate (ADR 0025). The model keys on getTime(), so
+ * the fresh object does not trigger a recompute.
  */
 function engineAsOf(asOf: Date | null | undefined, baseDate: Date): IsoDate {
   const picked = asOf ?? todayUtc();
@@ -41,11 +42,11 @@ function useEngineModel(): EngineModel | null {
 /**
  * Portfolio-wide engine output, or null until the store has loaded.
  *
- * Pass `propertyIds` to compute over a subset (e.g. the Dashboard filter). The
- * engine sees only the kept properties and their rows, so the other properties'
- * rows are not orphans to it (D-37); the returned `portfolio` keeps the other
- * arrays whole. Empty/undefined = whole portfolio (default for all callers). A new
- * array with the same ids, in any order, returns the same output.
+ * Pass `propertyIds` to compute over a subset (e.g. the Dashboard filter). The engine
+ * sees only the kept properties and their rows, so the other properties' rows are not
+ * orphans to it (ADR 0037); the returned `portfolio` keeps the other arrays whole.
+ * Empty/undefined = whole portfolio (default for all callers). A new array with the same
+ * ids, in any order, returns the same output.
  */
 export function useEngine(
   propertyIds?: string[] | null,
@@ -68,7 +69,7 @@ export function useEngine(
  * during render (ADR 0123); the caller names it from the ids missing in the result.
  * Returns one result per remaining scenario, in order, or null until the store has
  * loaded. Each run is kept by its overrides' content, so an equal new selection, a
- * rename or a revisit runs nothing again (#147, DR-055, #469).
+ * rename or a revisit runs nothing again (#147, #469).
  */
 export function useScenarioComparison(
   scenarios: Scenario[],
@@ -90,7 +91,7 @@ export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
 
 /**
  * Per-property engine output for the detail screen, or the engine's input error when the
- * stored data breaks a rule, so the page can still show the records to fix (DR-146).
+ * stored data breaks a rule, so the page can still show the records to fix.
  * What does not depend on the as-of date is built once per data change (#174).
  */
 export function usePropertyEngineResult(

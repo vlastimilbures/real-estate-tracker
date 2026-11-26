@@ -32,7 +32,7 @@ export async function openBrowserSql(): Promise<Sql> {
     transaction(statements: SqlStatement[]): Promise<void> {
       db.run("BEGIN");
       try {
-        // A parameterless text may hold several statements (a migration, DR-084).
+        // A parameterless text may hold several statements (a migration).
         for (const s of statements) {
           if (s.params?.length) db.run(s.query, s.params as never[]);
           else db.exec(s.query);

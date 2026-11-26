@@ -26,10 +26,10 @@ import type { PropertyExtras } from "../../data/mappers";
 import type { RefusedWrite } from "../writeTargets";
 import type { WriteRunner } from "./writeRunner";
 
-/** Where start-up stands, as one value (#467). `loading` with `refused` is Try again after
- *  a failed read-back: writes stay refused until it has read the data (ADR 0228).
+/** Where start-up stands, as one value (#467). `loading` with `refused` is Try again
+ *  after a failed read-back: writes stay refused until it has read the data (ADR 0228).
  *  `startupFailed`: `error` for the screen, and `startup` when it was a typed data-layer
- *  failure (P5a). `readBackFailed`: a write committed but reading the data back failed;
+ *  failure. `readBackFailed`: a write committed but reading the data back failed;
  *  `refused` names the writes refused since, once each in the order refused and without
  *  bookkeeping (ADR 0255). */
 export type Status =

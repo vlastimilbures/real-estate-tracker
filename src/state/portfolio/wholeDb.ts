@@ -62,7 +62,7 @@ function csvActions({
   requireSql,
 }: StoreCtx): Pick<WholeDbActions, "previewCsv" | "importCsv"> {
   return {
-    // Loaded on first use: keeps the CSV parser out of the startup bundle (P9).
+    // Loaded on first use: keeps the CSV parser out of the startup bundle.
     previewCsv: async (batch) => {
       try {
         return success(
@@ -87,7 +87,7 @@ function csvActions({
               return await importCsv(sql, batch);
             } catch (e) {
               // Known here, where the class is loaded, so it stays out of the
-              // startup bundle (P9). Nothing was written (ADR 0229 §2).
+              // startup bundle. Nothing was written (ADR 0229 §2).
               if (e instanceof CsvImportProblemsError) plan.refused = e.preview;
               throw e;
             }

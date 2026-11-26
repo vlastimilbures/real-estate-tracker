@@ -1,6 +1,6 @@
-// UI-only state: which screen is shown, which property is drilled into, the
-// Nominal/Real lens, and the UI language. No business logic here — purely navigation +
-// presentation mode.
+// UI-only state: what the app shows and how (navigation, the lens and the display
+// preferences, the open panels), and the one-off requests and messages the shell passes
+// to a page (a menu command, toasts, notices, failures). No business logic here.
 import { create } from "zustand";
 import { isDictionaryLoaded, loadDictionary } from "../i18n";
 import type { Language } from "../i18n/types";
@@ -108,9 +108,9 @@ interface UiState {
   asOf: Date | null;
   /** Whether the About modal is open. Opened from the native macOS menu. In-memory only. */
   aboutOpen: boolean;
-  /** Glossary entry the Guide should bring into view once (UX-044). In-memory only. */
+  /** Glossary entry the Guide should bring into view once. In-memory only. */
   guideTerm: string | null;
-  /** Properties should open its Add form once (menu ⌘N, UX-066). In-memory only. */
+  /** Properties should open its Add form once (menu ⌘N). In-memory only. */
   newPropertyRequested: boolean;
   /** Property detail should move to this section, or open the property form, once (a
    *  data check fix link, ADR 0118). In-memory only. */
@@ -175,11 +175,11 @@ interface UiState {
   setAsOf: (date: Date | null) => void;
   openAbout: () => void;
   closeAbout: () => void;
-  /** Open the Guide at a glossary term (UX-044). */
+  /** Open the Guide at a glossary term. */
   openGuide: (term: string) => void;
   /** The Guide has shown `guideTerm`. */
   clearGuideTerm: () => void;
-  /** Go to Properties and open the Add form (File ▸ New Property…, UX-066). */
+  /** Go to Properties and open the Add form (File ▸ New Property…). */
   requestNewProperty: () => void;
   /** Properties has opened the Add form for `newPropertyRequested`. */
   clearNewPropertyRequest: () => void;
@@ -187,7 +187,7 @@ interface UiState {
    *  the Dashboard. */
   showSampleCleared: (safetyBackup: string) => void;
   dismissBackupHint: () => void;
-  /** Some open form holds unsaved edits (UX-030): `unsavedSources` is not empty. */
+  /** Some open form holds unsaved edits: `unsavedSources` is not empty. */
   unsavedChanges: boolean;
   /** The open forms holding unsaved edits, one key per form, so a clean form never
    *  clears another form's flag. */
@@ -209,7 +209,7 @@ interface UiState {
 }
 
 /** Navigation that leaves the current screen or Settings tab: held back while a form
- *  has unsaved edits (UX-030); staying where you are never asks. */
+ *  has unsaved edits; staying where you are never asks. */
 function guarded(
   get: () => UiState,
   set: (s: Partial<UiState>) => void,
@@ -224,7 +224,7 @@ function guarded(
   else set(target);
 }
 
-/** The pending toast dismissal; a newer toast restarts it (DR-058). */
+/** The pending toast dismissal; a newer toast restarts it. */
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 let toastSeq = 0;
 
@@ -309,8 +309,8 @@ export const useUiStore = create<UiState>((set, get) => ({
     set({ theme });
   },
   setLanguage: (language) => {
-    // Show a language only once its dictionary has loaded (DR-009): the UI keeps the
-    // current one meanwhile, and the last choice wins when loads finish out of order.
+    // Show a language only once its dictionary has loaded: the UI keeps the current one
+    // meanwhile, and the last choice wins when loads finish out of order.
     requestedLanguage = language;
     const apply = () => {
       if (requestedLanguage !== language) return;
@@ -375,7 +375,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   cancelLeave: () => set({ pendingLeave: null, pendingSource: null }),
 }));
 
-/** Load the saved language's dictionary before the first render (src/main.tsx, DR-009).
+/** Load the saved language's dictionary before the first render (src/main.tsx).
  *  If it fails, show English for this session; the saved choice is kept. */
 export async function loadStartupDictionary(): Promise<void> {
   const language = useUiStore.getState().language;
