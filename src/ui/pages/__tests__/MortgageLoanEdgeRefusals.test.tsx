@@ -21,8 +21,9 @@ import { dubovaDevLoan } from "../../../engine/__tests__/support/loan";
 const en = getDict("en");
 const d = en.propertyDetail;
 const plain = portfolio.mortgages.find((m) => m.propertyId === "dubova")!;
-const dev = dubovaDevLoan();
 // From 2024-03-12 over 30 years: payment 358 is due 2054-01-12, 359 2054-02-12.
+const dev = dubovaDevLoan();
+
 /** A later Dubova block, stored next to the edited one. */
 const later: MortgageBlock = {
   ...plain,
