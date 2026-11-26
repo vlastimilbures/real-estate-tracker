@@ -91,6 +91,7 @@ describe("ADR 0121: the first cash-flow-positive year is strictly positive", () 
   ): Portfolio => ({
     properties: [
       {
+        active: true,
         id: "f",
         name: "Future flat",
         purchaseDate: isoDate(purchaseDate),

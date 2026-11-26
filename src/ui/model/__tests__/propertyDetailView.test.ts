@@ -173,6 +173,7 @@ describe("the page's sections and their nav links (ADR 0107)", () => {
 
 describe("propertySubtitle (ADR 0156, 0236 §2)", () => {
   const bare: Property = {
+    active: true,
     id: "x",
     name: "X",
     purchaseDate: isoDate("2020-02-03"),

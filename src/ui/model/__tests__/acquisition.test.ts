@@ -174,6 +174,7 @@ describe("cashInvestedTotal", () => {
     name: id,
     purchaseDate: isoDate("2020-01-01"),
     purchasePrice: money("5000000"),
+    active: true,
     ...over,
   });
   const cash = (amount: string) => ({ funding: { ownCash: money(amount) } });

@@ -52,6 +52,7 @@ function withBuy(
     name: "Byt Slovanske",
     purchaseDate,
     purchasePrice: money(PRICE),
+    active: true,
     ...patch,
   };
   return {

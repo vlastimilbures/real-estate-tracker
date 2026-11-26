@@ -24,6 +24,7 @@ const g = en.projGrid;
 const offPlan: Portfolio = {
   properties: [
     {
+      active: true,
       id: "dev",
       name: "Dev unit",
       purchaseDate: isoDate("2027-03-01"),

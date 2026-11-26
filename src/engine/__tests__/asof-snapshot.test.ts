@@ -197,6 +197,7 @@ describe("baseDate predates the first valuation (the user's real shape)", () => 
   const baseDate = isoDate("2025-12-31");
   const a = { ...assumptions, baseDate };
   const prop = {
+    active: true,
     id: "p1",
     name: "Flat",
     type: "1 bedroom",

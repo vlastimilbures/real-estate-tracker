@@ -38,6 +38,7 @@ const fixedCost = (t: number, months: number) =>
   FIXED_YR.times(CPI[t]!).times(months).div(12);
 
 const slovanske: Property = {
+  active: true,
   id: "slovanske",
   name: "Byt Slovanske",
   purchaseDate: PURCHASE,

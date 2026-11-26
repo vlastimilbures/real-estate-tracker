@@ -42,6 +42,7 @@ function withOwned(
     name: "Byt Kralovska",
     purchaseDate: isoDate("2020-03-01"),
     purchasePrice: money(4_000_000),
+    active: true,
     ...patch,
   };
   return {

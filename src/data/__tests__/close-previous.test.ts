@@ -53,6 +53,7 @@ async function ready(): Promise<TestSql> {
       {
         id: "p1",
         name: "Flat",
+        active: true,
         purchaseDate: isoDate("2024-01-01"),
         purchasePrice: money("4000000"),
       },

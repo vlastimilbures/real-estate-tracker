@@ -457,6 +457,7 @@ describe("data check: scope (ADR 0118)", () => {
     properties: [
       ...portfolio.properties,
       {
+        active: true,
         id: "future",
         name: "Byt Future",
         purchaseDate: isoDate("2027-01-01"),

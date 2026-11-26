@@ -45,6 +45,7 @@ describe("ADR 0122: the latest started valuation governs, closed or not", () => 
 
   /** Bought 2018-03-01 for 4,000,000; one valuation of 7,000,000 from 2023-09-01. */
   const property: Property = {
+    active: true,
     id: "p",
     name: "P",
     purchaseDate: isoDate("2018-03-01"),

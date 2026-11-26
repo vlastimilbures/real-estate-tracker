@@ -77,6 +77,7 @@ function onePropertyPortfolio(block: MortgageBlock): {
   property: Property;
 } {
   const property: Property = {
+    active: true,
     id: "p",
     name: "P",
     purchaseDate: block.startDate,
@@ -364,6 +365,7 @@ describe(
             );
             // The purchase price (1 Kč here) stands in only when there is no valuation.
             const property: Property = {
+              active: true,
               id: "p",
               name: "P",
               purchaseDate: utc(2020, 1, 1),
@@ -406,6 +408,7 @@ describe(
               monthlyRent: money(r.amount),
             }));
             const property: Property = {
+              active: true,
               id: "p",
               name: "P",
               purchaseDate: utc(2020, 1, 1),

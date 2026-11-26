@@ -19,6 +19,7 @@ const MONTHLY_RENT = 20_000;
 const PRINCIPAL = 2_000_000;
 
 const slovanske: Property = {
+  active: true,
   id: "slovanske",
   name: "Byt Slovanske",
   type: "1 bedroom",
@@ -144,6 +145,7 @@ describe("future property — mid-year purchase (turn-on alignment)", () => {
   const MID_VALUE = 5_000_000;
   const MID_RENT = 18_000;
   const midProp: Property = {
+    active: true,
     id: "mid",
     name: "Byt Mid",
     purchaseDate: MID,
@@ -254,6 +256,7 @@ describe("future property — turn-on edges (DR-168)", () => {
   /** The projection of a loan-free property bought on `purchaseDate`. */
   const bought = (purchaseDate: string, leases: Lease[] = []) => {
     const p: Property = {
+      active: true,
       id: "nova",
       name: "Byt Nova",
       purchaseDate: isoDate(purchaseDate),

@@ -111,6 +111,7 @@ describe("ProjectionYear.acquiredValue (ADR 0165)", () => {
     const pf: Portfolio = {
       properties: [
         {
+          active: true,
           id: "dev",
           name: "Dev unit",
           purchaseDate: isoDate("2027-03-01"),

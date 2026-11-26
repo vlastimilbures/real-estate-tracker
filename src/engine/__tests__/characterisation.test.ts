@@ -148,6 +148,7 @@ describe("Loan starting in (baseDate, baseDate + 1 month] on an owned property /
   const owned: Portfolio = {
     properties: [
       {
+        active: true,
         id: "p",
         name: "P",
         purchaseDate: isoDate("2020-01-01"),
@@ -231,6 +232,7 @@ describe("Tranche dated after baseDate within grid month 1 // D-44 (DR-121)", ()
   ): Portfolio => ({
     properties: [
       {
+        active: true,
         id: "p",
         name: "P",
         purchaseDate: isoDate("2020-01-01"),
@@ -389,6 +391,7 @@ describe("CAGR and DSCR edge cases", () => {
   const property = {
     id: "p",
     name: "P",
+    active: true,
     purchaseDate: isoDate("2020-01-01"),
     purchasePrice: money(3_000_000),
   };

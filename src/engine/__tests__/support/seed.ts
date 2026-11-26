@@ -45,6 +45,7 @@ function holdingFor(propertyId: string) {
 export const portfolio: Portfolio = {
   properties: [
     {
+      active: true,
       id: "javorova",
       name: "Byt Javorova",
       type: "3 bedroom",
@@ -53,6 +54,7 @@ export const portfolio: Portfolio = {
       purchasePrice: money("4080000"),
     },
     {
+      active: true,
       id: "lipova",
       name: "Byt Lipova",
       type: "1 bedroom",
@@ -61,6 +63,7 @@ export const portfolio: Portfolio = {
       purchasePrice: money("7225000"),
     },
     {
+      active: true,
       id: "dubova",
       name: "Byt Dubova",
       type: "1 bedroom",

@@ -256,6 +256,7 @@ describe("Development loan — through the projection path", () => {
     return {
       properties: [
         {
+          active: true,
           id: "dev",
           name: "Dev unit",
           purchaseDate: isoDate("2025-01-01"),

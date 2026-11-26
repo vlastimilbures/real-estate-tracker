@@ -16,6 +16,7 @@ const sql = openMemorySql();
 afterAll(() => sql.db.close());
 
 const property: Property = {
+  active: true,
   id: "p-half",
   name: "Half-metre flat",
   purchaseDate: isoDate("2020-01-01"),
