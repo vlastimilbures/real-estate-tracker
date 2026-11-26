@@ -9,13 +9,19 @@
 #[cfg(target_os = "macos")]
 fn main() {
     let got = dump();
-    let want: Vec<&str> = include_str!("menu_built.txt").lines().collect();
+    let want: Vec<&str> = include_str!("menu_built.txt")
+        .lines()
+        .filter(|l| !l.starts_with('#'))
+        .collect();
     if got != want {
         eprintln!("--- built menu ---");
         for line in &got {
             eprintln!("{line}");
         }
-        panic!("the built menu differs from tests/menu_built.txt");
+        panic!(
+            "the built menu differs from tests/menu_built.txt; if only macOS changed how it \
+             shows the menu, paste the lines above into that file below its header"
+        );
     }
     println!("menu_built: {} lines match", got.len());
 }

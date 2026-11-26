@@ -34,9 +34,7 @@ describe("the View menu's pages match the routes table (#483)", () => {
     /pub const ITEMS[^=]*=\s*\[([\s\S]*?)\n\];/.exec(rust)?.[1] ?? "";
 
   test("the Rust View menu names the same pages in the same order", () => {
-    const pages = [...items.matchAll(/page\(\s*"nav:([^"]+)"/g)].map(
-      (m) => m[1],
-    );
+    const pages = [...items.matchAll(/"nav:([^"]+)"/g)].map((m) => m[1]);
     expect(pages).toEqual(menuPages);
   });
 
