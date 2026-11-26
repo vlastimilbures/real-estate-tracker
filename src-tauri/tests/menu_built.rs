@@ -20,8 +20,11 @@ fn main() {
     println!("menu_built: {} lines match", got.len());
 }
 
+/// The menu is macOS's; elsewhere (the Linux CI runner) there is nothing to check.
 #[cfg(not(target_os = "macos"))]
-fn main() {}
+fn main() {
+    println!("menu_built: skipped, AppKit only (run it on macOS)");
+}
 
 /// One line per item: indent per level, `---` for a separator, else the title, `(icon)`
 /// when it has one, and its key equivalent as `[⌘⇧⌥⌃]key`. The process name macOS puts
