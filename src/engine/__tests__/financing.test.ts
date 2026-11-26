@@ -14,7 +14,6 @@ import { leaseEndWithoutFollowOn, upcomingEvents } from "../upcomingEvents";
 import { propertySchedules, type PropertySchedule } from "../schedule";
 import { portfolioOutputs } from "../outputs";
 import { impliedMaturity } from "../loanChecks";
-import { mortgageBlock } from "../loanBlock";
 import { edate, isoDate } from "../dates";
 import { money, rate } from "../brands";
 import { ZERO } from "../../lib/money";
@@ -22,7 +21,6 @@ import type {
   AmortizationRow,
   IsoDate,
   MortgageBlock,
-  MortgageBlockFields,
   Portfolio,
 } from "../types";
 import { BASE_DATE, assumptions, portfolio } from "./support/seed";
@@ -30,6 +28,7 @@ import { devBlock, mixed } from "./support/mixed";
 import { mixedWithRefi } from "./support/synthetic";
 import { fcRuns } from "./support/fcRuns";
 import { expectKc } from "./support/tolerance";
+import { fourPctLoan } from "./support/loan";
 
 // Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
 const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261011, 40);
@@ -86,20 +85,6 @@ function single(...blocks: MortgageBlock[]): Portfolio {
     leases: [],
     holdingCosts: [],
   };
-}
-
-function block(
-  over: Partial<MortgageBlockFields> & { id: string },
-): MortgageBlock {
-  return mortgageBlock({
-    propertyId: "p",
-    startDate: isoDate("2024-01-10"),
-    initialPrincipal: money("3000000"),
-    fixationYears: 5,
-    interestRatePa: rate("0.04"),
-    monthlyInstalment: money("14322.46"),
-    ...over,
-  });
 }
 
 describe("ADR 0103: next fixation on the sample portfolio", () => {
@@ -187,7 +172,7 @@ describe("ADR 0103: as-of after baseDate", () => {
 
 describe("ADR 0103: edge cases", () => {
   it("expired fixation: passed, no next fixation (ADR 0030)", () => {
-    const old = block({
+    const old = fourPctLoan({
       id: "old",
       startDate: isoDate("2016-01-10"),
       fixationYears: 5,
@@ -200,7 +185,7 @@ describe("ADR 0103: edge cases", () => {
   });
 
   it("paid off before the reset: repaid, balance 0", () => {
-    const short = block({
+    const short = fourPctLoan({
       id: "short",
       fixationYears: 10,
       loanTermYears: 5,
@@ -215,7 +200,7 @@ describe("ADR 0103: edge cases", () => {
   });
 
   it("fixed to maturity: the fixation-end payment repays it, so no reset", () => {
-    const toEnd = block({
+    const toEnd = fourPctLoan({
       id: "to-end",
       fixationYears: 5,
       loanTermYears: 5,
@@ -226,7 +211,7 @@ describe("ADR 0103: edge cases", () => {
 
   it("a reset one payment before payoff: upcoming, with the balance after its own payment", () => {
     // 61 payments of 1,000 at 0 %: 1,000 is left after payment 60 on the fixation end.
-    const short = block({
+    const short = fourPctLoan({
       id: "short",
       startDate: isoDate("2026-06-07"),
       initialPrincipal: money("61000"),
@@ -242,7 +227,7 @@ describe("ADR 0103: edge cases", () => {
   });
 
   it("0 fixation years: a floating loan has no fixation end", () => {
-    const floating = block({ id: "float", fixationYears: 0 });
+    const floating = fourPctLoan({ id: "float", fixationYears: 0 });
     const { fx } = exposure(single(floating));
     expect(fx.resets).toHaveLength(0);
     expect(loan(fx, "p").nextFixation).toBeNull();
@@ -289,8 +274,8 @@ describe("ADR 0103: edge cases", () => {
   it("a successor starting in the fixation-end schedule month replaces it", () => {
     // Fixation-end payment due 2029-01-10 sits on grid month 2029-02-07; a successor
     // starting 2029-01-20 draws in that same month.
-    const first = block({ id: "first" });
-    const next = block({
+    const first = fourPctLoan({ id: "first" });
+    const next = fourPctLoan({
       id: "next",
       startDate: isoDate("2029-01-20"),
       initialPrincipal: money("2500000"),
@@ -373,9 +358,12 @@ describe("ADR 0103: edge cases", () => {
         asOf,
       )?.chain,
     ).toEqual(["m-javorova", "m-refi"]);
-    const old = block({ id: "old", startDate: isoDate("2018-03-10") });
-    const now = block({ id: "now", startDate: isoDate("2024-01-10") });
-    const later = block({ id: "later", startDate: isoDate("2029-01-10") });
+    const old = fourPctLoan({ id: "old", startDate: isoDate("2018-03-10") });
+    const now = fourPctLoan({ id: "now", startDate: isoDate("2024-01-10") });
+    const later = fourPctLoan({
+      id: "later",
+      startDate: isoDate("2029-01-10"),
+    });
     const blocks = [later, old, now];
     const one = scheduleOf(propertySchedules(blocks, ["p"], assumptions), "p");
     expect(
@@ -389,19 +377,19 @@ describe("ADR 0117: replaced and repaid outrank passed", () => {
     exposure(single(...blocks), isoDate(asOf)).fx;
 
   it("a block refinanced mid-fixation stays replaced after its fixation end", () => {
-    const a = block({ id: "a", startDate: isoDate("2024-01-10") });
-    const b = block({ id: "b", startDate: isoDate("2027-01-10") });
+    const a = fourPctLoan({ id: "a", startDate: isoDate("2024-01-10") });
+    const b = fourPctLoan({ id: "b", startDate: isoDate("2027-01-10") });
     expect(reset(at("2026-06-07", a, b), "a").status).toBe("replaced");
     expect(reset(at("2029-06-01", a, b), "a").status).toBe("replaced");
   });
 
   it("a refix on the fixation end stays replaced after it", () => {
-    const a = block({
+    const a = fourPctLoan({
       id: "a",
       startDate: isoDate("2024-01-10"),
       fixationYears: 3,
     });
-    const b = block({
+    const b = fourPctLoan({
       id: "b",
       startDate: isoDate("2027-01-10"),
       fixationYears: 2,
@@ -411,7 +399,7 @@ describe("ADR 0117: replaced and repaid outrank passed", () => {
   });
 
   it("a loan repaid before its fixation end stays repaid after it", () => {
-    const short = block({
+    const short = fourPctLoan({
       id: "short",
       startDate: isoDate("2025-06-10"),
       initialPrincipal: money("300000"),
@@ -424,19 +412,22 @@ describe("ADR 0117: replaced and repaid outrank passed", () => {
     expect(
       reset(exposure(portfolio, isoDate("2031-06-01")).fx, "m-javorova").status,
     ).toBe("passed");
-    const old = block({ id: "old", startDate: isoDate("2016-01-10") });
+    const old = fourPctLoan({ id: "old", startDate: isoDate("2016-01-10") });
     expect(reset(at("2026-06-07", old), "old").status).toBe("passed");
   });
 
   it("a fixation end paid on baseDate (grid month 0) has passed", () => {
     // 2021-06-07 + 5 y = baseDate: payment 60 is due by baseDate, so it has no row.
-    const onBase = block({ id: "on-base", startDate: isoDate("2021-06-07") });
+    const onBase = fourPctLoan({
+      id: "on-base",
+      startDate: isoDate("2021-06-07"),
+    });
     const r = reset(at("2026-06-07", onBase), "on-base");
     expect([r.gridMonth, r.status]).toEqual([0, "passed"]);
   });
 
   it("a fixation end before baseDate has passed, whatever the as-of", () => {
-    const old = block({ id: "old", startDate: isoDate("2016-01-10") });
+    const old = fourPctLoan({ id: "old", startDate: isoDate("2016-01-10") });
     const fx = at("2020-06-01", old);
     expect(reset(fx, "old").status).toBe("passed");
     expect(loan(fx, "p").nextFixation).toBeNull();
@@ -464,9 +455,9 @@ describe("ADR 0117: remaining term = payments due after as-of", () => {
   it("a refinance chain: each month's payment is on the block drawn before it", () => {
     // a pays on the 10th; b (drawn in grid month 8) and c (month 32) on the 25th.
     const chain = single(
-      block({ id: "a" }),
-      block({ id: "b", startDate: isoDate("2027-01-25") }),
-      block({ id: "c", startDate: isoDate("2029-01-25") }),
+      fourPctLoan({ id: "a" }),
+      fourPctLoan({ id: "b", startDate: isoDate("2027-01-25") }),
+      fourPctLoan({ id: "c", startDate: isoDate("2029-01-25") }),
     );
     const view = (asOf: string) => loan(exposure(chain, isoDate(asOf)).fx, "p");
     // c's 360th payment, on its own day.
@@ -480,7 +471,10 @@ describe("ADR 0117: remaining term = payments due after as-of", () => {
   it("a loan not yet drawn counts its own payments only", () => {
     // 3,000,000 at 4 % for 14,322.46 is a 30-year annuity: 360 payments from 10.02.2028,
     // none in the 19 schedule months before the draw.
-    const later = block({ id: "later", startDate: isoDate("2028-01-10") });
+    const later = fourPctLoan({
+      id: "later",
+      startDate: isoDate("2028-01-10"),
+    });
     expect(loan(exposure(single(later)).fx, "p").remainingMonths).toBe(360);
   });
 });
@@ -590,15 +584,15 @@ describe("ADR 0103: upcoming events", () => {
 
   it("a replaced fixation end and a loan repaid before baseDate are not events", () => {
     // a's fixation ends 2029-01-10, inside the window, but b replaces a first.
-    const a = block({ id: "a", startDate: isoDate("2024-01-10") });
-    const b = block({ id: "b", startDate: isoDate("2027-01-10") });
+    const a = fourPctLoan({ id: "a", startDate: isoDate("2024-01-10") });
+    const b = fourPctLoan({ id: "b", startDate: isoDate("2027-01-10") });
     const refi = single(a, b);
     const { fx: refiFx } = exposure(refi);
     expect(reset(refiFx, "a").status).toBe("replaced");
     expect(upcomingEvents(refi, refiFx, 36)).toEqual([]);
 
     const old = single(
-      block({
+      fourPctLoan({
         id: "old",
         startDate: isoDate("2020-01-10"),
         initialPrincipal: money("300000"),
@@ -621,7 +615,7 @@ describe("ADR 0103: upcoming events", () => {
     // The successor starts 2027-01-10, before the 2027-08-20 completion.
     const replaced = single(
       { ...devBlock, propertyId: "p" },
-      block({ id: "succ", startDate: isoDate("2027-01-10") }),
+      fourPctLoan({ id: "succ", startDate: isoDate("2027-01-10") }),
     );
     const kinds = upcomingEvents(replaced, exposure(replaced).fx, 24).map(
       (e) => e.kind,

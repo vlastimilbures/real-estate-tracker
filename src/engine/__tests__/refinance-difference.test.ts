@@ -11,25 +11,9 @@ import { openingDebt, propertySchedule } from "../schedule";
 import type { AmortizationRow, MortgageBlock, Portfolio } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { mixedWithRefi } from "./support/synthetic";
-import { mortgageBlock } from "../loanBlock";
+import { refiLoan } from "./support/loan";
 
 const javorova = portfolio.mortgages.filter((m) => m.propertyId === "javorova");
-
-const refi = (
-  start: string,
-  principal: Decimal | string,
-  extra: Partial<MortgageBlock> = {},
-): MortgageBlock =>
-  mortgageBlock({
-    id: "m-refi",
-    propertyId: "javorova",
-    startDate: isoDate(start),
-    initialPrincipal: money(principal),
-    fixationYears: 5,
-    interestRatePa: rate("0.039"),
-    monthlyInstalment: money("9800"),
-    ...extra,
-  });
 
 const withRefi = (block: MortgageBlock): Portfolio => ({
   ...portfolio,
@@ -64,7 +48,12 @@ function identityGap(rows: AmortizationRow[], opening: Decimal): number {
 // successor starting that day draws in grid month 56 and pays that balance off.
 describe("ADR 0130: the refinance difference is apart from draws", () => {
   it("a successor rounded to 1,000 Kč: −249.89 Kč, nothing drawn", () => {
-    const { r, row } = handover(refi("2031-01-17", "1386000"));
+    const { r, row } = handover(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money("1386000"),
+      }),
+    );
     expect(r.month).toBe(56);
     expect(row.drawn.toString()).toBe("0");
     expect(row.refinanced.toFixed(2)).toBe("-249.89");
@@ -72,29 +61,49 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
   });
 
   it("a 200,000 Kč paydown at the refix: −200,000 Kč", () => {
-    const { r } = handover(refi("2031-01-17", "1386249.89"));
+    const { r } = handover(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money("1386249.89"),
+      }),
+    );
     const { row } = handover(
-      refi("2031-01-17", r.paidOff.minus(200000).toString()),
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money(r.paidOff.minus(200000).toString()),
+      }),
     );
     expect(row.drawn.toString()).toBe("0");
     expect(row.refinanced.toFixed(2)).toBe("-200000.00");
   });
 
   it("a successor typed to the haléř leaves a sub-haléř difference", () => {
-    const { row } = handover(refi("2031-01-17", "1386249.89"));
+    const { row } = handover(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money("1386249.89"),
+      }),
+    );
     expect(row.drawn.toString()).toBe("0");
     expect(row.refinanced.abs().lessThan(0.005)).toBe(true);
   });
 
   it("is zero in every other row", () => {
-    const { s, r } = handover(refi("2031-01-17", "1386000"));
+    const { s, r } = handover(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money("1386000"),
+      }),
+    );
     const others = s.rows.filter((x) => x.month !== r.month);
     expect(others.every((x) => x.refinanced.isZero())).toBe(true);
   });
 
   it("a tranche the successor draws in the handover month stays drawn", () => {
     const { r, row } = handover(
-      refi("2031-01-17", "1386000", {
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money("1386000"),
         loanTermYears: 20,
         completionDate: isoDate("2032-01-17"),
         draws: [{ date: isoDate("2031-01-30"), amount: money("100000") }],
@@ -111,14 +120,22 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
     // The owner pays on the 15th; its 500,000 Kč tranche (10.06) lands in grid month 1,
     // and so does a successor starting 12.06, before that payment is due: the balance
     // it pays off includes the tranche.
-    const owner = refi("2025-01-15", "1000000", {
+    const owner = refiLoan({
+      startDate: isoDate("2025-01-15"),
+      initialPrincipal: money("1000000"),
       id: "m-dev",
       interestRatePa: rate("0.05"),
       monthlyInstalment: money("5400"),
       loanTermYears: 30,
       draws: [{ date: isoDate("2026-06-10"), amount: money("500000") }],
     });
-    const blocks = [owner, refi("2026-06-12", "1600000")];
+    const blocks = [
+      owner,
+      refiLoan({
+        startDate: isoDate("2026-06-12"),
+        initialPrincipal: money("1600000"),
+      }),
+    ];
     const s = propertySchedule(blocks, assumptions);
     const [r] = s.refinances;
     const row = s.rows[0]!;
@@ -138,7 +155,9 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
     // ADR 0138 (#229): grid month 4 is 07.10.2026. The owner's 200,000 Kč tranche
     // (08.09) is dated before the successor's start (09.09), while its payment of that
     // month (15.09) is due after it and dropped: the successor still pays the tranche off.
-    const owner = refi("2025-01-15", "1000000", {
+    const owner = refiLoan({
+      startDate: isoDate("2025-01-15"),
+      initialPrincipal: money("1000000"),
       id: "m-dev",
       interestRatePa: rate("0.05"),
       monthlyInstalment: money("5400"),
@@ -146,7 +165,13 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
       completionDate: isoDate("2027-01-15"),
       draws: [{ date: isoDate("2026-09-08"), amount: money("200000") }],
     });
-    const blocks = [owner, refi("2026-09-09", "1300000")];
+    const blocks = [
+      owner,
+      refiLoan({
+        startDate: isoDate("2026-09-09"),
+        initialPrincipal: money("1300000"),
+      }),
+    ];
     const s = propertySchedule(blocks, assumptions);
     const [r] = s.refinances;
     const row = s.rows[r!.month - 1]!;
@@ -161,14 +186,27 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
 
   it("every row reconciles with drawn + refinanced", () => {
     for (const principal of ["1386000", "1186249.89", "1633000"]) {
-      const { s } = handover(refi("2031-01-17", principal));
+      const { s } = handover(
+        refiLoan({
+          startDate: isoDate("2031-01-17"),
+          initialPrincipal: money(principal),
+        }),
+      );
       const opening = openingDebt(javorova, assumptions);
       expect(identityGap(s.rows, opening)).toBeLessThanOrEqual(1e-9);
     }
   });
 
   it("the projection year carries it apart from draws, and the balance reconciles", () => {
-    for (const p of [withRefi(refi("2031-01-17", "1386000")), mixedWithRefi]) {
+    for (const p of [
+      withRefi(
+        refiLoan({
+          startDate: isoDate("2031-01-17"),
+          initialPrincipal: money("1386000"),
+        }),
+      ),
+      mixedWithRefi,
+    ]) {
       const years = portfolioProjection(p, assumptions);
       for (const y of years.slice(1)) {
         const prev = years[y.year - 1]!;
@@ -181,7 +219,12 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
       }
     }
     const years = portfolioProjection(
-      withRefi(refi("2031-01-17", "1386000")),
+      withRefi(
+        refiLoan({
+          startDate: isoDate("2031-01-17"),
+          initialPrincipal: money("1386000"),
+        }),
+      ),
       assumptions,
     );
     expect(years[5]!.draws.toString()).toBe("0");
@@ -211,7 +254,13 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
           effect: "lowerInstalment" as const,
         })),
       }));
-      const { s, r, row } = handover(refi(start, "1300000"), owner);
+      const { s, r, row } = handover(
+        refiLoan({
+          startDate: isoDate(start),
+          initialPrincipal: money("1300000"),
+        }),
+        owner,
+      );
       expect(row.drawn.toString()).toBe("0");
       expect(row.refinanced.toFixed(6)).toBe(
         r.drawn.minus(r.paidOff).toFixed(6),
@@ -225,7 +274,12 @@ describe("ADR 0130: the refinance difference is apart from draws", () => {
   );
 
   it("drawn + refinanced is the handover's net new debt (D-47, DR-092)", () => {
-    const { r, row } = handover(refi("2031-01-17", "1633000"));
+    const { r, row } = handover(
+      refiLoan({
+        startDate: isoDate("2031-01-17"),
+        initialPrincipal: money("1633000"),
+      }),
+    );
     expect(row.drawn.plus(row.refinanced).toFixed(6)).toBe(
       D(r.drawn).minus(r.paidOff).toFixed(6),
     );

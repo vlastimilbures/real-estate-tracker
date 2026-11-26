@@ -4,7 +4,7 @@
 // expired fixation with no follow-on block.
 import { describe, it, expect } from "vitest";
 import { loanWarnings, loanWarningText } from "../propertyDetail";
-import { isoDate, rate, mortgageBlock } from "../../../engine";
+import { isoDate, rate } from "../../../engine";
 import { impliedMaturity } from "../../../engine/__tests__/support/seams";
 import type {
   LoanEventIssue,
@@ -17,31 +17,22 @@ import { cs } from "../../../i18n/cs";
 import { ru } from "../../../i18n/ru";
 import { fmtCzk } from "../../../lib/format";
 import { money } from "../../../engine";
+import { loan } from "../../../engine/__tests__/support/loan";
+
+const M1 = { id: "m1", propertyId: "p1" };
 
 const baseDate = isoDate("2026-06-07");
 const reset = rate("0.045");
 
-function block(overrides: Partial<MortgageBlock> = {}): MortgageBlock {
-  return mortgageBlock({
-    id: "m1",
-    propertyId: "p1",
-    startDate: isoDate("2021-01-17"),
-    initialPrincipal: money("1912500"),
-    fixationYears: 10,
-    interestRatePa: rate("0.0169"),
-    monthlyInstalment: money("6721.8"),
-    ...overrides,
-  });
-}
-
 describe("loanWarnings", () => {
   it("a healthy loan has none; no loan has none", () => {
-    expect(loanWarnings([block()], baseDate)).toEqual([]);
+    expect(loanWarnings([loan(M1)], baseDate)).toEqual([]);
     expect(loanWarnings([], baseDate)).toEqual([]);
   });
 
   it("a loan not drawn yet is checked from its first block", () => {
-    const later = block({
+    const later = loan({
+      ...M1,
       id: "later",
       startDate: isoDate("2027-01-01"),
       loanTermYears: 5,
@@ -53,15 +44,16 @@ describe("loanWarnings", () => {
   });
 
   it("warns when the instalment does not repay the loan by its term", () => {
-    const b = block({ loanTermYears: 10 });
+    const b = loan({ ...M1, loanTermYears: 10 });
     const [w] = loanWarnings([b], baseDate);
     expect(w.kind).toBe("underpays");
     expect(w.block).toBe(b);
   });
 
   it("checks a follow-on block too (DR-125)", () => {
-    const current = block();
-    const next = block({
+    const current = loan(M1);
+    const next = loan({
+      ...M1,
       id: "m2",
       startDate: isoDate("2031-01-17"),
       initialPrincipal: money("1630882"),
@@ -72,33 +64,42 @@ describe("loanWarnings", () => {
   });
 
   it("ignores a block already replaced before baseDate", () => {
-    const old = block({
+    const old = loan({
+      ...M1,
       id: "old",
       startDate: isoDate("2015-01-01"),
       loanTermYears: 5,
     });
-    expect(loanWarnings([old, block()], baseDate)).toEqual([]);
+    expect(loanWarnings([old, loan(M1)], baseDate)).toEqual([]);
   });
 
   it("warns when the contract maturity is more than a month off (D-29)", () => {
-    const b = block();
+    const b = loan(M1);
     const implied = impliedMaturity(b)!;
-    const ok = block({ contractMaturityDate: implied });
+    const ok = loan({ ...M1, contractMaturityDate: implied });
     expect(loanWarnings([ok], baseDate)).toEqual([]);
-    const off = block({ contractMaturityDate: isoDate("2049-05-17") });
+    const off = loan({ ...M1, contractMaturityDate: isoDate("2049-05-17") });
     const [w] = loanWarnings([off], baseDate);
     expect(w).toMatchObject({ kind: "maturity", implied, months: 24 });
   });
 
   it("warns when the fixation ended with no follow-on block (D-30)", () => {
-    const b = block({ startDate: isoDate("2018-03-01"), fixationYears: 5 });
+    const b = loan({
+      ...M1,
+      startDate: isoDate("2018-03-01"),
+      fixationYears: 5,
+    });
     const ws = loanWarnings([b], baseDate);
     expect(ws.map((w) => w.kind)).toContain("fixationEnded");
   });
 
   it("no fixation warning once a follow-on block is entered", () => {
-    const b = block({ startDate: isoDate("2018-03-01"), fixationYears: 5 });
-    const next = block({ id: "m2", startDate: isoDate("2023-03-01") });
+    const b = loan({
+      ...M1,
+      startDate: isoDate("2018-03-01"),
+      fixationYears: 5,
+    });
+    const next = loan({ ...M1, id: "m2", startDate: isoDate("2023-03-01") });
     expect(
       loanWarnings([b, next], baseDate).filter(
         (w) => w.kind === "fixationEnded",
@@ -107,7 +108,8 @@ describe("loanWarnings", () => {
   });
 
   it("development loans get no instalment or maturity checks", () => {
-    const dev = block({
+    const dev = loan({
+      ...M1,
       loanTermYears: 2,
       completionDate: isoDate("2027-01-01"),
       contractMaturityDate: isoDate("2030-01-01"),
@@ -118,7 +120,7 @@ describe("loanWarnings", () => {
 
 describe("loanWarningText", () => {
   it("maturity: the P02 §5 wording, in the user's language", () => {
-    const off = block({ contractMaturityDate: isoDate("2049-05-17") });
+    const off = loan({ ...M1, contractMaturityDate: isoDate("2049-05-17") });
     const [w] = loanWarnings([off], baseDate);
     const text = loanWarningText(en, w, reset);
     expect(text).toContain("Loan from 17.01.2021");
@@ -128,7 +130,11 @@ describe("loanWarningText", () => {
   });
 
   it("fixation ended: names the end date and the assumed reset rate", () => {
-    const b = block({ startDate: isoDate("2018-03-01"), fixationYears: 5 });
+    const b = loan({
+      ...M1,
+      startDate: isoDate("2018-03-01"),
+      fixationYears: 5,
+    });
     const w = loanWarnings([b], baseDate).find(
       (x) => x.kind === "fixationEnded",
     )!;
@@ -138,8 +144,12 @@ describe("loanWarningText", () => {
   });
 
   it("fixation ended with a later block: from … until … (ADR 0129 §4)", () => {
-    const a = block({ startDate: isoDate("2019-05-01"), fixationYears: 5 });
-    const b = block({ id: "m2", startDate: isoDate("2027-03-01") });
+    const a = loan({
+      ...M1,
+      startDate: isoDate("2019-05-01"),
+      fixationYears: 5,
+    });
+    const b = loan({ ...M1, id: "m2", startDate: isoDate("2027-03-01") });
     const w = loanWarnings([a, b], baseDate).find(
       (x) => x.kind === "fixationEnded",
     );
@@ -162,8 +172,12 @@ describe("fixation ended before a later block", () => {
     loanWarnings(blocks, baseDate).filter((w) => w.kind === "fixationEnded");
 
   it("warns until the later block's start", () => {
-    const a = block({ startDate: isoDate("2019-05-01"), fixationYears: 5 });
-    const b = block({ id: "m2", startDate: isoDate("2027-03-01") });
+    const a = loan({
+      ...M1,
+      startDate: isoDate("2019-05-01"),
+      fixationYears: 5,
+    });
+    const b = loan({ ...M1, id: "m2", startDate: isoDate("2027-03-01") });
     expect(fixationEnded([a, b])).toEqual([
       {
         kind: "fixationEnded",
@@ -178,11 +192,15 @@ describe("fixation ended before a later block", () => {
     // Fixation ends 2026-06-01 (on/before baseDate); first floating payment 2026-07-01.
     // A block starting on 07-01 still leaves that payment, at the reset rate, with the
     // old block: the handover keeps a payment due on the successor's start (D-47).
-    const a = block({ startDate: isoDate("2021-06-01"), fixationYears: 5 });
-    const before = block({ id: "m2", startDate: isoDate("2026-06-30") });
+    const a = loan({
+      ...M1,
+      startDate: isoDate("2021-06-01"),
+      fixationYears: 5,
+    });
+    const before = loan({ ...M1, id: "m2", startDate: isoDate("2026-06-30") });
     expect(fixationEnded([a, before])).toEqual([]);
     for (const start of ["2026-07-01", "2026-07-02"]) {
-      const next = block({ id: "m2", startDate: isoDate(start) });
+      const next = loan({ ...M1, id: "m2", startDate: isoDate(start) });
       expect(fixationEnded([a, next])).toEqual([
         {
           kind: "fixationEnded",
@@ -197,14 +215,18 @@ describe("fixation ended before a later block", () => {
   // ADR 0162: a floating block pays its entered rate up to baseDate and floats after
   // it by design; there are no refix terms to enter.
   it("a floating (0-year) block never warns, with or without a later block", () => {
-    const a = block({ fixationYears: 0 });
+    const a = loan({ ...M1, fixationYears: 0 });
     expect(fixationEnded([a])).toEqual([]);
-    const next = block({ id: "m2", startDate: isoDate("2027-03-01") });
+    const next = loan({ ...M1, id: "m2", startDate: isoDate("2027-03-01") });
     expect(fixationEnded([a, next])).toEqual([]);
   });
 
   it("with no later block there is no `until`", () => {
-    const a = block({ startDate: isoDate("2019-05-01"), fixationYears: 5 });
+    const a = loan({
+      ...M1,
+      startDate: isoDate("2019-05-01"),
+      fixationYears: 5,
+    });
     expect(fixationEnded([a])[0]).not.toHaveProperty("until");
   });
 });
@@ -228,11 +250,15 @@ describe("event warnings", () => {
   });
 
   it("an outcome with no issue is no warning", () => {
-    expect(loanWarnings([block()], baseDate, [outcome(null)])).toEqual([]);
+    expect(loanWarnings([loan(M1)], baseDate, [outcome(null)])).toEqual([]);
   });
 
   it("an outcome with an issue is a warning on its block, after the block checks", () => {
-    const b = block({ startDate: isoDate("2018-03-01"), fixationYears: 5 });
+    const b = loan({
+      ...M1,
+      startDate: isoDate("2018-03-01"),
+      fixationYears: 5,
+    });
     const ws = loanWarnings([b], baseDate, [
       outcome("PREPAYMENT_EXCEEDS_BALANCE"),
     ]);
@@ -241,7 +267,7 @@ describe("event warnings", () => {
   });
 
   it("names the loan and the date (amounts: every language, below)", () => {
-    const [w] = loanWarnings([block()], baseDate, [
+    const [w] = loanWarnings([loan(M1)], baseDate, [
       outcome("PREPAYMENT_EXCEEDS_BALANCE"),
     ]);
     const text = loanWarningText(en, w!, reset);
@@ -258,7 +284,7 @@ describe("event warnings", () => {
     for (const dict of [en, cs, ru]) {
       for (const issue of issues) {
         const kind = issue.startsWith("RECAST") ? "recast" : "prepayment";
-        const [w] = loanWarnings([block()], baseDate, [
+        const [w] = loanWarnings([loan(M1)], baseDate, [
           outcome(issue, { kind }),
         ]);
         expect(loanWarningText(dict, w!, reset)).toContain("17.01.2031");
@@ -267,7 +293,7 @@ describe("event warnings", () => {
   });
 
   it("names both amounts of a clamped prepayment in every language", () => {
-    const [w] = loanWarnings([block()], baseDate, [
+    const [w] = loanWarnings([loan(M1)], baseDate, [
       outcome("PREPAYMENT_EXCEEDS_BALANCE"),
     ]);
     for (const dict of [en, cs, ru]) {
@@ -278,7 +304,7 @@ describe("event warnings", () => {
   });
 
   it("says a shortenTerm prepayment did not shorten the term (ADR 0179)", () => {
-    const [w] = loanWarnings([block()], baseDate, [
+    const [w] = loanWarnings([loan(M1)], baseDate, [
       outcome("PREPAYMENT_TERM_NOT_SHORTENED"),
     ]);
     expect(loanWarningText(en, w!, reset)).toBe(
@@ -288,7 +314,7 @@ describe("event warnings", () => {
 
   it("skips an outcome of a block the page does not list", () => {
     expect(
-      loanWarnings([block()], baseDate, [
+      loanWarnings([loan(M1)], baseDate, [
         outcome("PREPAYMENT_AFTER_PAYOFF", { blockId: "gone" }),
       ]),
     ).toEqual([]);

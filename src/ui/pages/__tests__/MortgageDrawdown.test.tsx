@@ -19,17 +19,12 @@ import {
   mortgageBlock,
 } from "../../../engine";
 import { portfolio } from "../../../engine/__tests__/support/seed";
+import { dubovaDevLoan } from "../../../engine/__tests__/support/loan";
 
 const en = getDict("en");
 const d = en.propertyDetail;
 const plain = portfolio.mortgages.find((m) => m.propertyId === "dubova")!;
-const dev: MortgageBlock = mortgageBlock({
-  ...plain,
-  loanTermYears: 30,
-  draws: [{ date: isoDate("2024-09-01"), amount: money("500000") }],
-  completionDate: isoDate("2025-03-31"),
-});
-
+const dev = dubovaDevLoan();
 /** Saves like the store: the edit is checked against the engine rules first. */
 const save = vi.fn(async (m: MortgageBlock) => {
   const errors = validatePortfolio({

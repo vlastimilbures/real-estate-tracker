@@ -12,23 +12,18 @@ import { useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import {
   isoDate,
-  money,
   validatePortfolio,
   type MortgageBlock,
-  mortgageBlock,
 } from "../../../engine";
 import { portfolio } from "../../../engine/__tests__/support/seed";
+import { dubovaDevLoan } from "../../../engine/__tests__/support/loan";
 
 const en = getDict("en");
 const d = en.propertyDetail;
 const plain = portfolio.mortgages.find((m) => m.propertyId === "dubova")!;
 // From 2024-03-12 over 30 years: payment 358 is due 2054-01-12, 359 2054-02-12.
-const dev: MortgageBlock = mortgageBlock({
-  ...plain,
-  loanTermYears: 30,
-  draws: [{ date: isoDate("2024-09-01"), amount: money("500000") }],
-  completionDate: isoDate("2025-03-31"),
-});
+const dev = dubovaDevLoan();
+
 /** A later Dubova block, stored next to the edited one. */
 const later: MortgageBlock = {
   ...plain,
