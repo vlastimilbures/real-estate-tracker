@@ -52,7 +52,11 @@ export function propertiesTotal(
   const active = properties.filter((p) => p.active);
   if (active.length < 2) return null;
   const pending = active.some(
-    (p) => !ownedOn(p.purchaseDate, basis, assumptions.baseDate, snapshot.asOf),
+    (p) =>
+      !ownedOn(p.purchaseDate, basis, {
+        baseDate: assumptions.baseDate,
+        asOf: snapshot.asOf,
+      }),
   );
   const s = tilesForAsOf(
     snapshot,

@@ -86,12 +86,18 @@ function snapshotAt(asOf: Date): PortfolioSnapshot {
 
 describe("projectionYearForAsOf", () => {
   it("maps baseDate (and earlier) to year 0", () => {
-    expect(projectionYearForAsOf(baseDate, baseDate)).toBe(0);
-    expect(projectionYearForAsOf(baseDate, isoDate("2020-01-01"))).toBe(0);
+    expect(projectionYearForAsOf({ baseDate, asOf: baseDate })).toBe(0);
+    expect(
+      projectionYearForAsOf({ baseDate, asOf: isoDate("2020-01-01") }),
+    ).toBe(0);
   });
   it("maps baseDate + N years to year N, tolerating a few days of drift", () => {
-    expect(projectionYearForAsOf(baseDate, edate(baseDate, 60))).toBe(5);
-    expect(projectionYearForAsOf(baseDate, isoDate("2031-06-26"))).toBe(5); // +19 days
+    expect(projectionYearForAsOf({ baseDate, asOf: edate(baseDate, 60) })).toBe(
+      5,
+    );
+    expect(
+      projectionYearForAsOf({ baseDate, asOf: isoDate("2031-06-26") }),
+    ).toBe(5); // +19 days
   });
 });
 
@@ -100,7 +106,7 @@ describe("tilesForAsOf", () => {
     tilesForAsOf(
       snapshotAt(asOf),
       series,
-      asOfView(baseDate, asOf, false),
+      asOfView({ baseDate, asOf }, false),
       "nominal",
       tileAssumptions,
     );

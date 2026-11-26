@@ -16,20 +16,37 @@ describe("propertiesSubtitle", () => {
   const today = { kind: "today" } as const;
 
   it("names the count, the as-of date, the currency and the flow period", () => {
-    expect(propertiesSubtitle(en, 3, isoDate("2026-10-03"), today, base)).toBe(
-      "3 apartments · as of 03.10.2026 · amounts in Kč, flows per year",
-    );
+    expect(
+      propertiesSubtitle(en, {
+        count: 3,
+        asOf: isoDate("2026-10-03"),
+        basis: today,
+        baseDate: base,
+      }),
+    ).toBe("3 apartments · as of 03.10.2026 · amounts in Kč, flows per year");
   });
 
   it("is translated", () => {
-    expect(propertiesSubtitle(cs, 1, isoDate("2026-10-03"), today, base)).toBe(
-      "1 byt · k 03.10.2026 · částky v Kč, toky za rok",
-    );
+    expect(
+      propertiesSubtitle(cs, {
+        count: 1,
+        asOf: isoDate("2026-10-03"),
+        basis: today,
+        baseDate: base,
+      }),
+    ).toBe("1 byt · k 03.10.2026 · částky v Kč, toky za rok");
   });
 
   it("names the projection year Today shows (ADR 0150)", () => {
     const y1 = { kind: "projection", year: 1, calendarYear: 2027 } as const;
-    expect(propertiesSubtitle(en, 3, isoDate("2027-01-15"), y1, base)).toBe(
+    expect(
+      propertiesSubtitle(en, {
+        count: 3,
+        asOf: isoDate("2027-01-15"),
+        basis: y1,
+        baseDate: base,
+      }),
+    ).toBe(
       "3 apartments · as of 15.01.2027 (projection year Y1 · 2027, Jul 2026 – Jun 2027) · amounts in Kč, flows per year",
     );
   });
