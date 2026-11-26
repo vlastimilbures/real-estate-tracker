@@ -1,12 +1,4 @@
 {
-  "src/ui/components/charts.tsx": {
-    "complexity": {
-      "Function 'ChartCard'": 18
-    },
-    "lines": {
-      "Function 'ChartBody'": 161
-    }
-  },
   "src/ui/model/compare.ts": {
     "lines": {
       "Function 'kpiRowSpecs'": 132

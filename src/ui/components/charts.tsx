@@ -1,6 +1,7 @@
-// Recharts wrappers themed to the design tokens. Engine Decimals become plain numbers
-// HERE (the chart boundary) and nowhere upstream. A CZK axis counts in the unit its
-// values call for (M Kč, tis. Kč or Kč).
+// Recharts wrappers themed to the design tokens. They plot plain numbers: engine
+// Decimals become numbers in ui/model/chartData.ts, the chart boundary. A CZK axis counts
+// in the unit its values call for (pickCzkAxisUnit: M Kč, thousands of Kč with the
+// interface language's word for thousands, or Kč); a percent axis in whole percent.
 import {
   ResponsiveContainer,
   LineChart,
@@ -14,7 +15,13 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  type ComponentProps,
+  type ReactElement,
+} from "react";
 import { Table2 } from "lucide-react";
 import {
   fmtCzk,
@@ -137,48 +144,69 @@ function SeriesSwatch({
   );
 }
 
-/** What the card plots: lines, sign-stacked bars, or one series as green/red bars. */
-type ChartShape = "lines" | "stacked" | "signed";
+/** What the card plots, with the props that only that shape takes: lines (with the
+ *  fixation-end markers, ADR 0210), sign-stacked bars (with an optional net-of-stack row
+ *  in the tooltip), or one series as green/red bars. */
+export type ChartShape =
+  | {
+      type: "lines";
+      /** Years marked with their fixation ends (ADR 0210). */
+      markers?: readonly ResetMarker[] | undefined;
+      /** The markers' tooltip heading; the legend names them `charts.rateReset`. */
+      markerHeading?: string | undefined;
+    }
+  | {
+      type: "stacked";
+      /** Adds a net-of-stack row, under this label, to the tooltip. */
+      totalLabel?: string | undefined;
+    }
+  | { type: "signed" };
+
+const LINES: ChartShape = { type: "lines" };
+
+/** The card's subtitle: the axis unit, then `sub` after a dash. The table lists whole Kč;
+ *  the chart's axis may count in thousands or millions. */
+function subtitleOf(
+  sub: string | undefined,
+  unit: CzkAxisUnit | undefined,
+  asTable: boolean,
+): string | undefined {
+  const unitLabel = unit && (asTable ? CZK.symbol : unit.label);
+  if (!unitLabel) return sub;
+  return sub ? `${unitLabel} — ${sub}` : unitLabel;
+}
 
 /** A chart card: title, subtitle, the chart and a legend built from `series` (by default
  *  only for two or more series). The Table toggle swaps the chart for a table of the same
  *  rows, the keyboard and screen-reader way to read the values; not saved. For
  *  `kind: "czk"` the axis unit is taken once from the rows' values (e.g. "M Kč"): it
- *  leads the subtitle and scales the ticks. `totalLabel` adds a net-of-stack row to a
- *  stacked chart's tooltip. */
+ *  leads the subtitle and scales the ticks. */
 export function ChartCard({
   title,
   sub,
   kind,
-  chart = "lines",
+  shape = LINES,
   rows,
   series,
   legend,
-  totalLabel,
   height = CHART_HEIGHT,
-  markers = [],
-  markerHeading,
 }: {
   title: string;
   sub?: string | undefined;
   kind: "czk" | "pct";
-  chart?: ChartShape;
+  /** Lines when absent. */
+  shape?: ChartShape | undefined;
   rows: readonly Record<string, unknown>[];
   series: readonly SeriesDef[];
   legend?: boolean | undefined;
-  totalLabel?: string | undefined;
   /** Plot (and table) height in px: the Dashboard's charts (ADR 0218) and Scenario
    *  compare's (ADR 0216). */
   height?: number | undefined;
-  /** Years marked on a line chart with their fixation ends (ADR 0210). */
-  markers?: readonly ResetMarker[] | undefined;
-  /** The markers' tooltip heading; the legend names them `charts.rateReset`. */
-  markerHeading?: string | undefined;
 }) {
   const t = useT();
   const [asTable, setAsTable] = useState(false);
   // Markers are drawn on a line chart only (ADR 0210).
-  const marked = chart === "lines" && markers.length > 0;
+  const marked = shape.type === "lines" && (shape.markers?.length ?? 0) > 0;
   const showLegend = legend ?? (series.length > 1 || marked);
   const unit =
     kind === "czk"
@@ -188,13 +216,7 @@ export function ChartCard({
           t.common.thousandsShort,
         )
       : undefined;
-  // The table lists whole Kč; the chart's axis may count in thousands or millions.
-  const unitLabel = unit && (asTable ? CZK.symbol : unit.label);
-  const resolvedSub = unitLabel
-    ? sub
-      ? `${unitLabel} — ${sub}`
-      : unitLabel
-    : sub;
+  const resolvedSub = subtitleOf(sub, unit, asTable);
   return (
     <div className="chart-card">
       <div className="chart-head">
@@ -225,13 +247,10 @@ export function ChartCard({
           <ResponsiveContainer width="100%" height={height}>
             <ChartBody
               kind={kind}
-              chart={chart}
+              shape={shape}
               rows={rows}
               series={series}
               unit={unit}
-              totalLabel={totalLabel}
-              markers={markers}
-              markerHeading={markerHeading ?? ""}
             />
           </ResponsiveContainer>
         </SurfaceLabel.Provider>
@@ -411,168 +430,227 @@ interface SeriesDef {
 
 const MARGIN = { top: 6, right: 8, bottom: 0, left: 4 };
 
+/** What every body gets: the rows, the series, the grid and axes, the surface's name and
+ *  whether to animate. */
+interface BodyProps {
+  data: Record<string, unknown>[];
+  series: readonly SeriesDef[];
+  frame: ReactElement[];
+  surface: ReturnType<typeof useSurfaceProps>;
+  animate: boolean;
+}
+
+/** Recharts' Tooltip `content` as a function, and what it is called with. */
+type TipContent = Extract<
+  ComponentProps<typeof Tooltip>["content"],
+  (props: never) => unknown
+>;
+type TipArgs = Parameters<TipContent>[0];
+
+/** The one tooltip wrapper: the hovered year's heading from Recharts' call, the rest of
+ *  the Tip from the shape. */
+function tipFor(
+  rest: (
+    label: TipArgs["label"],
+    payload: TipArgs["payload"],
+  ) => Pick<ComponentProps<typeof Tip>, "items" | "total" | "resets">,
+): TipContent {
+  return ({ active, label, payload }: TipArgs) => (
+    <Tip
+      active={active}
+      year={label}
+      point={payload?.[0]?.payload}
+      {...rest(label, payload)}
+    />
+  );
+}
+
 /** The chart inside a card: one grid and axis frame for every shape. A percent chart's
  *  axis starts at 0 and its tooltip keeps a null LTV, read as n/a (ADR 0133). */
 function ChartBody({
   kind,
-  chart,
+  shape,
   rows,
   series,
   unit,
-  totalLabel,
-  markers,
-  markerHeading,
 }: {
   kind: "czk" | "pct";
-  chart: ChartShape;
+  shape: ChartShape;
   rows: readonly Record<string, unknown>[];
   series: readonly SeriesDef[];
   /** The card's CZK axis unit; none for a percent chart. */
   unit: CzkAxisUnit | undefined;
-  totalLabel: string | undefined;
-  markers: readonly ResetMarker[];
-  markerHeading: string;
 }) {
   // Reduce motion: no entry animation.
   const animate = !usePrefersReducedMotion();
   const surface = useSurfaceProps();
-  const data = rows as Record<string, unknown>[];
   const pct = kind === "pct";
   const tick = unit ? (v: number) => fmtCzkAxisTick(v, unit) : pctAxis;
-  const frame = [
-    <CartesianGrid key="grid" stroke={GRID} vertical={false} />,
-    <XAxis key="x" dataKey="calendarYear" {...AXIS} minTickGap={28} />,
-    <YAxis
-      key="y"
-      {...AXIS}
-      tickFormatter={tick}
-      width="auto"
-      {...(pct && { domain: [0, "auto"] })}
-    />,
-  ];
-
-  if (chart === "lines")
-    return (
-      <LineChart data={data} margin={MARGIN} {...surface}>
-        {frame}
-        <Tooltip
-          {...(pct && { filterNull: false })}
-          content={({ active, label, payload }) => (
-            <Tip
-              active={active}
-              year={label}
-              point={payload?.[0]?.payload}
-              items={seriesTipItems(payload, series, pct ? "pct" : "czk")}
-              resets={{
-                heading: markerHeading,
-                items:
-                  markers.find((m) => m.calendarYear === label)?.resets ?? [],
-              }}
-            />
-          )}
+  const body: BodyProps = {
+    data: rows as Record<string, unknown>[],
+    series,
+    surface,
+    animate,
+    frame: [
+      <CartesianGrid key="grid" stroke={GRID} vertical={false} />,
+      <XAxis key="x" dataKey="calendarYear" {...AXIS} minTickGap={28} />,
+      <YAxis
+        key="y"
+        {...AXIS}
+        tickFormatter={tick}
+        width="auto"
+        {...(pct && { domain: [0, "auto"] })}
+      />,
+    ],
+  };
+  switch (shape.type) {
+    case "lines":
+      return (
+        <LineBody
+          {...body}
+          pct={pct}
+          markers={shape.markers ?? []}
+          markerHeading={shape.markerHeading ?? ""}
         />
-        {/* Fixation ends (ADR 0210): a dashed line topped by a diamond. */}
-        {markers.map((m) => (
-          <ReferenceLine
-            key={m.calendarYear}
-            className="reset-marker"
-            x={m.calendarYear}
-            stroke={MARKER_COLOR}
-            strokeWidth={1.5}
-            strokeDasharray={MARKER_DASH}
-            label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => {
-              const x = viewBox?.x ?? 0;
-              const y = viewBox?.y ?? 0;
-              return (
-                <path
-                  d={`M ${x} ${y} L ${x + 5} ${y + 5} L ${x} ${y + 10} L ${x - 5} ${y + 5} Z`}
-                  fill={MARKER_COLOR}
-                />
-              );
-            }}
-          />
-        ))}
-        {series.map((s) => (
-          <Line
-            isAnimationActive={animate}
-            key={s.key}
-            type="monotone"
-            dataKey={s.key}
-            name={s.name}
-            stroke={s.color}
-            // Spread, not strokeDasharray={undefined}: exactOptionalPropertyTypes.
-            {...(s.dash && { strokeDasharray: s.dash })}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 3 }}
-          />
-        ))}
-      </LineChart>
-    );
+      );
+    case "stacked":
+      return <StackedBody {...body} totalLabel={shape.totalLabel} />;
+    case "signed":
+      return <SignedBody {...body} />;
+  }
+}
 
-  const zero = <ReferenceLine y={0} stroke="var(--hairline-strong)" />;
-  if (chart === "stacked")
-    // Stacks share one `stackId`; negative segments drop below the zero line.
-    return (
-      <BarChart data={data} stackOffset="sign" margin={MARGIN} {...surface}>
-        {frame}
-        {zero}
-        <Tooltip
-          content={({ active, label, payload }) => {
-            const items = seriesTipItems(payload, series, "czk", Number);
-            const total =
-              totalLabel !== undefined
-                ? {
-                    label: totalLabel,
-                    value: tooltipTotal(items.map((it) => it.value ?? 0)),
-                  }
-                : undefined;
+function LineBody({
+  data,
+  series,
+  frame,
+  surface,
+  animate,
+  pct,
+  markers,
+  markerHeading,
+}: BodyProps & {
+  pct: boolean;
+  markers: readonly ResetMarker[];
+  markerHeading: string;
+}) {
+  return (
+    <LineChart data={data} margin={MARGIN} {...surface}>
+      {frame}
+      <Tooltip
+        {...(pct && { filterNull: false })}
+        content={tipFor((label, payload) => ({
+          items: seriesTipItems(payload, series, pct ? "pct" : "czk"),
+          resets: {
+            heading: markerHeading,
+            items: markers.find((m) => m.calendarYear === label)?.resets ?? [],
+          },
+        }))}
+      />
+      {/* Fixation ends (ADR 0210): a dashed line topped by a diamond. */}
+      {markers.map((m) => (
+        <ReferenceLine
+          key={m.calendarYear}
+          className="reset-marker"
+          x={m.calendarYear}
+          stroke={MARKER_COLOR}
+          strokeWidth={1.5}
+          strokeDasharray={MARKER_DASH}
+          label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => {
+            const x = viewBox?.x ?? 0;
+            const y = viewBox?.y ?? 0;
             return (
-              <Tip
-                active={active}
-                year={label}
-                point={payload?.[0]?.payload}
-                items={items}
-                total={total}
+              <path
+                d={`M ${x} ${y} L ${x + 5} ${y + 5} L ${x} ${y + 10} L ${x - 5} ${y + 5} Z`}
+                fill={MARKER_COLOR}
               />
             );
           }}
         />
-        {series.map((s) => (
-          <Bar
-            isAnimationActive={animate}
-            key={s.key}
-            stackId="stack"
-            dataKey={s.key}
-            name={s.name}
-            fill={s.color}
-          />
-        ))}
-      </BarChart>
-    );
+      ))}
+      {series.map((s) => (
+        <Line
+          isAnimationActive={animate}
+          key={s.key}
+          type="monotone"
+          dataKey={s.key}
+          name={s.name}
+          stroke={s.color}
+          // Spread, not strokeDasharray={undefined}: exactOptionalPropertyTypes.
+          {...(s.dash && { strokeDasharray: s.dash })}
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 3 }}
+        />
+      ))}
+    </LineChart>
+  );
+}
 
-  // Signed: one series (net cash flow), green above zero, red below.
+const ZERO = <ReferenceLine y={0} stroke="var(--hairline-strong)" />;
+
+function StackedBody({
+  data,
+  series,
+  frame,
+  surface,
+  animate,
+  totalLabel,
+}: BodyProps & { totalLabel: string | undefined }) {
+  // Stacks share one `stackId`; negative segments drop below the zero line.
+  return (
+    <BarChart data={data} stackOffset="sign" margin={MARGIN} {...surface}>
+      {frame}
+      {ZERO}
+      <Tooltip
+        content={tipFor((_label, payload) => {
+          const items = seriesTipItems(payload, series, "czk", Number);
+          const total =
+            totalLabel !== undefined
+              ? {
+                  label: totalLabel,
+                  value: tooltipTotal(items.map((it) => it.value ?? 0)),
+                }
+              : undefined;
+          return { items, total };
+        })}
+      />
+      {series.map((s) => (
+        <Bar
+          isAnimationActive={animate}
+          key={s.key}
+          stackId="stack"
+          dataKey={s.key}
+          name={s.name}
+          fill={s.color}
+        />
+      ))}
+    </BarChart>
+  );
+}
+
+const sign = (v: unknown) =>
+  Number(v ?? 0) < 0 ? SERIES.negative : SERIES.positive;
+
+/** One series (net cash flow), green above zero, red below. It plots the first series
+ *  only; any other is in the legend but not drawn. With no series it still draws one bar
+ *  of no key and no name, so the card keeps its frame. Both are kept as they are: changing either would change
+ *  what a card draws (ChartMarkup.test.tsx pins them). */
+function SignedBody({ data, series, frame, surface, animate }: BodyProps) {
   const { key, name } = series[0] ?? { key: "", name: "" };
-  const sign = (v: unknown) =>
-    Number(v ?? 0) < 0 ? SERIES.negative : SERIES.positive;
   return (
     <BarChart data={data} margin={MARGIN} {...surface}>
       {frame}
-      {zero}
+      {ZERO}
       <Tooltip
-        content={({ active, label, payload }) => (
-          <Tip
-            active={active}
-            year={label}
-            point={payload?.[0]?.payload}
-            items={(payload ?? []).map((p) => ({
-              label: name,
-              value: tipValue(p.value),
-              color: sign(p.value),
-              kind: "czk",
-            }))}
-          />
-        )}
+        content={tipFor((_label, payload) => ({
+          items: (payload ?? []).map((p) => ({
+            label: name,
+            value: tipValue(p.value),
+            color: sign(p.value),
+            kind: "czk",
+          })),
+        }))}
       />
       <Bar dataKey={key} name={name} isAnimationActive={animate}>
         {data.map((d, i) => (

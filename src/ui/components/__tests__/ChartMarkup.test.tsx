@@ -142,8 +142,7 @@ describe("lines", () => {
         kind="czk"
         rows={rows}
         series={lineSeries}
-        markers={markers}
-        markerHeading="Fixation ends"
+        shape={{ type: "lines", markers, markerHeading: "Fixation ends" }}
       />,
     );
     expect(html(c)).toMatchSnapshot();
@@ -206,10 +205,9 @@ describe("stacked", () => {
       <ChartCard
         title="Equity change"
         kind="czk"
-        chart="stacked"
+        shape={{ type: "stacked", totalLabel: "Net change" }}
         rows={rows}
         series={series}
-        totalLabel="Net change"
       />,
     );
     expect(html(c)).toMatchSnapshot();
@@ -232,7 +230,7 @@ describe("stacked", () => {
       <ChartCard
         title="Equity change"
         kind="czk"
-        chart="stacked"
+        shape={{ type: "stacked" }}
         rows={rows}
         series={series}
       />,
@@ -251,7 +249,7 @@ describe("signed", () => {
       <ChartCard
         title="Cash"
         kind="czk"
-        chart="signed"
+        shape={{ type: "signed" }}
         rows={rows}
         series={[net]}
       />,
@@ -270,7 +268,7 @@ describe("signed", () => {
       <ChartCard
         title="Cash"
         kind="czk"
-        chart="signed"
+        shape={{ type: "signed" }}
         rows={rows}
         series={[net, { key: "value", name: "Value", color: "red" }]}
       />,
@@ -288,7 +286,7 @@ describe("signed", () => {
       <ChartCard
         title="Cash"
         kind="czk"
-        chart="signed"
+        shape={{ type: "signed" }}
         rows={rows}
         series={[]}
       />,
