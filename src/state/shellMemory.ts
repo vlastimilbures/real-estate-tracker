@@ -4,6 +4,10 @@
 // here, in the state layer, rather than as module state in src/ui.
 import type { Route } from "./uiStore";
 
+// The one module-level `let` in src/state, kept on purpose as the documented exception
+// under ADR 0263. The chrome stays mounted across pages, but AppLayout mounts again
+// when the app comes back to the ready state, so a ref in the layout would forget the last
+// shown route; this variable outlives that remount.
 let shownRoute: Route | null = null;
 
 /** Records `route` as the one the content column shows; returns the route it showed
