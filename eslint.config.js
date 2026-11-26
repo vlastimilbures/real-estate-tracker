@@ -289,7 +289,20 @@ export default tseslint.config(
           message: "Node global: shipped code runs in the WebView.",
         })),
       ],
+      // A record id is made in one place, lib/newId.ts.
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "crypto",
+          property: "randomUUID",
+          message: "Make a record id with newId() from lib/newId.ts.",
+        },
+      ],
     },
+  },
+  {
+    files: ["src/lib/newId.ts"],
+    rules: { "no-restricted-properties": "off" },
   },
   // Layering boundaries (CLAUDE.md §4) in the editor. The engine is PURE: other engine
   // modules and lib/money + lib/rules only. This block also covers the engine tests and

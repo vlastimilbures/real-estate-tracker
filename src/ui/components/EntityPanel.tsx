@@ -10,8 +10,7 @@ import type { FormSpec, ParsedValues } from "../model/formParse";
 import { useT } from "../hooks/useT";
 import { useUiStore } from "../../state/uiStore";
 import type { WriteError } from "../../state/writeError";
-
-const newId = () => crypto.randomUUID();
+import { newId } from "../../lib/newId";
 
 type Draft = Record<string, string>;
 
