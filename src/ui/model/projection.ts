@@ -6,7 +6,7 @@ import { Decimal } from "../../lib/money";
 import { cpiIndex, edate, purchasedValue, realProjection } from "../../engine";
 import type { Assumptions, ProjectionYear } from "../../engine";
 import type { Mode } from "./lens";
-import type { XlsxColumn } from "./xlsxExport";
+import type { CellKind, XlsxColumn } from "./xlsxExport";
 import { nonZeroColumns } from "./columns";
 import type { Dictionary } from "../../i18n";
 
@@ -109,22 +109,98 @@ export function projectionExtras(rows: SeriesRow[], g: Dictionary["projGrid"]) {
 
 /** The Undrawn column, shown only while a development loan has tranches ahead
  *  (ADR 0169). It follows Debt. */
-export function undrawnColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
+function undrawnColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(rows, [{ key: "undrawnDebt", header: g.undrawn }]);
 }
 
 /** The Purchases column, shown only when some year has a purchase or construction
  *  (ADR 0194). It follows Value. */
-export function purchasesColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
+function purchasesColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
   return nonZeroColumns(
     rows.map((r) => ({ purchases: purchasedValue(r) })),
     [{ key: "purchases", header: g.purchases }],
   );
 }
 
+/** How a projection column's cell shows. Money is a stock (every year, a negative in
+ *  parentheses only for `balance`) or a flow, which the opening row (year 0) has none of:
+ *  the engine sets its flow fields to 0, so the grid dashes them and the export leaves
+ *  them empty. A `signedFlow` shows its sign's tone on screen. */
+export type ProjectionCell =
+  "stock" | "balance" | "flow" | "signedFlow" | "percent" | "multiple";
+
+/** One column after Year, as the grid and the Excel export both show it. */
+export interface ProjectionColumn {
+  key: string;
+  header: string;
+  /** The glossary term the grid's header explains. */
+  term?: keyof Dictionary["guide"]["glossary"];
+  cell: ProjectionCell;
+  value: (r: SeriesRow) => Decimal | null;
+}
+
+/** Every projection column after Year, in order, for ProjectionGrid and its export, so
+ *  the two cannot drift apart: a column is one entry here. The optional ones show only
+ *  when some year has a value for them. */
+export function projectionGridColumns(
+  rows: SeriesRow[],
+  g: Dictionary["projGrid"],
+): ProjectionColumn[] {
+  const col = (
+    key: string,
+    header: string,
+    cell: ProjectionCell,
+    value: (r: SeriesRow) => Decimal | null,
+    term?: ProjectionColumn["term"],
+  ): ProjectionColumn => ({ key, header, cell, value, ...(term && { term }) });
+  return [
+    // ADR 0169: the value less the tranches not drawn yet, a purchase's value and
+    // construction (ADR 0194), the drawn balance, and those tranches while a
+    // development loan draws.
+    col("value", g.value, "stock", (r) => r.reportedValue),
+    ...purchasesColumn(rows, g).map(({ key, header }) =>
+      col(key, header, "flow", purchasedValue),
+    ),
+    col("debt", g.debt, "stock", (r) => r.balance),
+    ...undrawnColumn(rows, g).map(({ key, header }) =>
+      col(key, header, "stock", (r) => r[key]),
+    ),
+    col("equity", g.equity, "balance", (r) => r.equity),
+    col("ltv", g.ltv, "percent", (r) => r.ltv, "ltv"),
+    col("grossRent", g.grossRent, "flow", (r) => r.grossRent),
+    col("effectiveRent", g.effective, "flow", (r) => r.effectiveRent, "egi"),
+    col("holding", g.holding, "flow", (r) => r.holdingCosts),
+    col("noi", g.noi, "signedFlow", (r) => r.noi, "noi"),
+    col("interest", g.interest, "flow", (r) => r.interest),
+    col("principal", g.principal, "flow", (r) => r.principal),
+    col("debtSvc", g.debtSvc, "flow", (r) => r.debtService),
+    col("netCf", g.netCf, "signedFlow", (r) => r.netCashFlow),
+    col("cashToOwner", g.cashToOwner, "signedFlow", (r) => r.cashToOwner),
+    col("dscr", g.dscr, "multiple", (r) => r.dscr, "dscr"),
+    ...projectionExtras(rows, g).map(({ key, header }) =>
+      col(key, header, "flow", (r) => r[key]),
+    ),
+  ];
+}
+
+/** Whether a column's cell is a flow, which the opening row has none of. */
+function isFlow(cell: ProjectionCell): boolean {
+  return cell === "flow" || cell === "signedFlow";
+}
+
+const XLSX_KIND: Record<ProjectionCell, CellKind> = {
+  stock: "money",
+  balance: "money",
+  flow: "money",
+  signedFlow: "money",
+  percent: "percent",
+  multiple: "multiple",
+};
+
 /**
- * Excel column map mirroring ProjectionGrid's columns, order and headers in the UI
- * language. Each column's kind rounds and formats its cells as the grid shows them
+ * Excel column map: the Year (calendar year), the Period when projection years are not
+ * calendar years, then ProjectionGrid's columns with their headers as plain text in the
+ * UI language. Each column's kind rounds and formats its cells as the grid shows them
  * (ADR 0010); opening-row (year ≤ 0) flow cells are blanked like the "—" on screen.
  */
 export function projectionColumns(
@@ -133,9 +209,6 @@ export function projectionColumns(
   rows: SeriesRow[],
 ): XlsxColumn<SeriesRow>[] {
   const g = t.projGrid;
-  // Flow fields are structurally N/A in the opening snapshot row.
-  const flow = (pick: (r: SeriesRow) => Decimal) => (r: SeriesRow) =>
-    r.year <= 0 ? null : pick(r);
   const cols: XlsxColumn<SeriesRow>[] = [
     { header: g.year, kind: "int", value: (r) => r.calendarYear },
   ];
@@ -147,43 +220,13 @@ export function projectionColumns(
         periodLabelLocalized(baseDate, r.year, t.monthsShort, g.opening),
     });
   }
-  cols.push(
-    // ADR 0169: the drawn balance, and the value less the tranches not drawn yet.
-    { header: g.value, kind: "money", value: (r) => r.reportedValue },
-    ...purchasesColumn(rows, g).map(({ header }): XlsxColumn<SeriesRow> => ({
-      header,
-      kind: "money",
-      value: flow(purchasedValue),
-    })),
-    { header: g.debt, kind: "money", value: (r) => r.balance },
-    ...undrawnColumn(rows, g).map(({ header }): XlsxColumn<SeriesRow> => ({
-      header,
-      kind: "money",
-      value: (r) => r.undrawnDebt,
-    })),
-    { header: g.equity, kind: "money", value: (r) => r.equity },
-    { header: g.ltv, kind: "percent", value: (r) => r.ltv },
-    { header: g.grossRent, kind: "money", value: flow((r) => r.grossRent) },
-    { header: g.effective, kind: "money", value: flow((r) => r.effectiveRent) },
-    { header: g.holding, kind: "money", value: flow((r) => r.holdingCosts) },
-    { header: g.noi, kind: "money", value: flow((r) => r.noi) },
-    { header: g.interest, kind: "money", value: flow((r) => r.interest) },
-    { header: g.principal, kind: "money", value: flow((r) => r.principal) },
-    { header: g.debtSvc, kind: "money", value: flow((r) => r.debtService) },
-    { header: g.netCf, kind: "money", value: flow((r) => r.netCashFlow) },
-    {
-      header: g.cashToOwner,
-      kind: "money",
-      value: flow((r) => r.cashToOwner),
-    },
-    { header: g.dscr, kind: "multiple", value: (r) => r.dscr },
-    ...projectionExtras(rows, g).map(
-      ({ key, header }): XlsxColumn<SeriesRow> => ({
-        header,
-        kind: "money",
-        value: flow((r) => r[key]),
-      }),
-    ),
-  );
+  for (const c of projectionGridColumns(rows, g)) {
+    const flow = isFlow(c.cell);
+    cols.push({
+      header: c.header,
+      kind: XLSX_KIND[c.cell],
+      value: (r) => (flow && r.year <= 0 ? null : c.value(r)),
+    });
+  }
   return cols;
 }

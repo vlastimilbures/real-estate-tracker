@@ -7,24 +7,14 @@ import { TableWrap } from "./layout";
 import { Pct } from "./rates";
 import { fmtDscr, orDash } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
-import { purchasedValue } from "../../engine";
 import {
-  projectionExtras,
-  purchasesColumn,
-  undrawnColumn,
+  projectionGridColumns,
   yearCellPeriod,
   yearLabel,
+  type ProjectionColumn,
   type SeriesRow,
 } from "../model/projection";
-import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
-
-/** A column after Year: its header and the cell it shows for a row. */
-interface GridColumn {
-  key: string;
-  header: ReactNode;
-  cell: (r: SeriesRow) => ReactNode;
-}
 
 /** A stock figure: no parentheses, no "Kč". */
 const stock = (v: Decimal) => <Money value={v} parens={false} suffix={false} />;
@@ -36,82 +26,21 @@ function flow(r: SeriesRow, v: Decimal, signed = false): ReactNode {
   return <Money value={v} parens={signed} suffix={false} signed={signed} />;
 }
 
-/** Every column after Year, in order: a column is one entry here. The optional ones show
- *  only when some year has a value for them. */
-function gridColumns(
-  rows: SeriesRow[],
-  g: Dictionary["projGrid"],
-): GridColumn[] {
-  return [
-    // ADR 0169: the value less the tranches not drawn yet, a purchase's value and
-    // construction (ADR 0194), the drawn balance, and those tranches while a
-    // development loan draws.
-    { key: "value", header: g.value, cell: (r) => stock(r.reportedValue) },
-    ...purchasesColumn(rows, g).map(({ key, header }) => ({
-      key,
-      header,
-      cell: (r: SeriesRow) => flow(r, purchasedValue(r)),
-    })),
-    { key: "debt", header: g.debt, cell: (r) => stock(r.balance) },
-    ...undrawnColumn(rows, g).map(({ key, header }) => ({
-      key,
-      header,
-      cell: (r: SeriesRow) => stock(r[key]),
-    })),
-    {
-      key: "equity",
-      header: g.equity,
-      cell: (r) => <Money value={r.equity} suffix={false} />,
-    },
-    {
-      key: "ltv",
-      header: <MetricLabel term="ltv">{g.ltv}</MetricLabel>,
-      cell: (r) => <Pct value={r.ltv} dp={1} />,
-    },
-    {
-      key: "grossRent",
-      header: g.grossRent,
-      cell: (r) => flow(r, r.grossRent),
-    },
-    {
-      key: "effectiveRent",
-      header: <MetricLabel term="egi">{g.effective}</MetricLabel>,
-      cell: (r) => flow(r, r.effectiveRent),
-    },
-    { key: "holding", header: g.holding, cell: (r) => flow(r, r.holdingCosts) },
-    {
-      key: "noi",
-      header: <MetricLabel term="noi">{g.noi}</MetricLabel>,
-      cell: (r) => flow(r, r.noi, true),
-    },
-    { key: "interest", header: g.interest, cell: (r) => flow(r, r.interest) },
-    {
-      key: "principal",
-      header: g.principal,
-      cell: (r) => flow(r, r.principal),
-    },
-    { key: "debtSvc", header: g.debtSvc, cell: (r) => flow(r, r.debtService) },
-    {
-      key: "netCf",
-      header: g.netCf,
-      cell: (r) => flow(r, r.netCashFlow, true),
-    },
-    {
-      key: "cashToOwner",
-      header: g.cashToOwner,
-      cell: (r) => flow(r, r.cashToOwner, true),
-    },
-    {
-      key: "dscr",
-      header: <MetricLabel term="dscr">{g.dscr}</MetricLabel>,
-      cell: (r) => orDash(r.dscr, fmtDscr),
-    },
-    ...projectionExtras(rows, g).map(({ key, header }) => ({
-      key,
-      header,
-      cell: (r: SeriesRow) => flow(r, r[key]),
-    })),
-  ];
+/** A column's cell for a row, as its kind shows it. Only LTV (n/a) and DSCR (a dash)
+ *  are ever null. */
+function cellFor(c: ProjectionColumn, r: SeriesRow): ReactNode {
+  const v = c.value(r);
+  if (c.cell === "percent") return <Pct value={v} dp={1} />;
+  if (c.cell === "multiple") return orDash(v, fmtDscr);
+  if (v === null) return null;
+  switch (c.cell) {
+    case "stock":
+      return stock(v);
+    case "balance":
+      return <Money value={v} suffix={false} />;
+    default:
+      return flow(r, v, c.cell === "signedFlow");
+  }
 }
 
 export function ProjectionGrid({
@@ -123,7 +52,7 @@ export function ProjectionGrid({
 }) {
   const t = useT();
   const last = rows.length - 1;
-  const columns = gridColumns(rows, t.projGrid);
+  const columns = projectionGridColumns(rows, t.projGrid);
   return (
     <TableWrap label={t.projGrid.caption}>
       {/* Compact rows, the period in the Year cell (ADR 0211). */}
@@ -136,7 +65,11 @@ export function ProjectionGrid({
             </th>
             {columns.map((c) => (
               <th key={c.key} scope="col">
-                {c.header}
+                {c.term ? (
+                  <MetricLabel term={c.term}>{c.header}</MetricLabel>
+                ) : (
+                  c.header
+                )}
               </th>
             ))}
           </tr>
@@ -154,7 +87,7 @@ export function ProjectionGrid({
                   {period && <span className="sr-only">, {period}</span>}
                 </td>
                 {columns.map((c) => (
-                  <td key={c.key}>{c.cell(r)}</td>
+                  <td key={c.key}>{cellFor(c, r)}</td>
                 ))}
               </tr>
             );
