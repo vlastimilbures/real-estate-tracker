@@ -1,7 +1,7 @@
 // First-run seed: the sample portfolio seed in .claude/rules/engine-parity.md. Kept here (not imported from the
 // engine's test fixtures) so the data layer doesn't make the engine depend on it.
 // `seedIfEmpty` inserts only when the DB has no properties yet.
-import { isoDate, rate } from "../engine";
+import { isoDate, mortgageBlock, rate } from "../engine";
 import type { StoredAssumptions } from "../engine";
 import type { Sql, SqlStatement } from "./sql";
 import {
@@ -133,7 +133,7 @@ const MORTGAGES = [
     interestRatePa: rate("0.0449"),
     monthlyInstalment: money("21576.4"),
   },
-];
+].map((fields) => mortgageBlock(fields));
 
 const VALUATIONS = [
   {
