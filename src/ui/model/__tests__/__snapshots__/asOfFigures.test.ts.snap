@@ -1,0 +1,469 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Property detail's tiles at each as-of and lens > development, future, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "289986.7864006774582030203178762322988321",
+  "committedDebt": "4194103.130673313026334013898923378573287",
+  "debt": "4194103.130673313026334013898923378573287",
+  "dscr": "0.7910849752799396362227161103002557913841",
+  "effectiveGrossIncome": "323884.2828",
+  "equity": "7364099.442126686973665986101076621426713",
+  "grossAnnualRent": "340930.824",
+  "grossYield": "0.0294968721868843970154369502763245426686",
+  "holdingCosts": "94480.0930487109375",
+  "ltv": "0.3628681106994374399838528757476683090521",
+  "name": "Dev unit",
+  "netCashFlow": "-60582.5966493883957030203178762322988321",
+  "netYield": "0.01984773915376319562717813244243055597884",
+  "noi": "229404.1897512890625",
+  "owned": true,
+  "propertyId": "dev",
+  "reportedValue": "11558202.5728",
+  "undrawnDebt": "0",
+  "value": "11558202.5728",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > development, future, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "256306.0645103439195282199918718738878759",
+  "committedDebt": "3706976.034722105672156495302739591520911",
+  "debt": "3706976.034722105672156495302739591520911",
+  "dscr": "0.7910849752799396362227161103002557913841",
+  "effectiveGrossIncome": "286266.5120421133090666420177198801814674",
+  "equity": "6508790.866306523775135669921977210646631",
+  "grossAnnualRent": "301333.170570645588491202123915663348913",
+  "grossYield": "0.0294968721868843970154369502763245426686",
+  "holdingCosts": "83506.63533484927578455640885376519466576",
+  "ltv": "0.3628681106994374399838528757476683090521",
+  "name": "Dev unit",
+  "netCashFlow": "-53546.18780307988624613438300575890107433",
+  "netYield": "0.01984773915376319562717813244243055597885",
+  "noi": "202759.8767072640332820856088661149868016",
+  "owned": true,
+  "propertyId": "dev",
+  "reportedValue": "10215766.90102862944729216522471680216754",
+  "undrawnDebt": "0",
+  "value": "10215766.90102862944729216522471680216754",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > development, records in force, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "97999.99999999999999999999999999999999999",
+  "committedDebt": "4500000",
+  "debt": "2000000",
+  "dscr": "-0.2602040816326530612244897959183673469388",
+  "effectiveGrossIncome": "0",
+  "equity": "5062302.870897313149739821647178200358522",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25500",
+  "ltv": "0.4705979365802838540781426496464650734603",
+  "name": "Dev unit",
+  "netCashFlow": "-123500",
+  "netYield": "-0.002666721640621608506442808347996635416275",
+  "noi": "-25500",
+  "owned": true,
+  "propertyId": "dev",
+  "reportedValue": "7062302.870897313149739821647178200358522",
+  "undrawnDebt": "2500000",
+  "value": "9562302.870897313149739821647178200358522",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > development, records in force, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "97597.51609402020317584306815917168982916",
+  "committedDebt": "4481518.596153988921339732721594618410523",
+  "debt": "1991786.042735106187262103431819830404677",
+  "dscr": "-0.2602040816326530612244897959183673469388",
+  "effectiveGrossIncome": "0",
+  "equity": "5041512.101175563254573078390921377065187",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25395.27204487260388759181875570283765963",
+  "ltv": "0.4705979365802838540781426496464650734603",
+  "name": "Dev unit",
+  "netCashFlow": "-122992.7881388928070634348869148745274888",
+  "netYield": "-0.002666721640621608506442808347996635416275",
+  "noi": "-25395.27204487260388759181875570283765963",
+  "owned": true,
+  "propertyId": "dev",
+  "reportedValue": "7033298.143910669441835181822741207469864",
+  "undrawnDebt": "2489732.553418882734077629289774788005846",
+  "value": "9523030.697329552175912811112515995475711",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > development, today, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "97999.99999999999999999999999999999999999",
+  "committedDebt": "4500000",
+  "debt": "2000000",
+  "dscr": "-0.2602040816326530612244897959183673469388",
+  "effectiveGrossIncome": "0",
+  "equity": "5000000",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25500",
+  "ltv": "0.4736842105263157894736842105263157894737",
+  "name": "Dev unit",
+  "netCashFlow": "-123500",
+  "netYield": "-0.002684210526315789473684210526315789473684",
+  "noi": "-25500",
+  "owned": true,
+  "propertyId": "dev",
+  "reportedValue": "7000000",
+  "undrawnDebt": "2500000",
+  "value": "9500000",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > development, today, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "97999.99999999999999999999999999999999999",
+  "committedDebt": "4500000",
+  "debt": "2000000",
+  "dscr": "-0.2602040816326530612244897959183673469388",
+  "effectiveGrossIncome": "0",
+  "equity": "5000000",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25500",
+  "ltv": "0.4736842105263157894736842105263157894737",
+  "name": "Dev unit",
+  "netCashFlow": "-123500",
+  "netYield": "-0.002684210526315789473684210526315789473684",
+  "noi": "-25500",
+  "owned": true,
+  "propertyId": "dev",
+  "reportedValue": "7000000",
+  "undrawnDebt": "2500000",
+  "value": "9500000",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > pending, future, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "288000",
+  "committedDebt": "3822726.131687237554319113190819466001235",
+  "debt": "3822726.131687237554319113190819466001235",
+  "dscr": "0.6240963458378092447916666666666666666667",
+  "effectiveGrossIncome": "261598.8438",
+  "equity": "3310392.670037491046273514082958318742173",
+  "grossAnnualRent": "275367.204",
+  "grossYield": "0.0386040400635719831280440437246975238002",
+  "holdingCosts": "81859.0961987109375",
+  "ltv": "0.5359123039928809648050584755051767471506",
+  "name": "Future buy",
+  "netCashFlow": "-108260.2523987109375",
+  "netYield": "0.02519791869411028054837112396384534989616",
+  "noi": "179739.7476012890625",
+  "owned": true,
+  "propertyId": "future",
+  "reportedValue": "7133118.801724728600592627273777784743408",
+  "undrawnDebt": "0",
+  "value": "7133118.801724728600592627273777784743408",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > pending, future, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "254550.0348315408684943846898622198047043",
+  "committedDebt": "3378732.881848707654088167371722410598691",
+  "debt": "3378732.881848707654088167371722410598691",
+  "dscr": "0.6240963458378092447916666666666666666667",
+  "effectiveGrossIncome": "231215.2597263222880922877835429801465698",
+  "equity": "2925904.755083753204875135186721096087024",
+  "grossAnnualRent": "243384.4839224445137813555616241896279682",
+  "grossYield": "0.0386040400635719831280440437246975238002",
+  "holdingCosts": "72351.51315507056890291094561265650338388",
+  "ltv": "0.5359123039928809648050584755051767471506",
+  "name": "Future buy",
+  "netCashFlow": "-95686.28826028914930500785193189616151836",
+  "netYield": "0.02519791869411028054837112396384534989616",
+  "noi": "158863.7465712517191893768379303236431859",
+  "owned": true,
+  "propertyId": "future",
+  "reportedValue": "6304637.636932460858963302558443506685714",
+  "undrawnDebt": "0",
+  "value": "6304637.636932460858963302558443506685714",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > pending, records in force, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "0",
+  "committedDebt": "0",
+  "debt": "0",
+  "dscr": null,
+  "effectiveGrossIncome": "0",
+  "equity": "6300000",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25500",
+  "ltv": "0",
+  "name": "Future buy",
+  "netCashFlow": "-25500",
+  "netYield": "-0.004047619047619047619047619047619047619048",
+  "noi": "-25500",
+  "owned": false,
+  "propertyId": "future",
+  "reportedValue": "6300000",
+  "undrawnDebt": "0",
+  "value": "6300000",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > pending, records in force, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "0",
+  "committedDebt": "0",
+  "debt": "0",
+  "dscr": null,
+  "effectiveGrossIncome": "0",
+  "equity": "6274126.034615584489875625810232465774733",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25395.27204487260388759181875570283765963",
+  "ltv": "0",
+  "name": "Future buy",
+  "netCashFlow": "-25395.27204487260388759181875570283765963",
+  "netYield": "-0.004047619047619047619047619047619047619048",
+  "noi": "-25395.27204487260388759181875570283765963",
+  "owned": false,
+  "propertyId": "future",
+  "reportedValue": "6274126.034615584489875625810232465774733",
+  "undrawnDebt": "0",
+  "value": "6274126.034615584489875625810232465774733",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > pending, today, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "0",
+  "committedDebt": "0",
+  "debt": "0",
+  "dscr": null,
+  "effectiveGrossIncome": "0",
+  "equity": "6300000",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25500",
+  "ltv": "0",
+  "name": "Future buy",
+  "netCashFlow": "-25500",
+  "netYield": "-0.004047619047619047619047619047619047619048",
+  "noi": "-25500",
+  "owned": false,
+  "propertyId": "future",
+  "reportedValue": "6300000",
+  "undrawnDebt": "0",
+  "value": "6300000",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > pending, today, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "0",
+  "committedDebt": "0",
+  "debt": "0",
+  "dscr": null,
+  "effectiveGrossIncome": "0",
+  "equity": "6300000",
+  "grossAnnualRent": "0",
+  "grossYield": "0",
+  "holdingCosts": "25500",
+  "ltv": "0",
+  "name": "Future buy",
+  "netCashFlow": "-25500",
+  "netYield": "-0.004047619047619047619047619047619047619048",
+  "noi": "-25500",
+  "owned": false,
+  "propertyId": "future",
+  "reportedValue": "6300000",
+  "undrawnDebt": "0",
+  "value": "6300000",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > seed, future, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "88500.25152830936072499529687069229111464",
+  "committedDebt": "1372239.222608342471606442872509468399417",
+  "debt": "1372239.222608342471606442872509468399417",
+  "dscr": "3.04312864669261206459070999474549492977",
+  "effectiveGrossIncome": "359467.704958944",
+  "equity": "11037620.38187165752839355712749053160058",
+  "grossAnnualRent": "378387.05785152",
+  "grossYield": "0.0304908411465767937989673923289693045654",
+  "holdingCosts": "90150.0542936441625",
+  "ltv": "0.1105765307862918621322561401224040352293",
+  "name": "Byt Javorova",
+  "netCashFlow": "180817.3991369904767750047031293077088854",
+  "netYield": "0.021701909550054481093062158793728941833",
+  "noi": "269317.6506652998375",
+  "owned": true,
+  "propertyId": "javorova",
+  "reportedValue": "12409859.60448",
+  "undrawnDebt": "0",
+  "value": "12409859.60448",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > seed, future, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "78221.32676781692969752666410629924426867",
+  "committedDebt": "1212859.520528333818683557129108432997042",
+  "debt": "1212859.520528333818683557129108432997042",
+  "dscr": "3.04312864669261206459070999474549492977",
+  "effectiveGrossIncome": "317717.0722851154561852066942882064638042",
+  "equity": "9755648.099523457798409083427955923014422",
+  "grossAnnualRent": "334439.0234580162696686386255665331197939",
+  "grossYield": "0.03049084114657679379896739232896930456539",
+  "holdingCosts": "79679.51201566813191121293542155762556033",
+  "ltv": "0.1105765307862918621322561401224040352293",
+  "name": "Byt Javorova",
+  "netCashFlow": "159816.2335016303945764670947603495939753",
+  "netYield": "0.02170190955005448109306215879372894183299",
+  "noi": "238037.5602694473242739937588666488382439",
+  "owned": true,
+  "propertyId": "javorova",
+  "reportedValue": "10968507.62005179161709264055706435601147",
+  "undrawnDebt": "0",
+  "value": "10968507.62005179161709264055706435601147",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > seed, records in force, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "80661.6",
+  "committedDebt": "1634085.02569105614083963687308559922946",
+  "debt": "1634085.02569105614083963687308559922946",
+  "dscr": "2.875569044006069802731411229135053110774",
+  "effectiveGrossIncome": "310080",
+  "equity": "8632808.5830618485041441716323057316818",
+  "grossAnnualRent": "326400",
+  "grossYield": "0.03179150504897917591994563677611675162931",
+  "holdingCosts": "78132",
+  "ltv": "0.1591606076737698458892620833687811203938",
+  "name": "Byt Javorova",
+  "netCashFlow": "151286.4",
+  "netYield": "0.02259183827543082688811136813402796662658",
+  "noi": "231948",
+  "owned": true,
+  "propertyId": "javorova",
+  "reportedValue": "10266893.60875290464498380850539133091126",
+  "undrawnDebt": "0",
+  "value": "10266893.60875290464498380850539133091126",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > seed, records in force, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "80330.32453234102061723044108803921608495",
+  "committedDebt": "1627373.87340694151923031174848750200255",
+  "debt": "1627373.87340694151923031174848750200255",
+  "dscr": "2.875569044006069802731411229135053110774",
+  "effectiveGrossIncome": "308806.5080656508632731165160693465059411",
+  "equity": "8597353.822673209238065548603898093139797",
+  "grossAnnualRent": "325059.4821743693297611752800729963220433",
+  "grossYield": "0.03179150504897917591994563677611675162931",
+  "holdingCosts": "77811.11354548965831158133266747349458911",
+  "ltv": "0.1591606076737698458892620833687811203938",
+  "name": "Byt Javorova",
+  "netCashFlow": "150665.0699878201843443047423138337952671",
+  "netYield": "0.02259183827543082688811136813402796662658",
+  "noi": "230995.394520161204961535183401873011352",
+  "owned": true,
+  "propertyId": "javorova",
+  "reportedValue": "10224727.69608015075729586035238559514235",
+  "undrawnDebt": "0",
+  "value": "10224727.69608015075729586035238559514235",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > seed, today, nominal 1`] = `
+{
+  "active": true,
+  "annualDebtService": "80661.6",
+  "committedDebt": "1642907.311418635219163957383276396839669",
+  "debt": "1642907.311418635219163957383276396839669",
+  "dscr": "2.875569044006069802731411229135053110774",
+  "effectiveGrossIncome": "310080",
+  "equity": "8557092.688581364780836042616723603160331",
+  "grossAnnualRent": "326400",
+  "grossYield": "0.032",
+  "holdingCosts": "78132",
+  "ltv": "0.1610693442567289430552899395369016509479",
+  "name": "Byt Javorova",
+  "netCashFlow": "151286.4",
+  "netYield": "0.02274",
+  "noi": "231948",
+  "owned": true,
+  "propertyId": "javorova",
+  "reportedValue": "10200000",
+  "undrawnDebt": "0",
+  "value": "10200000",
+}
+`;
+
+exports[`Property detail's tiles at each as-of and lens > seed, today, real 1`] = `
+{
+  "active": true,
+  "annualDebtService": "80661.6",
+  "committedDebt": "1642907.311418635219163957383276396839669",
+  "debt": "1642907.311418635219163957383276396839669",
+  "dscr": "2.875569044006069802731411229135053110774",
+  "effectiveGrossIncome": "310080",
+  "equity": "8557092.688581364780836042616723603160331",
+  "grossAnnualRent": "326400",
+  "grossYield": "0.032",
+  "holdingCosts": "78132",
+  "ltv": "0.1610693442567289430552899395369016509479",
+  "name": "Byt Javorova",
+  "netCashFlow": "151286.4",
+  "netYield": "0.02274",
+  "noi": "231948",
+  "owned": true,
+  "propertyId": "javorova",
+  "reportedValue": "10200000",
+  "undrawnDebt": "0",
+  "value": "10200000",
+}
+`;
+
+exports[`the Dashboard's subtitle > filter all, future 1`] = `"as of 07.06.2031"`;
+
+exports[`the Dashboard's subtitle > filter all, records in force 1`] = `"as of 01.09.2026"`;
+
+exports[`the Dashboard's subtitle > filter all, today 1`] = `"Portfolio overview"`;
+
+exports[`the Dashboard's subtitle > filter one, future 1`] = `"1 of 3 properties · as of 07.06.2031"`;
+
+exports[`the Dashboard's subtitle > filter one, records in force 1`] = `"1 of 3 properties · as of 01.09.2026"`;
+
+exports[`the Dashboard's subtitle > filter one, today 1`] = `"1 of 3 properties"`;
+
+exports[`the Dashboard's subtitle > filter two, future 1`] = `"2 of 3 properties · as of 07.06.2031"`;
+
+exports[`the Dashboard's subtitle > filter two, records in force 1`] = `"2 of 3 properties · as of 01.09.2026"`;
+
+exports[`the Dashboard's subtitle > filter two, today 1`] = `"2 of 3 properties"`;

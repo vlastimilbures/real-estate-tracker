@@ -25,16 +25,28 @@ export interface PropertiesTotal {
   dscr: Decimal | null;
 }
 
+/** The totals row's inputs: the portfolio snapshot at the page's date and its projection,
+ *  the as-of basis, the assumptions and every listed property. */
+interface PropertiesTotalInput {
+  snapshot: PortfolioSnapshot;
+  projection: ProjectionYear[];
+  basis: AsOfBasis;
+  assumptions: Assumptions;
+  properties: readonly Property[];
+}
+
 /** The totals row, or null when fewer than two properties are active (an inactive one is
  *  listed but not in the portfolio, so there is nothing to total). The label says what
  *  is counted: a pending purchase's value and flows are not owned yet (its drawn debt
  *  is, ADR 0165), and an inactive property is left out (ADR 0205 §5). */
 export function propertiesTotal(
-  snapshot: PortfolioSnapshot,
-  projection: ProjectionYear[],
-  basis: AsOfBasis,
-  assumptions: Assumptions,
-  properties: readonly Property[],
+  {
+    snapshot,
+    projection,
+    basis,
+    assumptions,
+    properties,
+  }: PropertiesTotalInput,
   t: Pick<Dictionary, "properties">,
 ): PropertiesTotal | null {
   const active = properties.filter((p) => p.active);

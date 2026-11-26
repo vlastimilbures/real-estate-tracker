@@ -34,17 +34,17 @@ function tiles(asOf: IsoDate, mode: Mode) {
   const perProperty = portfolio.properties.map((p) => {
     const full = fullSchedules.get(p.id) ?? EMPTY_PROPERTY_SCHEDULE;
     return propertyTilesForAsOf(
-      propertySnapshot(p, portfolio, assumptions, asOf, full.rows),
-      projectionSeries(
-        propertyProjection(p, portfolio, assumptions, full),
-        mode,
-        assumptions,
-      ),
-      basis,
-      asOf,
+      {
+        snapshot: propertySnapshot(p, portfolio, assumptions, asOf, full.rows),
+        series: projectionSeries(
+          propertyProjection(p, portfolio, assumptions, full),
+          mode,
+          assumptions,
+        ),
+        purchaseDate: p.purchaseDate,
+      },
+      { basis, asOf, assumptions },
       mode,
-      assumptions,
-      p.purchaseDate,
     );
   });
   return { dashboard, perProperty };

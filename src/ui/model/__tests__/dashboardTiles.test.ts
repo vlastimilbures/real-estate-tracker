@@ -129,27 +129,53 @@ describe("dashboardSubtitle", () => {
   const today = isoDate("2026-06-07");
 
   it("falls back to the default when no filter and as-of is today", () => {
-    expect(dashboardSubtitle(en, false, 3, 3, true, today)).toBe(
-      en.dashboard.subtitleDefault,
-    );
+    expect(
+      dashboardSubtitle(en, {
+        filterActive: false,
+        effectiveCount: 3,
+        totalCount: 3,
+        isToday: true,
+        asOf: today,
+      }),
+    ).toBe(en.dashboard.subtitleDefault);
   });
 
   it("notes an active property filter", () => {
-    expect(dashboardSubtitle(en, true, 2, 3, true, today)).toBe(
-      en.dashboard.subFilter(2, 3),
-    );
+    expect(
+      dashboardSubtitle(en, {
+        filterActive: true,
+        effectiveCount: 2,
+        totalCount: 3,
+        isToday: true,
+        asOf: today,
+      }),
+    ).toBe(en.dashboard.subFilter(2, 3));
   });
 
   it("notes a non-today as-of date", () => {
     const asOf = isoDate("2027-01-01");
-    expect(dashboardSubtitle(en, false, 3, 3, false, asOf)).toBe(
-      en.dashboard.asOf("01.01.2027"),
-    );
+    expect(
+      dashboardSubtitle(en, {
+        filterActive: false,
+        effectiveCount: 3,
+        totalCount: 3,
+        isToday: false,
+        asOf: asOf,
+      }),
+    ).toBe(en.dashboard.asOf("01.01.2027"));
   });
 
   it("joins both filter and as-of notes when both apply", () => {
     const asOf = isoDate("2027-01-01");
-    expect(dashboardSubtitle(en, true, 2, 3, false, asOf)).toBe(
+    expect(
+      dashboardSubtitle(en, {
+        filterActive: true,
+        effectiveCount: 2,
+        totalCount: 3,
+        isToday: false,
+        asOf: asOf,
+      }),
+    ).toBe(
       `${en.dashboard.subFilter(2, 3)} · ${en.dashboard.asOf("01.01.2027")}`,
     );
   });
