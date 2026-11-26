@@ -52,7 +52,7 @@
     "ux:axe-check": "node ux-capture/axeCheck.ts",
     "ux:baseline": "node ux-capture/baseline.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.strict.json && tsc --noEmit -p ux-capture/tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "lint": "eslint . --max-warnings 0 && node scripts/check-size-baseline.mjs && pnpm lint:css",
+    "lint": "eslint . --max-warnings 0 && node scripts/check-size-baseline.mjs && node scripts/check-comment-refs.mjs && pnpm lint:css",
     "lint:css": "stylelint \"src/**/*.css\" --max-warnings 0 && node scripts/css-dead-classes.mjs",
     "lint:size": "node scripts/check-size-baseline.mjs",
     "lint:size:baseline-check": "node scripts/check-size-baseline.mjs --base",
