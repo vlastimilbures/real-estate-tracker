@@ -150,11 +150,13 @@ describe("chrome lifetime across pages (#483, ADR 0263)", () => {
     await waitFor(() =>
       expect(title()?.textContent).toBe(en.projections.title),
     );
-    expect(scrollTo).toHaveBeenCalledTimes(2);
+    // A lazy page commits outside act, and its frame's scroll effect runs in a later
+    // task than the commit that shows the title: wait for the effect too (#632).
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(2));
     const [a, b] = portfolio.properties;
     await act(async () => useUiStore.getState().openProperty(a!.id));
     await waitFor(() => expect(title()?.textContent).toBe(a!.name));
-    expect(scrollTo).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(3));
     await act(async () => useUiStore.getState().openProperty(b!.id));
     expect(scrollTo).toHaveBeenCalledTimes(4);
     expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
