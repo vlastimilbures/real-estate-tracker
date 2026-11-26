@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { App } from "../App";
+import { Modal } from "../components/Modal";
 import { en } from "../../i18n/en";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
@@ -20,6 +21,19 @@ vi.mock("@tauri-apps/api/event", () => ({
     return () => handlers.delete(name);
   }),
 }));
+
+/** The app with a modal dialog open over it (#600: the dialog layer, not only the
+ *  attribute). */
+function WithDialog() {
+  return (
+    <>
+      <App />
+      <Modal titleId="d" title="Dialog" onClose={() => {}} closeLabel="Close">
+        Body
+      </Modal>
+    </>
+  );
+}
 
 function emit(name: string, payload: unknown = null) {
   const h = handlers.get(name);
@@ -74,11 +88,8 @@ describe("menu shortcuts (UX-066)", () => {
   });
 
   it("does nothing while a dialog is open", async () => {
-    render(<App />);
+    render(<WithDialog />);
     await act(async () => {});
-    const dialog = document.createElement("div");
-    dialog.setAttribute("aria-modal", "true");
-    document.body.appendChild(dialog);
     emit("menu://navigate", "projections");
     emit("menu://new-property");
     const s = useUiStore.getState();
@@ -99,11 +110,8 @@ describe("About menu item", () => {
   // #128 R5-14 (ADR 0157): like the other menu items, About waits for an open dialog.
   it("does nothing while a dialog is open", async () => {
     act(() => useUiStore.setState({ aboutOpen: false }));
-    render(<App />);
+    render(<WithDialog />);
     await act(async () => {});
-    const dialog = document.createElement("div");
-    dialog.setAttribute("aria-modal", "true");
-    document.body.appendChild(dialog);
     emit("menu://about");
     expect(useUiStore.getState().aboutOpen).toBe(false);
   });
@@ -119,11 +127,8 @@ describe("Settings shortcut (UX-074)", () => {
   });
 
   it("does nothing while a dialog is open", async () => {
-    render(<App />);
+    render(<WithDialog />);
     await act(async () => {});
-    const dialog = document.createElement("div");
-    dialog.setAttribute("aria-modal", "true");
-    document.body.appendChild(dialog);
     emit("menu://settings");
     expect(useUiStore.getState().route).toBe("dashboard");
   });
