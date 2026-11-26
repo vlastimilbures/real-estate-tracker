@@ -47,17 +47,21 @@ they stay as they are.
 
 The three former `.link-btn` buttons take on `.link-button`'s extra declarations:
 
-- `border-radius: 2px`: only the focus outline's corners round by 2 px.
+- `border-radius: 2px`: no visible effect. At rest the button has no background or border,
+  and with keyboard focus `button:focus-visible` (`layout.css:89-95`, specificity 0,1,1)
+  sets `border-radius: var(--r-sm)`, which beats `.link-button`'s 2 px (0,1,0), as it did
+  before.
 - `text-align: inherit`: the labels are one line, so nothing moves.
 - `appearance: none`: no visible effect on a button with no background or border.
 
-At rest, nothing changes in text, size or colour.
+No visible change, including focus: nothing changes in text, size, colour or the focus
+ring.
 
 ## Customer view
 
-A user would not notice: at rest the links look the same, and the focus ring's corners
-round by 2 px. It is still clearer, because one class now means "a button that reads as
-text", and a new link can no longer get the reset without `appearance: none`.
+A user would not notice: the links look the same, at rest and with focus. It is still
+clearer, because one class now means "a button that reads as text", and a new link
+can no longer get the reset without `appearance: none`.
 
 ## Tests
 
@@ -66,7 +70,9 @@ a pin on the stylesheets and the sources, written first and failing on main:
 
 - no `.link-btn` rule or `className` is left;
 - `.link-button.underlined` sets `min-height: 24px` and `text-decoration: underline`;
-- the error summary's colour rule targets `.link-button`.
+- the error summary's colour rule targets `.link-button`;
+- the three sites render with `link-button underlined`, so a site that drops `underlined`
+  fails.
 
 Kept as they are: the existing Assumptions error-summary, LoanTypeSwitch and NotOwned
 tests, which find the buttons by role and name.
@@ -77,4 +83,7 @@ One capture, en/light/1280x800, `UX_AXE=0`, against the cached main baseline. Ex
 0 px over tolerance on every screen. The prototype (#615, against 1d72fd34) found 0 of 102
 screens over tolerance; `61-settings-assumptions-error`, `25-property-mortgage-development`
 and `84-property-pending` show the three buttons at rest and are pixel-identical. No screen
-captures them with keyboard focus, the one state that changes.
+captures them with keyboard focus; the focus ring keeps its radius (Visible effects).
+
+Correction (2026-11-26, review of #621): the draft said the focus outline's corners would
+round by 2 px. They do not, because the focus rule's radius wins; the text above says so.
