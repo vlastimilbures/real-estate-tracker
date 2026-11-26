@@ -1,14 +1,7 @@
 // UX-055 (DR-093, D-62): Scenario compare honours the Nominal/Real lens, with each
 // scenario's own CPI index (so an inflation shock shows in real terms).
 import { describe, it, expect } from "vitest";
-import {
-  applyScenario,
-  cpiIndex,
-  portfolioProjection,
-  rate,
-  realProjection,
-} from "../../../engine";
-import { portfolioKpis } from "../../../engine/__tests__/support/seams";
+import { applyScenario, cpiIndex, rate } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import type { Decimal } from "../../../lib/money";
 import { fmtCzkM, fmtMultiple, fmtPp, toNumber } from "../../../lib/format";
@@ -23,28 +16,17 @@ import {
   type CompareResult,
 } from "../compare";
 import { SERIES } from "../chartData";
+import { compareResult } from "../../__tests__/support/compareResult";
 
-function result(id: string, overrides = {}): CompareResult {
-  const assn = applyScenario(assumptions, overrides);
-  const projection = portfolioProjection(portfolio, assn);
-  return {
-    id,
-    name: id,
-    projection,
-    realProjection: realProjection(projection, cpiIndex(assn)),
-    kpis: portfolioKpis(portfolio, assn),
-  };
-}
-
-const base = result("base");
-const shocked = result("shock", {
+const base = compareResult("base");
+const shocked = compareResult("shock", "shock", {
   inflationShock: { deltaPa: rate("0.06"), durationYears: 3 },
 });
 
-const crash = result("crash", {
+const crash = compareResult("crash", "crash", {
   valueShock: { pct: rate("0.2"), atYear: 0 },
 });
-const rateShock = result("rate", {
+const rateShock = compareResult("rate", "rate", {
   rateShock: { deltaPa: rate("0.02"), durationYears: 3 },
 });
 

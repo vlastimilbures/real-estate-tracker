@@ -2,15 +2,8 @@
 // per chart series, under the lens, holding the numbers the compare shows.
 import { describe, it, expect } from "vitest";
 import ExcelJS from "exceljs";
-import {
-  applyScenario,
-  cpiIndex,
-  portfolioProjection,
-  rate,
-  realProjection,
-} from "../../../engine";
-import { portfolioKpis } from "../../../engine/__tests__/support/seams";
-import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
+import { rate } from "../../../engine";
+import { assumptions } from "../../../engine/__tests__/support/seed";
 import { D } from "../../../lib/money";
 import { fmtCzkM, fmtDate, fmtMultiple, fmtPct } from "../../../lib/format";
 import { en } from "../../../i18n/en";
@@ -25,24 +18,13 @@ import {
   type XlsxSheetCells,
 } from "../xlsxExport";
 import type { Mode } from "../lens";
+import { compareResult } from "../../__tests__/support/compareResult";
 
-function result(id: string, overrides = {}): CompareResult {
-  const assn = applyScenario(assumptions, overrides);
-  const projection = portfolioProjection(portfolio, assn);
-  return {
-    id,
-    name: id,
-    projection,
-    realProjection: realProjection(projection, cpiIndex(assn)),
-    kpis: portfolioKpis(portfolio, assn),
-  };
-}
-
-const base = result("base");
-const shocked = result("shock", {
+const base = compareResult("base");
+const shocked = compareResult("shock", "shock", {
   inflationShock: { deltaPa: rate("0.06"), durationYears: 3 },
 });
-const crash = result("crash", {
+const crash = compareResult("crash", "crash", {
   valueShock: { pct: rate("0.2"), atYear: 0 },
 });
 const results = [base, shocked, crash];

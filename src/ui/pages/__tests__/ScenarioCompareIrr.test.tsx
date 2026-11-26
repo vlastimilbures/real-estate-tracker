@@ -9,6 +9,7 @@ import { portfolioKpis } from "../../../engine/__tests__/support/seams";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
+import { mockScenarioComparison } from "../../__tests__/support/compareResult";
 
 const projection = portfolioProjection(portfolio, assumptions);
 const kpis = portfolioKpis(portfolio, assumptions);
@@ -30,9 +31,9 @@ const flat: CompareResult = {
   },
 };
 
-vi.mock("../../../state/useEngine", () => ({
-  useScenarioComparison: () => [base, flat],
-}));
+vi.mock("../../../state/useEngine", () =>
+  mockScenarioComparison(() => [base, flat]),
+);
 
 const { CompareView } = await import("../ScenarioCompare");
 

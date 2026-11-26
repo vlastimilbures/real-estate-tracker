@@ -18,6 +18,7 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { fmtDate } from "../../../lib/format";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
+import { mockScenarioComparison } from "../../__tests__/support/compareResult";
 
 const baseResult: CompareResult = (() => {
   const projection = portfolioProjection(portfolio, assumptions);
@@ -30,9 +31,9 @@ const baseResult: CompareResult = (() => {
   };
 })();
 
-vi.mock("../../../state/useEngine", () => ({
-  useScenarioComparison: () => [baseResult],
-}));
+vi.mock("../../../state/useEngine", () =>
+  mockScenarioComparison(() => [baseResult]),
+);
 
 const { PresetBar, ScenarioListPanel } = await import("../ScenariosPanels");
 const { ShockPairFields } = await import("../ScenarioFormFields");

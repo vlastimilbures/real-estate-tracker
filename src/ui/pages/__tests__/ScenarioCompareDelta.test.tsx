@@ -5,39 +5,23 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  applyScenario,
-  cpiIndex,
-  portfolioProjection,
-  rate,
-  realProjection,
-} from "../../../engine";
-import { portfolioKpis } from "../../../engine/__tests__/support/seams";
-import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
+import { rate } from "../../../engine";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
+import {
+  compareResult,
+  mockScenarioComparison,
+} from "../../__tests__/support/compareResult";
 
-function result(id: string, name: string, overrides = {}): CompareResult {
-  const assn = applyScenario(assumptions, overrides);
-  const projection = portfolioProjection(portfolio, assn);
-  return {
-    id,
-    name,
-    projection,
-    realProjection: realProjection(projection, cpiIndex(assn)),
-    kpis: portfolioKpis(portfolio, assn),
-  };
-}
-
-const base = result("base", "Base");
-const crash = result("crash", "Price crash", {
+const base = compareResult("base", "Base");
+const crash = compareResult("crash", "Price crash", {
   valueShock: { pct: rate("0.2"), atYear: 0 },
 });
 
 let results: CompareResult[] = [];
-vi.mock("../../../state/useEngine", () => ({
-  useScenarioComparison: () => results,
-}));
+vi.mock("../../../state/useEngine", () =>
+  mockScenarioComparison(() => results),
+);
 
 const { CompareView } = await import("../ScenarioCompare");
 
