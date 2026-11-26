@@ -72,7 +72,7 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs,css,md,json,jsonc,yaml,yml,html}": "prettier --write",
     "*.{ts,tsx,js,mjs,cjs}": "eslint --max-warnings 0 --no-warn-ignored",
-    "src/**/*.{ts,tsx}": "vitest related --run --passWithNoTests",
+    "src/**/*.{ts,tsx}": "vitest related --run --passWithNoTests --maxWorkers=2",
     "*.css": "stylelint --max-warnings 0"
   },
   "dependencies": {
