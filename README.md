@@ -203,9 +203,11 @@ real** terms. Everything runs and stays on your Mac.
 
 - **Offline by design** — no network calls, analytics or updater. A strict Content Security
   Policy and a navigation guard keep the webview on the app.
-- **Least privilege** — the webview can use the SQL plugin's load and read, menu events and
-  the app's own commands, nothing else. Database writes, file dialogs and file writes run in
-  Rust; the webview never sees a path.
+- **Least privilege** — the webview can open the database and read it through the SQL
+  plugin, listen for menu events and call the app's own commands, nothing else. Every write
+  runs in the app's own Rust commands. The plugin's read is not a read-only guarantee (see
+  [Security posture](docs/release.md#security-posture)). File dialogs open in Rust, so the
+  webview never passes a file path.
 - **Your data stays on your Mac:**
 
   | What                           | Location                                                              |
@@ -297,7 +299,8 @@ flowchart LR
     PLATFORM["platform<br/>Tauri command wrappers"]
   end
   DB <--> CMD
-  CMD <--> DATA
+  DATA -- "reads (SQL plugin)" --> DB
+  DATA -- "writes" --> PLATFORM
   IMPORT --> DATA
   DATA -- "engine inputs" --> STATE
   STATE -- "inputs" --> ENGINE
@@ -309,8 +312,9 @@ flowchart LR
 ```
 
 - **The engine is pure** — typed inputs in, typed outputs out; no IO and no clock reads
-  (the base date is always a parameter). Outside the engine it imports only the money helpers
-  (`src/lib/money.ts`, which wraps `decimal.js`) and the shared input rules (`src/lib/rules.ts`).
+  (the base date is always a parameter). From outside its own folder the engine imports only
+  the money helpers (`src/lib/money.ts`, which wraps `decimal.js`) and the shared input rules
+  (`src/lib/rules.ts`).
 - **Money is never a float** — `decimal.js` everywhere, stored as decimal text in SQLite and
   rounded only for display.
 - **One-way data flow** — DB → mappers → engine → UI. Components never do financial arithmetic.
@@ -328,7 +332,7 @@ flowchart LR
 | [`src/state/`](src/state)                       | Zustand stores, memoised engine recompute, facades the UI uses                                                          |
 | [`src/ui/`](src/ui)                             | Pages, components and pure view models (`ui/model`)                                                                     |
 | [`src/i18n/`](src/i18n)                         | Typed English, Czech and Russian dictionaries                                                                           |
-| [`src/lib/`](src/lib)                           | Decimal setup and powers, shared input rules, local-day helpers and display formatting                                  |
+| [`src/lib/`](src/lib)                           | Decimal setup and helpers, shared input rules, local-day helpers and display formatting                                 |
 | [`src/platform/`](src/platform)                 | Wrappers around the app's Tauri commands                                                                                |
 | [`src-tauri/`](src-tauri)                       | Rust shell: DB writes and transactions, error codes, backups, file dialogs, atomic writes, menu, navigation guard, logs |
 | [`ux-capture/`](ux-capture)                     | Screenshot + axe harness for every screen                                                                               |
