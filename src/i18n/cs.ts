@@ -456,6 +456,8 @@ export const cs: Dictionary = {
       `Horizont projekce ${value} ${csPlural(n, ["rok", "roky", "let"])} je mimo rozsah, který formuláře přijímají (${range} let).`,
     leaseOverlap: (first, second) =>
       `Nájmy od ${first} a od ${second} se překrývají. Nájmy jednoho bytu se překrývat nemohou: nastavte dřívějšímu nájmu datum konce před začátkem pozdějšího.`,
+    instalmentBelowInterest: (date, instalment, interest) =>
+      `Úvěr od ${date}: splátka ${instalment} je nižší než úrok za první měsíc ${interest}. Čísla až do příští změny sazby nezahrnují nezaplacený úrok. Zvyšte splátku, nebo odstraňte dobu splatnosti, aby šlo úvěr znovu uložit.`,
   },
 
   properties: {

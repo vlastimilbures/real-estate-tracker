@@ -4,6 +4,7 @@
 import {
   basisDate,
   edate,
+  instalmentBelowInterest,
   leaseEndWithoutFollowOn,
   leaseInForce,
   monthsBetween,
@@ -22,6 +23,7 @@ import type {
   Rate,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
+import type { Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtNumber, fmtPct } from "../../lib/format";
 import { inRange, rangeProblems, type IntRange } from "../../lib/rules";
 import {
@@ -88,7 +90,16 @@ export type DataFinding =
     }
   /** Two stored leases of the property that overlap (ADR 0163), by start date: a
    *  database from before the rule keeps them. */
-  | { kind: "leaseOverlap"; first: IsoDate; second: IsoDate };
+  | { kind: "leaseOverlap"; first: IsoDate; second: IsoDate }
+  /** A stored plain loan with a term whose instalment is at or below its first month's
+   *  interest (ADR 0264): a database from before the rule keeps it, and its figures
+   *  leave the unpaid interest out until the next rate reset. */
+  | {
+      kind: "instalmentBelowInterest";
+      loanStart: IsoDate;
+      instalment: Money;
+      interest: Decimal;
+    };
 
 /** A property's findings: "needs attention" (counted) and "using portfolio defaults". */
 export interface DataCheck {
@@ -138,6 +149,7 @@ export function propertyDataCheck(
   const stored = [
     ...rangeFindings(property, own(portfolio.mortgages)),
     ...leaseOverlapFindings(own(portfolio.leases)),
+    ...instalmentFindings(own(portfolio.mortgages)),
   ];
   if (property.purchaseDate.getTime() > asOf.getTime())
     return { attention: stored, defaults: fundingOf(property, baseDate) };
@@ -217,6 +229,24 @@ function leaseOverlapFindings(leases: Lease[]): DataFinding[] {
     first: a.startDate,
     second: b.startDate,
   }));
+}
+
+/** Stored loans with a term that pay at or below their first month's interest (ADR 0264):
+ *  every such block, a replaced past one too, as the forms refuse to save any of them. */
+function instalmentFindings(mortgages: MortgageBlock[]): DataFinding[] {
+  return mortgages.flatMap((b) => {
+    const found = instalmentBelowInterest(b);
+    return found
+      ? [
+          {
+            kind: "instalmentBelowInterest" as const,
+            loanStart: b.startDate,
+            instalment: b.monthlyInstalment,
+            interest: found.firstInterest,
+          },
+        ]
+      : [];
+  });
 }
 
 /** The portfolio's own findings, as rows without a property: a stored projection horizon
@@ -406,6 +436,7 @@ const FINDING_FIX: Record<Exclude<FindingKind, "outOfRange">, DataCheckFix> = {
   leaseEnding: "records",
   leaseOverlap: "records",
   fixationEnded: "financing",
+  instalmentBelowInterest: "financing",
   costDefaults: "holding",
   growthDefault: "edit",
   fundingUnknown: "editFunding",
@@ -466,6 +497,12 @@ const FINDING_TEXT: {
   leaseOverlap: (t, f) =>
     t.dataCheck.leaseOverlap(fmtDate(f.first), fmtDate(f.second)),
   fixationEnded: (t, f, resetRate) => loanWarningText(t, f, resetRate),
+  instalmentBelowInterest: (t, f) =>
+    t.dataCheck.instalmentBelowInterest(
+      fmtDate(f.loanStart),
+      fmtCzk(f.instalment),
+      fmtCzk(f.interest),
+    ),
   growthDefault: ({ dataCheck: d }, f) =>
     f.appreciation && f.rentIndexation
       ? d.growthBoth

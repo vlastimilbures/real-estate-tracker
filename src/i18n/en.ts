@@ -515,6 +515,14 @@ export const en = {
     // ADR 0163: two stored leases of one apartment overlap (a database from before the rule).
     leaseOverlap: (first: string, second: string) =>
       `The leases from ${first} and from ${second} overlap. Leases on one apartment cannot overlap: set an end date on the earlier lease before the later one starts.`,
+    // ADR 0264: a stored plain loan with a term whose instalment is at or below its first
+    // month's interest (a database from before the rule).
+    instalmentBelowInterest: (
+      date: string,
+      instalment: string,
+      interest: string,
+    ) =>
+      `Loan from ${date}: the instalment ${instalment} is below the first month's interest ${interest}. The figures leave the unpaid interest out until the next rate reset. Raise the instalment, or remove the term, to save this loan again.`,
   },
 
   properties: {

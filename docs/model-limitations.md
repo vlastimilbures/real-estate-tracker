@@ -149,6 +149,11 @@ work still to do is in the [roadmap](roadmap.md).
   and maturity changes, which move the maturity on purpose (ADR 0116).
 - **Balloon at maturity.** If the instalment cannot clear the loan by the end of its term, the
   last payment pays the rest.
+- **A loan stored with an instalment at or below its interest keeps its old figures.** Since
+  ADR 0264 a loan with a term must pay more than its first month's interest. One saved
+  before keeps loading: until its next rate reset its balance stays flat and the unpaid
+  interest is neither paid nor added to the debt, so the cash flow is too high and the debt
+  too low (#611). The Data check lists it; raise the instalment to fix it.
 
 ## Rent and leases
 

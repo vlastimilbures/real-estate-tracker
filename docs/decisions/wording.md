@@ -266,3 +266,16 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Rejected: keeping the join, which fixes the order of the two sentences and the space
   between them in every language.
 - Approved by: owner OK 2026-11-25 (recorded in the #435 log)
+
+### 2026-11-26 · #597 / ADR 0264
+
+- Keys: `dataCheck.instalmentBelowInterest` (en, cs, ru), new
+- Change: the Data check's "Needs attention" line for a stored plain loan with a term whose
+  instalment is at or below its first month's interest names the loan's start date, the
+  instalment and that interest, says the figures leave the unpaid interest out until the
+  next rate reset, and asks to raise the instalment or remove the term to save the loan
+  again. The list is `role="list"`, not a live region; ADR 0264 records the finding.
+- Rejected: a term-specific variant of `inputRules.INSTALMENT_BELOW_INTEREST` for the
+  refusal; the owner kept the existing text, so the refusal adds no key.
+- Approved by: the en text, owner 2026-11-26 verbatim (#597, decision 6); cs and ru, owner
+  review in the PR
