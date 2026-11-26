@@ -1,5 +1,6 @@
 // Dense year-by-year grid, shared by the Projections screen and Property detail.
 // Renders SeriesRow[] (already lensed Nominal/Real). Money compact (no "Kč" suffix).
+import type { ReactNode } from "react";
 import { MetricLabel } from "./MetricLabel";
 import { Money } from "./figures";
 import { TableWrap } from "./layout";
@@ -15,7 +16,103 @@ import {
   yearLabel,
   type SeriesRow,
 } from "../model/projection";
+import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
+
+/** A column after Year: its header and the cell it shows for a row. */
+interface GridColumn {
+  key: string;
+  header: ReactNode;
+  cell: (r: SeriesRow) => ReactNode;
+}
+
+/** A stock figure: no parentheses, no "Kč". */
+const stock = (v: Decimal) => <Money value={v} parens={false} suffix={false} />;
+
+/** A flow figure. The opening row (year 0) is a stock snapshot: its flow fields are
+ *  structurally N/A (engine hard-codes them to 0), so they are dashed like DSCR. */
+function flow(r: SeriesRow, v: Decimal, signed = false): ReactNode {
+  if (r.year <= 0) return <span className="proj-na">—</span>;
+  return <Money value={v} parens={signed} suffix={false} signed={signed} />;
+}
+
+/** Every column after Year, in order: a column is one entry here. The optional ones show
+ *  only when some year has a value for them. */
+function gridColumns(
+  rows: SeriesRow[],
+  g: Dictionary["projGrid"],
+): GridColumn[] {
+  return [
+    // ADR 0169: the value less the tranches not drawn yet, a purchase's value and
+    // construction (ADR 0194), the drawn balance, and those tranches while a
+    // development loan draws.
+    { key: "value", header: g.value, cell: (r) => stock(r.reportedValue) },
+    ...purchasesColumn(rows, g).map(({ key, header }) => ({
+      key,
+      header,
+      cell: (r: SeriesRow) => flow(r, purchasedValue(r)),
+    })),
+    { key: "debt", header: g.debt, cell: (r) => stock(r.balance) },
+    ...undrawnColumn(rows, g).map(({ key, header }) => ({
+      key,
+      header,
+      cell: (r: SeriesRow) => stock(r[key]),
+    })),
+    {
+      key: "equity",
+      header: g.equity,
+      cell: (r) => <Money value={r.equity} suffix={false} />,
+    },
+    {
+      key: "ltv",
+      header: <MetricLabel term="ltv">{g.ltv}</MetricLabel>,
+      cell: (r) => <Pct value={r.ltv} dp={1} />,
+    },
+    {
+      key: "grossRent",
+      header: g.grossRent,
+      cell: (r) => flow(r, r.grossRent),
+    },
+    {
+      key: "effectiveRent",
+      header: <MetricLabel term="egi">{g.effective}</MetricLabel>,
+      cell: (r) => flow(r, r.effectiveRent),
+    },
+    { key: "holding", header: g.holding, cell: (r) => flow(r, r.holdingCosts) },
+    {
+      key: "noi",
+      header: <MetricLabel term="noi">{g.noi}</MetricLabel>,
+      cell: (r) => flow(r, r.noi, true),
+    },
+    { key: "interest", header: g.interest, cell: (r) => flow(r, r.interest) },
+    {
+      key: "principal",
+      header: g.principal,
+      cell: (r) => flow(r, r.principal),
+    },
+    { key: "debtSvc", header: g.debtSvc, cell: (r) => flow(r, r.debtService) },
+    {
+      key: "netCf",
+      header: g.netCf,
+      cell: (r) => flow(r, r.netCashFlow, true),
+    },
+    {
+      key: "cashToOwner",
+      header: g.cashToOwner,
+      cell: (r) => flow(r, r.cashToOwner, true),
+    },
+    {
+      key: "dscr",
+      header: <MetricLabel term="dscr">{g.dscr}</MetricLabel>,
+      cell: (r) => (r.dscr ? fmtDscr(r.dscr) : "—"),
+    },
+    ...projectionExtras(rows, g).map(({ key, header }) => ({
+      key,
+      header,
+      cell: (r: SeriesRow) => flow(r, r[key]),
+    })),
+  ];
+}
 
 export function ProjectionGrid({
   rows,
@@ -26,9 +123,7 @@ export function ProjectionGrid({
 }) {
   const t = useT();
   const last = rows.length - 1;
-  const extras = projectionExtras(rows, t.projGrid);
-  const undrawn = undrawnColumn(rows, t.projGrid);
-  const purchases = purchasesColumn(rows, t.projGrid);
+  const columns = gridColumns(rows, t.projGrid);
   return (
     <TableWrap label={t.projGrid.caption}>
       {/* Compact rows, the period in the Year cell (ADR 0211). */}
@@ -39,61 +134,15 @@ export function ProjectionGrid({
             <th scope="col" className="left sticky-col">
               {t.projGrid.year}
             </th>
-            <th scope="col">{t.projGrid.value}</th>
-            {purchases.map(({ key, header }) => (
-              <th key={key} scope="col">
-                {header}
-              </th>
-            ))}
-            <th scope="col">{t.projGrid.debt}</th>
-            {undrawn.map(({ key, header }) => (
-              <th key={key} scope="col">
-                {header}
-              </th>
-            ))}
-            <th scope="col">{t.projGrid.equity}</th>
-            <th scope="col">
-              <MetricLabel term="ltv">{t.projGrid.ltv}</MetricLabel>
-            </th>
-            <th scope="col">{t.projGrid.grossRent}</th>
-            <th scope="col">
-              <MetricLabel term="egi">{t.projGrid.effective}</MetricLabel>
-            </th>
-            <th scope="col">{t.projGrid.holding}</th>
-            <th scope="col">
-              <MetricLabel term="noi">{t.projGrid.noi}</MetricLabel>
-            </th>
-            <th scope="col">{t.projGrid.interest}</th>
-            <th scope="col">{t.projGrid.principal}</th>
-            <th scope="col">{t.projGrid.debtSvc}</th>
-            <th scope="col">{t.projGrid.netCf}</th>
-            <th scope="col">{t.projGrid.cashToOwner}</th>
-            <th scope="col">
-              <MetricLabel term="dscr">{t.projGrid.dscr}</MetricLabel>
-            </th>
-            {extras.map(({ key, header }) => (
-              <th key={key} scope="col">
-                {header}
+            {columns.map((c) => (
+              <th key={c.key} scope="col">
+                {c.header}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => {
-            // The opening row (year 0) is a stock snapshot: its flow fields are
-            // structurally N/A (engine hard-codes them to 0), so dash them like DSCR.
-            const opening = r.year <= 0;
-            const flow = (v: Decimal, signed = false) =>
-              opening ? (
-                <span className="proj-na">—</span>
-              ) : (
-                <Money
-                  value={v}
-                  parens={signed}
-                  suffix={false}
-                  signed={signed}
-                />
-              );
             const period = yearCellPeriod(t, baseDate, r.year);
             return (
               <tr
@@ -104,45 +153,8 @@ export function ProjectionGrid({
                   {yearLabel(t, r.year, r.calendarYear)}
                   {period && <span className="sr-only">, {period}</span>}
                 </td>
-                {/* ADR 0169: the value less the tranches not drawn yet, a purchase's
-                    value and construction (ADR 0194), the drawn balance, and those tranches
-                    while a development loan draws. */}
-                <td>
-                  <Money
-                    value={r.reportedValue}
-                    parens={false}
-                    suffix={false}
-                  />
-                </td>
-                {purchases.map(({ key }) => (
-                  <td key={key}>{flow(purchasedValue(r))}</td>
-                ))}
-                <td>
-                  <Money value={r.balance} parens={false} suffix={false} />
-                </td>
-                {undrawn.map(({ key }) => (
-                  <td key={key}>
-                    <Money value={r[key]} parens={false} suffix={false} />
-                  </td>
-                ))}
-                <td>
-                  <Money value={r.equity} suffix={false} />
-                </td>
-                <td>
-                  <Pct value={r.ltv} dp={1} />
-                </td>
-                <td>{flow(r.grossRent)}</td>
-                <td>{flow(r.effectiveRent)}</td>
-                <td>{flow(r.holdingCosts)}</td>
-                <td>{flow(r.noi, true)}</td>
-                <td>{flow(r.interest)}</td>
-                <td>{flow(r.principal)}</td>
-                <td>{flow(r.debtService)}</td>
-                <td>{flow(r.netCashFlow, true)}</td>
-                <td>{flow(r.cashToOwner, true)}</td>
-                <td>{r.dscr ? fmtDscr(r.dscr) : "—"}</td>
-                {extras.map(({ key }) => (
-                  <td key={key}>{flow(r[key])}</td>
+                {columns.map((c) => (
+                  <td key={c.key}>{c.cell(r)}</td>
                 ))}
               </tr>
             );
