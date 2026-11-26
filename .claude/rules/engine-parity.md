@@ -70,13 +70,13 @@ weighted-avg rate, net-worth multiple) within **±0.0001**. Base date **2026-06-
 
 ### Amortization (Byt Javorova; rate 1.69%, instalment 6,721.8; baseDate balance 1,642,907.31)
 
-| Month | Interest | Principal | End balance | Note                                                                                    |
-| ----- | -------- | --------- | ----------- | --------------------------------------------------------------------------------------- |
-| 1     | 2,313.8  | 4,408.0   | 1,638,499.3 | annuity split                                                                           |
-| 55    | 1,965.7  | 4,756.1   | 1,391,012.7 | at the fixed 1.69%                                                                      |
+| Month | Interest | Principal | End balance | Note                                                                                        |
+| ----- | -------- | --------- | ----------- | ------------------------------------------------------------------------------------------- |
+| 1     | 2,313.8  | 4,408.0   | 1,638,499.3 | annuity split                                                                               |
+| 55    | 1,965.7  | 4,756.1   | 1,391,012.7 | at the fixed 1.69%                                                                          |
 | 56    | 1,959.0  | 4,762.8   | 1,386,249.9 | **payment due on the fixation end 2031-01-17 → still 1.69%, instalment 6,721.8 (ADR 0021)** |
 | 57    | 5,198.4  | 3,483.0   | 1,382,766.9 | **rate resets to 4.5%, instalment re-amortizes to ≈8,681.46 over 244 months (ADR 0021)**    |
-| 300   | 32.4     | 8,649.0   | 0           | fully amortized                                                                         |
+| 300   | 32.4     | 8,649.0   | 0           | fully amortized                                                                             |
 
 ### 30-year projection — portfolio
 

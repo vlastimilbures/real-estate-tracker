@@ -4,8 +4,8 @@ Screenshots of every screen and state, plus an axe WCAG 2.2 AA scan of each one.
 for UX reviews and for before/after evidence of UI changes. CI runs it too (four
 `axe-shard` jobs, gathered by the job `axe`: English, light + dark, 1280×800 + `min`; plus
 the layout screens in Czech and Russian, light, 1280×800, 1200×800 + `min`, ADR 0158) and
-fails on any axe violation or layout assertion (ADR 0078). On CI a failed screen is retried once; see [Retries and flaky
-captures](#retries-and-flaky-captures).
+fails on any axe violation or layout assertion (ADR 0078). On CI a failed screen is
+retried once; see [Retries and flaky captures](#retries-and-flaky-captures).
 
 ```bash
 pnpm ux:capture                                  # en, light, 1280×800
