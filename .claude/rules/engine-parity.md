@@ -74,8 +74,8 @@ weighted-avg rate, net-worth multiple) within **±0.0001**. Base date **2026-06-
 | ----- | -------- | --------- | ----------- | --------------------------------------------------------------------------------------- |
 | 1     | 2,313.8  | 4,408.0   | 1,638,499.3 | annuity split                                                                           |
 | 55    | 1,965.7  | 4,756.1   | 1,391,012.7 | at the fixed 1.69%                                                                      |
-| 56    | 1,959.0  | 4,762.8   | 1,386,249.9 | **payment due on the fixation end 2031-01-17 → still 1.69%, instalment 6,721.8 (D-21)** |
-| 57    | 5,198.4  | 3,483.0   | 1,382,766.9 | **rate resets to 4.5%, instalment re-amortizes to ≈8,681.46 over 244 months (D-21)**    |
+| 56    | 1,959.0  | 4,762.8   | 1,386,249.9 | **payment due on the fixation end 2031-01-17 → still 1.69%, instalment 6,721.8 (ADR 0021)** |
+| 57    | 5,198.4  | 3,483.0   | 1,382,766.9 | **rate resets to 4.5%, instalment re-amortizes to ≈8,681.46 over 244 months (ADR 0021)**    |
 | 300   | 32.4     | 8,649.0   | 0           | fully amortized                                                                         |
 
 ### 30-year projection — portfolio
@@ -138,7 +138,7 @@ vacancy), maintenance on the rent contracted (ADR 0182).
 
 > Note: Lipova's rent in force at baseDate (2026-06-07) is **21,675** (the lease ending
 > 2026-08-30), not 23,205 — the snapshot must pick the lease valid _on_ the base date. This is a
-> good effective-dating test. The projection follows the leases month by month (D-80): grid
+> good effective-dating test. The projection follows the leases month by month (ADR 0080): grid
 > months 1–2 (07-07, 08-07) at 21,675, from month 3 (09-07) at 23,205, indexed from year 1.
 
 ## Target change log
