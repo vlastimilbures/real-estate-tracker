@@ -10,6 +10,7 @@ import {
   portfolioProjection,
   rate,
   type Portfolio,
+  mortgageBlock,
 } from "../../../engine";
 import { projectionSeries, type SeriesRow } from "../projection";
 import { hasPurchases, toEquityChangeRows } from "../chartData";
@@ -264,7 +265,7 @@ describe("toEquityChangeRows: development draws (ADR 0170)", () => {
       },
     ],
     mortgages: [
-      {
+      mortgageBlock({
         ...devBlock,
         startDate: isoDate("2027-03-01"),
         loanTermYears: 30,
@@ -273,7 +274,7 @@ describe("toEquityChangeRows: development draws (ADR 0170)", () => {
           { date: isoDate("2028-08-20"), amount: money("1000000") },
         ],
         completionDate: isoDate("2028-08-20"),
-      },
+      }),
     ],
     valuations: [
       {
@@ -341,7 +342,7 @@ describe("toEquityChangeRows: development draws (ADR 0170)", () => {
       const pf: Portfolio = {
         ...devOnly,
         mortgages: [
-          {
+          mortgageBlock({
             id: "m-plain",
             propertyId: "dev",
             startDate: isoDate("2026-03-01"),
@@ -349,8 +350,8 @@ describe("toEquityChangeRows: development draws (ADR 0170)", () => {
             fixationYears: 5,
             interestRatePa: rate("0.049"),
             monthlyInstalment: money("16000"),
-          },
-          {
+          }),
+          mortgageBlock({
             ...devBlock,
             id: "m-dev-refi",
             startDate: isoDate("2027-01-01"),
@@ -358,7 +359,7 @@ describe("toEquityChangeRows: development draws (ADR 0170)", () => {
             loanTermYears: 30,
             draws: [{ date: isoDate("2027-11-15"), amount: money("1000000") }],
             completionDate: isoDate("2027-11-15"),
-          },
+          }),
         ],
       };
       const series = projectionSeries(

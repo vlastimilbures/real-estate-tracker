@@ -16,18 +16,19 @@ import {
   money,
   validatePortfolio,
   type MortgageBlock,
+  mortgageBlock,
 } from "../../../engine";
 import { portfolio } from "../../../engine/__tests__/support/seed";
 
 const en = getDict("en");
 const d = en.propertyDetail;
 const plain = portfolio.mortgages.find((m) => m.propertyId === "dubova")!;
-const dev: MortgageBlock = {
+const dev: MortgageBlock = mortgageBlock({
   ...plain,
   loanTermYears: 30,
   draws: [{ date: isoDate("2024-09-01"), amount: money("500000") }],
   completionDate: isoDate("2025-03-31"),
-};
+});
 
 /** Saves like the store: the edit is checked against the engine rules first. */
 const save = vi.fn(async (m: MortgageBlock) => {
@@ -125,13 +126,15 @@ describe("drawdown schedule (ADR 0167)", () => {
   });
 
   it("remove moves focus to the next row, or to Add when none is left", async () => {
-    await openEdit({
-      ...dev,
-      draws: [
-        { date: isoDate("2024-09-01"), amount: money("500000") },
-        { date: isoDate("2025-01-01"), amount: money("100000") },
-      ],
-    });
+    await openEdit(
+      mortgageBlock({
+        ...dev,
+        draws: [
+          { date: isoDate("2024-09-01"), amount: money("500000") },
+          { date: isoDate("2025-01-01"), amount: money("100000") },
+        ],
+      }),
+    );
     await userEvent.click(removeTranche(1));
     expect(document.activeElement).toBe(cell(tranche(1), d.eventDate));
     expect(cell(tranche(1), d.eventDate).value).toBe("01.01.2025");
@@ -144,13 +147,15 @@ describe("drawdown schedule (ADR 0167)", () => {
   });
 
   it("shows an engine error on the tranche it is about", async () => {
-    await openEdit({
-      ...dev,
-      draws: [
-        { date: isoDate("2024-09-01"), amount: money("500000") },
-        { date: isoDate("2024-12-01"), amount: money("100000") },
-      ],
-    });
+    await openEdit(
+      mortgageBlock({
+        ...dev,
+        draws: [
+          { date: isoDate("2024-09-01"), amount: money("500000") },
+          { date: isoDate("2024-12-01"), amount: money("100000") },
+        ],
+      }),
+    );
     const date = cell(tranche(2), d.eventDate);
     await userEvent.clear(date);
     await userEvent.type(date, "01.01.2024");

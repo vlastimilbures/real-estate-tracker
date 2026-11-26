@@ -6,7 +6,11 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { ProjectionGrid } from "../components/ProjectionGrid";
-import { portfolioProjection, type Portfolio } from "../../engine";
+import {
+  portfolioProjection,
+  type Portfolio,
+  mortgageBlock,
+} from "../../engine";
 import { assumptions, portfolio } from "../../engine/__tests__/support/seed";
 import { mixed } from "../../engine/__tests__/support/mixed";
 import { projectionColumns, projectionSeries } from "../model/projection";
@@ -32,7 +36,7 @@ const offPlan: Portfolio = {
     },
   ],
   mortgages: [
-    {
+    mortgageBlock({
       ...devBlock,
       startDate: isoDate("2027-03-01"),
       loanTermYears: 30,
@@ -41,7 +45,7 @@ const offPlan: Portfolio = {
         { date: isoDate("2028-08-20"), amount: money("1000000") },
       ],
       completionDate: isoDate("2028-08-20"),
-    },
+    }),
   ],
   valuations: [
     {

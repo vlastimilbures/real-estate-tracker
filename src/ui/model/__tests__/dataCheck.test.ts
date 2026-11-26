@@ -9,6 +9,7 @@ import {
   type IsoDate,
   type MortgageBlock,
   type Portfolio,
+  mortgageBlock,
 } from "../../../engine";
 import {
   BASE_DATE,
@@ -266,7 +267,7 @@ describe("data check: fixation (ADR 0118)", () => {
       ...portfolio,
       mortgages: [
         ...portfolio.mortgages,
-        {
+        mortgageBlock({
           id: "m-lipova-2",
           propertyId: "lipova",
           startDate: isoDate("2029-01-15"),
@@ -274,7 +275,7 @@ describe("data check: fixation (ADR 0118)", () => {
           fixationYears: 5,
           interestRatePa: rate("0.049"),
           monthlyInstalment: money("27500"),
-        },
+        }),
       ],
     };
     expect(
@@ -300,7 +301,7 @@ describe("data check: fixation (ADR 0118)", () => {
       ...portfolio,
       mortgages: [
         ...portfolio.mortgages,
-        {
+        mortgageBlock({
           id: "m-lipova-2",
           propertyId: "lipova",
           startDate: isoDate(start),
@@ -308,7 +309,7 @@ describe("data check: fixation (ADR 0118)", () => {
           fixationYears: 5,
           interestRatePa: rate("0.049"),
           monthlyInstalment: money("27500"),
-        },
+        }),
       ],
     });
     const asOf = isoDate("2029-01-20");

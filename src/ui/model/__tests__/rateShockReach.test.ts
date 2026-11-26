@@ -27,7 +27,7 @@ function block(
   loanTermYears = 30,
   propertyId = "p1",
 ): MortgageBlock {
-  return {
+  return mortgageBlock({
     id,
     propertyId,
     startDate: isoDate(startDate),
@@ -36,7 +36,7 @@ function block(
     interestRatePa: rate("0.04"),
     monthlyInstalment: money("15000"),
     loanTermYears,
-  };
+  });
 }
 
 function withBlocks(

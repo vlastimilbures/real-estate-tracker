@@ -80,7 +80,7 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
   });
 
   it("addMortgageBlock / saveMortgageBlock / removeMortgageBlock", async () => {
-    const block = {
+    const block = mortgageBlock({
       id: "m-new",
       propertyId: pid(),
       startDate: new Date(Date.UTC(2030, 0, 1)) as IsoDate,
@@ -88,14 +88,16 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
       fixationYears: 5,
       interestRatePa: rate("0.04"),
       monthlyInstalment: money("5000"),
-    };
+    });
     const add = await usePortfolioStore.getState().addMortgageBlock(block);
     expect(add.ok).toBe(true);
     expect(pf().mortgages.some((m) => m.id === "m-new")).toBe(true);
 
     const save = await usePortfolioStore
       .getState()
-      .saveMortgageBlock({ ...block, monthlyInstalment: money("5500") });
+      .saveMortgageBlock(
+        mortgageBlock({ ...block, monthlyInstalment: money("5500") }),
+      );
     expect(save.ok).toBe(true);
     expect(
       pf()
@@ -145,12 +147,14 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
       ],
     });
 
-    const ok = await usePortfolioStore.getState().saveMortgageBlock({
-      ...existing,
-      loanTermYears: 30,
-      draws,
-      completionDate,
-    });
+    const ok = await usePortfolioStore.getState().saveMortgageBlock(
+      mortgageBlock({
+        ...existing,
+        loanTermYears: 30,
+        draws,
+        completionDate,
+      }),
+    );
     expect(ok.ok).toBe(true);
     const reloaded = pf().mortgages.find((m) => m.id === existing.id)!;
     expect(reloaded.draws?.length).toBe(3);
