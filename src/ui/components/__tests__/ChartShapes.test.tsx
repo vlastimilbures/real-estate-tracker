@@ -100,7 +100,7 @@ describe("signed bars (net cash flow)", () => {
       <ChartCard
         title="Cash"
         kind="czk"
-        chart="signed"
+        shape={{ type: "signed" }}
         rows={rows}
         series={series}
       />,
@@ -117,7 +117,7 @@ describe("signed bars (net cash flow)", () => {
       <ChartCard
         title="Cash"
         kind="czk"
-        chart="signed"
+        shape={{ type: "signed" }}
         rows={rows}
         series={series}
       />,
@@ -136,13 +136,12 @@ describe("stacked bars (equity change)", () => {
       <ChartCard
         title="Equity change"
         kind="czk"
-        chart="stacked"
+        shape={{ type: "stacked", totalLabel: "Net change" }}
         rows={[{ year: 1, calendarYear: 2027, up: 30_000, down: -10_000 }]}
         series={[
           { key: "up", name: "Appreciation", color: "red" },
           { key: "down", name: "New debt", color: "blue" },
         ]}
-        totalLabel="Net change"
       />,
     );
     const text = hover([

@@ -72,8 +72,7 @@ describe("reset markers on a chart (ADR 0210)", () => {
         kind="czk"
         rows={rows}
         series={series}
-        markers={markers}
-        markerHeading={en.charts.rateReset}
+        shape={{ type: "lines", markers, markerHeading: en.charts.rateReset }}
       />,
     );
     expect(
@@ -93,8 +92,11 @@ describe("reset markers on a chart (ADR 0210)", () => {
         kind="czk"
         rows={rows}
         series={series}
-        markers={markers}
-        markerHeading={en.charts.rateResetNominal}
+        shape={{
+          type: "lines",
+          markers,
+          markerHeading: en.charts.rateResetNominal,
+        }}
       />,
     );
     const legend = container.querySelector(".legend")?.textContent ?? "";
@@ -103,15 +105,20 @@ describe("reset markers on a chart (ADR 0210)", () => {
   });
 
   it("only a line chart is marked", () => {
+    // The shape type gives a stacked chart no markers; an object that carries them
+    // anyway (not a literal, so the type check lets it through) still draws none.
+    const stacked = {
+      type: "stacked",
+      markers,
+      markerHeading: en.charts.rateReset,
+    } as const;
     const { container } = render(
       <ChartCard
         title="Value"
         kind="czk"
-        chart="stacked"
+        shape={stacked}
         rows={rows}
         series={series}
-        markers={markers}
-        markerHeading={en.charts.rateReset}
       />,
     );
     expect(container.querySelector(".reset-marker")).toBeNull();
@@ -125,8 +132,11 @@ describe("reset markers on a chart (ADR 0210)", () => {
         kind="czk"
         rows={rows}
         series={series}
-        markers={[]}
-        markerHeading={en.charts.rateReset}
+        shape={{
+          type: "lines",
+          markers: [],
+          markerHeading: en.charts.rateReset,
+        }}
       />,
     );
     expect(container.querySelector(".reset-marker")).toBeNull();

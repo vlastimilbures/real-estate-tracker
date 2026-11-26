@@ -123,15 +123,18 @@ export function ProjectionCharts({ view }: { view: ProjectionChartsView }) {
           rows={rows}
           series={valueSeries}
           height={CHART_HEIGHT}
-          markers={markers}
-          markerHeading={resetMarkerHeading(t, mode)}
+          shape={{
+            type: "lines",
+            markers,
+            markerHeading: resetMarkerHeading(t, mode),
+          }}
         />
         <ChartCard
           title={d.chartNetCashFlowByYear}
           sub={d.subNetCashFlow}
           kind="czk"
           rows={rows}
-          chart="signed"
+          shape={{ type: "signed" }}
           series={cashFlowSeries}
           height={CHART_HEIGHT}
         />
@@ -140,9 +143,8 @@ export function ProjectionCharts({ view }: { view: ProjectionChartsView }) {
           sub={d.subEquityChange}
           kind="czk"
           rows={eqChange}
-          chart="stacked"
+          shape={{ type: "stacked", totalLabel: d.seriesNetEquityChange }}
           series={equitySeries}
-          totalLabel={d.seriesNetEquityChange}
           height={CHART_HEIGHT}
         />
         <ChartCard

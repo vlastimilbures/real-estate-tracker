@@ -62,15 +62,14 @@ export function PropertySnapshotTiles({
           kind="czk"
           rows={chartRows}
           series={series}
-          markers={markers}
-          markerHeading={markerHeading}
+          shape={{ type: "lines", markers, markerHeading }}
         />
         <ChartCard
           title={t.propertyDetail.chartNetCashFlowByYear}
           sub={t.propertyDetail.subMKcMode(modeWord)}
           kind="czk"
           rows={chartRows}
-          chart="signed"
+          shape={{ type: "signed" }}
           series={cashFlowSeries}
         />
       </div>
