@@ -95,6 +95,17 @@ describe("the gate list", () => {
     );
   });
 
+  // #619: with the default worker count the heavy engine tests time out when another
+  // job runs; the hook keeps to two workers, as the full suite does.
+  it("caps the pre-commit hook's vitest workers at 2", () => {
+    const vitest = Object.values(pkg["lint-staged"]).filter((c) =>
+      String(c).startsWith("vitest "),
+    );
+    expect(vitest).toEqual([
+      "vitest related --run --passWithNoTests --maxWorkers=2",
+    ]);
+  });
+
   it("states the coverage ratchet's slack from check-coverage-ratchet.mjs", () => {
     const gate = GATES.find((g) => g.id === "coverage-ratchet");
     expect(gate.what).toContain(`more than ${MAX_SLACK} points below`);
