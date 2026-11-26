@@ -20,6 +20,7 @@ import {
   type ValuationRow,
 } from "../data/mappers";
 import {
+  instalmentBelowInterestErrors,
   leaseOverlapErrors,
   validatePortfolio,
   type EngineValidationError,
@@ -550,10 +551,10 @@ class PlanBuilder {
       leases: [...children.leases.rows.values()],
       holding_costs: this.holdingCosts,
     };
-    // The engine's input rules and the lease overlap rule (ADR 0163) over the merged
-    // portfolio; only rows this import wrote can be at fault (stored rows passed the
-    // rules when they were saved, or predate them: a stored overlap is not this
-    // import's to report).
+    // The engine's input rules and the write-time instalment (ADR 0264) and lease
+    // overlap (ADR 0163) rules over the merged portfolio; only rows this import wrote can
+    // be at fault (stored rows passed the rules when they were saved, or predate them: a
+    // stored overlap or loan below its interest is not this import's to report).
     const merged = {
       properties: db.properties.map(rowToProperty),
       mortgages: db.mortgage_blocks.map(rowToMortgageBlock),
@@ -563,6 +564,7 @@ class PlanBuilder {
     };
     for (const e of [
       ...validatePortfolio(merged),
+      ...instalmentBelowInterestErrors(merged),
       ...leaseOverlapErrors(merged),
     ]) {
       const at = this.origin.get(`${e.entity}:${e.id}`);

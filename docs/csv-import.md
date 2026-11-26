@@ -124,7 +124,7 @@ date, rate and instalment.
 If `monthly_instalment` is empty and `loan_term_years` is given, the app calculates the
 instalment from the principal, rate and term, rounded **up** to a whole koruna so the loan
 fully repays. An instalment you enter is used as written. The instalment must be more than
-the first month's interest.
+the first month's interest, also when `loan_term_years` is given (ADR 0264).
 
 ```csv
 property_name,start_date,initial_principal,fixation_years,interest_rate_pa,monthly_instalment,loan_term_years,contract_maturity_date

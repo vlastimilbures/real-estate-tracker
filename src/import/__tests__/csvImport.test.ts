@@ -4,10 +4,14 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { openMemorySql, type TestSql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
-import { insertLease, upsertAssumptions } from "../../data/repositories";
+import {
+  insertLease,
+  insertMortgageBlock,
+  upsertAssumptions,
+} from "../../data/repositories";
 import { SEED_ASSUMPTIONS } from "../../data/seed";
 import type { Sql } from "../../data/sql";
-import { isoDate, money, portfolioKpis } from "../../engine";
+import { isoDate, money, portfolioKpis, rate } from "../../engine";
 import {
   parseMortgages,
   parseProperties,
@@ -670,5 +674,95 @@ describe("importCsv — leases never overlap (ADR 0163)", () => {
     expect(e.problems.map((p) => [p.row, p.problem])).toEqual([
       [2, { code: "inputRule", rule: "LEASE_OVERLAP" }],
     ]);
+  });
+});
+
+describe("importCsv — a loan with a term pays more than its first interest (ADR 0264)", () => {
+  /** A Byt A loan stored before the rule: 3,000,000 Kč at 5 % (first interest
+   *  12,500 Kč), a 30-year term, instalment 1,000 Kč. */
+  const storeBelow = () =>
+    insertMortgageBlock(sql, {
+      id: "m-below",
+      propertyId: idOf("Byt A"),
+      startDate: isoDate("2027-01-17"),
+      initialPrincipal: money("3000000"),
+      fixationYears: 3,
+      interestRatePa: rate("0.05"),
+      monthlyInstalment: money("1000"),
+      loanTermYears: 30,
+    });
+
+  it("a row with a term and an instalment below the interest rejects the file", async () => {
+    const before = dump(sql);
+    const e = await refused(
+      importNow(sql, {
+        mortgages: parseMortgages(
+          `${MH}\nByt B,2021-01-01,3000000,5,0.05,1000,30,`,
+        ).rows,
+      }),
+    );
+    expect(e.problems).toEqual([
+      {
+        file: "mortgages",
+        row: 2,
+        field: "monthly_instalment",
+        problem: { code: "inputRule", rule: "INSTALMENT_BELOW_INTEREST" },
+      },
+    ]);
+    expect(dump(sql)).toEqual(before);
+  });
+
+  it("a 0 % row with a term and a 0 Kč instalment rejects the file", async () => {
+    const e = await refused(
+      importNow(sql, {
+        mortgages: parseMortgages(`${MH}\nByt B,2021-01-01,300000,5,0,0,10,`)
+          .rows,
+      }),
+    );
+    expect(e.problems.map((p) => [p.field, p.problem])).toEqual([
+      [
+        "monthly_instalment",
+        { code: "inputRule", rule: "ZERO_RATE_ZERO_INSTALMENT" },
+      ],
+    ]);
+  });
+
+  it("a stored loan like that does not reject an import of other rows", async () => {
+    await storeBelow();
+    await importNow(sql, {
+      mortgages: parseMortgages(
+        `${MH}\nByt B,2021-01-01,3000000,5,0.05,16200,30,`,
+      ).rows,
+      rents: parseRents(
+        "property_name,start_date,end_date,monthly_rent\nByt A,2026-01-01,,21000",
+      ).rows,
+    });
+    expect(
+      sql.db
+        .prepare(
+          "SELECT COUNT(*) AS n FROM mortgage_blocks WHERE property_id = ?",
+        )
+        .get(idOf("Byt B")),
+    ).toEqual({ n: 1 });
+  });
+
+  it("re-importing the stored loan with the same instalment is refused", async () => {
+    await storeBelow();
+    const before = dump(sql);
+    const e = await refused(
+      importNow(sql, {
+        mortgages: parseMortgages(
+          `${MH}\nByt A,2027-01-17,3000000,3,0.05,1000,30,`,
+        ).rows,
+      }),
+    );
+    expect(e.problems.map((p) => [p.row, p.field, p.problem])).toEqual([
+      [
+        2,
+        "monthly_instalment",
+        { code: "inputRule", rule: "INSTALMENT_BELOW_INTEREST" },
+      ],
+    ]);
+    expect(dump(sql)).toEqual(before);
   });
 });
