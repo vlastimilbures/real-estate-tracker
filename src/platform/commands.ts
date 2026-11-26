@@ -30,6 +30,7 @@ interface DbStatements {
 
 /** Each command's arguments (`undefined`: it takes none) and what it resolves to. */
 export interface Commands {
+  db_execute: { args: WireStatement; result: { rowsAffected: number } };
   db_transaction: { args: DbStatements; result: void };
   db_select_snapshot: {
     args: DbStatements;

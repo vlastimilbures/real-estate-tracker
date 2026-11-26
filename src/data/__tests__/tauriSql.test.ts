@@ -1,10 +1,13 @@
 // ADR 0175 (#171 option A): `execute` refuses transaction control. Each `execute` may run
 // on another pooled connection, so `BEGIN` … `COMMIT` sent as separate calls would not be
 // atomic (the H-14 bug shape); multi-step writes go through `transaction` (ADR 0014).
+// ADR 0270 point 4: a single statement goes to the app's `db_execute` command, so its
+// failure carries Rust's code; reads stay on the SQL plugin.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DB_URL, openTauriSql } from "../tauriSql";
+import { CommandError } from "../../platform/commandError";
 
 const db = vi.hoisted(() => ({
   execute: vi.fn(async () => ({ rowsAffected: 1 })),
@@ -19,6 +22,7 @@ vi.mock("../../lib/tauri", () => ({ isTauri: () => true }));
 
 beforeEach(() => {
   db.execute.mockClear();
+  core.invoke.mockReset();
 });
 
 describe("tauriSql.execute (ADR 0175)", () => {
@@ -33,27 +37,65 @@ describe("tauriSql.execute (ADR 0175)", () => {
   ])("refuses %j and names transaction", async (query) => {
     const sql = await openTauriSql();
     await expect(sql.execute(query)).rejects.toThrow(/transaction/);
+    expect(core.invoke).not.toHaveBeenCalled();
     expect(db.execute).not.toHaveBeenCalled();
   });
 
-  it("runs an ordinary statement through the plugin", async () => {
+  it("runs an ordinary statement through db_execute, not the plugin", async () => {
+    core.invoke.mockResolvedValue({ rowsAffected: 1 });
     const sql = await openTauriSql();
     await expect(
       sql.execute("INSERT INTO t (a) VALUES (?)", ["BEGIN"]),
     ).resolves.toEqual({ rowsAffected: 1 });
-    expect(db.execute).toHaveBeenCalledWith("INSERT INTO t (a) VALUES (?)", [
-      "BEGIN",
+    expect(core.invoke.mock.calls).toEqual([
+      [
+        "db_execute",
+        { query: "INSERT INTO t (a) VALUES (?)", params: ["BEGIN"] },
+      ],
     ]);
+    expect(db.execute).not.toHaveBeenCalled();
   });
 
   it("lets a statement through that only contains a keyword", async () => {
+    core.invoke.mockResolvedValue({ rowsAffected: 0 });
     const sql = await openTauriSql();
     await sql.execute(
       "UPDATE notes SET text = 'BEGIN; COMMIT' WHERE id = ?",
       [1],
     );
     await sql.execute("DELETE FROM endpoints");
-    expect(db.execute).toHaveBeenCalledTimes(2);
+    expect(core.invoke.mock.calls).toEqual([
+      [
+        "db_execute",
+        {
+          query: "UPDATE notes SET text = 'BEGIN; COMMIT' WHERE id = ?",
+          params: [1],
+        },
+      ],
+      ["db_execute", { query: "DELETE FROM endpoints", params: [] }],
+    ]);
+  });
+
+  it("fails with Rust's code and detail", async () => {
+    const detail =
+      "error returned from database: (code: 2067) UNIQUE constraint failed: properties.name";
+    core.invoke.mockRejectedValue({ code: "SQL", detail });
+    const sql = await openTauriSql();
+    const err: unknown = await sql
+      .execute("INSERT INTO properties (name) VALUES (?)", ["A"])
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(CommandError);
+    expect(err).toMatchObject({ code: "SQL", message: detail });
+  });
+
+  it("reads through the plugin", async () => {
+    db.select.mockResolvedValueOnce([{ a: 1 }] as never);
+    const sql = await openTauriSql();
+    await expect(sql.select("SELECT a FROM t", [])).resolves.toEqual([
+      { a: 1 },
+    ]);
+    expect(db.select).toHaveBeenCalledWith("SELECT a FROM t", []);
+    expect(core.invoke).not.toHaveBeenCalled();
   });
 });
 
@@ -68,10 +110,6 @@ describe("tauriSql commands", () => {
     { query: "DELETE FROM t WHERE id = ?", params: [1] },
     { query: "DELETE FROM u", params: [] },
   ];
-
-  beforeEach(() => {
-    core.invoke.mockReset();
-  });
 
   it("sends a transaction to db_transaction, every statement with its params", async () => {
     core.invoke.mockResolvedValue(undefined);

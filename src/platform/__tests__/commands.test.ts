@@ -24,6 +24,7 @@ afterEach(() => {
 
 /** Every command in the typed map: the type check fails if one is left out here. */
 const TYPED = {
+  db_execute: true,
   db_transaction: true,
   db_select_snapshot: true,
   db_backup: true,

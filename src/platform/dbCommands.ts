@@ -1,6 +1,7 @@
-// The app's own database commands (src-tauri/src/db.rs, ADR 0014): a transaction, a
-// snapshot read and a file backup. Rust runs them on the SQL plugin's pool for the app's
-// one database (`DB_URL`), so they see the same database as tauriSql's single statements.
+// The app's own database commands (src-tauri/src/db.rs, ADR 0014): one statement
+// (ADR 0270), a transaction, a snapshot read and a file backup. Rust runs them on the SQL
+// plugin's pool for the app's one database (`DB_URL`), so they see the same database as
+// tauriSql's reads.
 import { call } from "./commands";
 
 /** A statement as the data layer holds it; the wire always carries a params list. */
@@ -9,8 +10,17 @@ interface Statement {
   params?: unknown[];
 }
 
+const wireOne = (s: Statement) => ({ query: s.query, params: s.params ?? [] });
+
 function wire(statements: Statement[]) {
-  return statements.map((s) => ({ query: s.query, params: s.params ?? [] }));
+  return statements.map(wireOne);
+}
+
+/** Run one statement; resolves to the rows it changed. */
+export function dbExecute(
+  statement: Statement,
+): Promise<{ rowsAffected: number }> {
+  return call("db_execute", wireOne(statement));
 }
 
 /** Run every statement in one transaction; any failure rolls all of them back. */

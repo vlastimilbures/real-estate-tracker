@@ -1,13 +1,15 @@
 // App-runtime `Sql` adapter backed by `@tauri-apps/plugin-sql`. Only imported when
 // running inside Tauri (never by the Node tests, which use the better-sqlite3 adapter).
-// Single statements go through the plugin; transactions, snapshot reads and backups go
-// through the app's own Rust commands (src-tauri/src/db.rs, ADR 0014), which borrow the
-// plugin's pool.
+// Reads go through the plugin; writes (one statement, ADR 0270, or a transaction),
+// snapshot reads and backups go through the app's own Rust commands (src-tauri/src/db.rs,
+// ADR 0014), which borrow the plugin's pool. So every failed write rejects with Rust's
+// error code.
 import Database from "@tauri-apps/plugin-sql";
 import type { ExecuteResult, Sql, SqlStatement } from "./sql";
 import { isTauri } from "../lib/tauri";
 import {
   dbBackup,
+  dbExecute,
   dbSelectSnapshot,
   dbTransaction,
 } from "../platform/dbCommands";
@@ -45,7 +47,7 @@ export async function openTauriSql(): Promise<Sql> {
         throw new Error(
           "execute refuses transaction control; use transaction() for multi-step writes",
         );
-      const { rowsAffected } = await db.execute(query, params);
+      const { rowsAffected } = await dbExecute({ query, params });
       return { rowsAffected };
     },
     async select<T>(query: string, params: unknown[] = []): Promise<T[]> {
