@@ -10,6 +10,7 @@
 macro_rules! app_commands {
     ($callback:ident) => {
         $callback! {
+            db::db_execute,
             db::db_transaction,
             db::db_select_snapshot,
             db::db_backup,

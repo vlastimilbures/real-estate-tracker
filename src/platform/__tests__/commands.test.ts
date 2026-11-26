@@ -24,6 +24,7 @@ afterEach(() => {
 
 /** Every command in the typed map: the type check fails if one is left out here. */
 const TYPED = {
+  db_execute: true,
   db_transaction: true,
   db_select_snapshot: true,
   db_backup: true,
@@ -130,13 +131,26 @@ describe("a failed command", () => {
     });
   });
 
+  it("keeps the detail of a code it does not know, as OTHER", async () => {
+    // The code-list test keeps both lists equal; this guards the user's text if one
+    // slips anyway: never "[object Object]".
+    invoke.mockRejectedValueOnce({ code: "NOT_A_RUST_CODE", detail: "boom" });
+    const err: unknown = await call("perf_enabled").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(CommandError);
+    expect(err).toMatchObject({
+      code: "OTHER",
+      detail: "boom",
+      message: "boom",
+    });
+  });
+
   it("passes any other rejection on unchanged", async () => {
     // Tauri's own refusals (an unknown command, a missing grant) are plain strings.
     invoke.mockRejectedValueOnce("Command perf_enabled not allowed by ACL");
     await expect(call("perf_enabled")).rejects.toBe(
       "Command perf_enabled not allowed by ACL",
     );
-    const odd = { code: "NOT_A_RUST_CODE", detail: "x" };
+    const odd = { code: 7, detail: "x" };
     invoke.mockRejectedValueOnce(odd);
     await expect(call("perf_enabled")).rejects.toBe(odd);
     expect(isCommandError("BACKUP_TOO_LARGE", "BACKUP_TOO_LARGE")).toBe(false);

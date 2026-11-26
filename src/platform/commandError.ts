@@ -4,8 +4,8 @@
 // `CommandError`. Kept apart from the Tauri call, so the data layer and its test double
 // can name the error without importing `@tauri-apps/api` (like saveFileTypes.ts).
 
-/** Every code `AppError::code` returns, in its order. Renaming or removing one needs an
- *  ADR; `src/platform/__tests__/commands.test.ts` checks this list against error.rs. */
+/** Every code `AppError::code` returns. Renaming or removing one needs an ADR;
+ *  `src/platform/__tests__/commands.test.ts` checks this list against error.rs. */
 export const COMMAND_ERROR_CODES = [
   "SQL",
   "IO",
@@ -35,8 +35,8 @@ export type CommandErrorCode = (typeof COMMAND_ERROR_CODES)[number];
 
 const CODES: ReadonlySet<string> = new Set(COMMAND_ERROR_CODES);
 
-function isCode(code: unknown): code is CommandErrorCode {
-  return typeof code === "string" && CODES.has(code);
+function isCode(code: string): code is CommandErrorCode {
+  return CODES.has(code);
 }
 
 /** A failed app command: Rust's code, and its text as the message. */
@@ -61,10 +61,11 @@ export function isCommandError(
 }
 
 /** Rust's rejection as a `CommandError`; anything else (Tauri's own refusals are plain
- *  strings) as it came. */
+ *  strings) as it came. A code this list does not know is `OTHER`, so its detail is still
+ *  the text the user sees, and the code stays one of the list. */
 export function toCommandError(rejection: unknown): unknown {
   if (typeof rejection !== "object" || rejection === null) return rejection;
   const { code, detail } = rejection as Record<string, unknown>;
-  if (!isCode(code) || typeof detail !== "string") return rejection;
-  return new CommandError(code, detail);
+  if (typeof code !== "string" || typeof detail !== "string") return rejection;
+  return new CommandError(isCode(code) ? code : "OTHER", detail);
 }

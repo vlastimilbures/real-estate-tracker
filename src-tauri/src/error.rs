@@ -55,7 +55,7 @@ impl AppError {
     }
 
     /// The stable code the webview matches on (ADR 0270): one per variant, upper snake
-    /// case. `src/platform/commands.ts` keeps the same list, and its test reads this
+    /// case. `src/platform/commandError.ts` keeps the same list, and a test reads this
     /// function. Renaming or removing a code needs an ADR.
     pub fn code(&self) -> &'static str {
         match self {

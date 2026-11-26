@@ -6,8 +6,10 @@
 //! (`DbInstances`) and run a whole statement list on ONE connection inside a real sqlx
 //! transaction: every statement commits, or none does. Reads that must agree with each
 //! other (the portfolio load, DR-134) run the same way inside one read transaction.
+//! A single statement runs here too (`db_execute`, ADR 0270), so every write fails with
+//! an `AppError` and its code; only reads stay on the plugin's `select`.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value as JsonValue};
 use sqlx::sqlite::{SqliteArguments, SqliteConnectOptions, SqliteRow, SqliteValueRef};
 use sqlx::{
@@ -80,6 +82,24 @@ async fn run_in_transaction(
             Err(e)
         }
     }
+}
+
+/// What one statement changed, as the plugin's `execute` reports it to the webview.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecuteResult {
+    pub rows_affected: u64,
+}
+
+/// Run one statement on the pool, bound as a transaction's statements are.
+pub async fn execute_one(
+    pool: &Pool<Sqlite>,
+    statement: &Statement,
+) -> Result<ExecuteResult, AppError> {
+    let done = pool.execute(build(statement)?).await?;
+    Ok(ExecuteResult {
+        rows_affected: done.rows_affected(),
+    })
 }
 
 /// Run `statements` on one pooled connection inside one transaction.
@@ -214,6 +234,17 @@ async fn pool_for(instances: &DbInstances, db: &str) -> Result<Pool<Sqlite>, App
         Some(DbPool::Sqlite(pool)) => Ok(pool.clone()),
         _ => Err(AppError::DbNotLoaded(db.to_string())),
     }
+}
+
+/// Run one statement (see `execute_one`); the webview's single-statement writes.
+#[tauri::command]
+pub async fn db_execute(
+    instances: State<'_, DbInstances>,
+    query: String,
+    params: Vec<JsonValue>,
+) -> Result<ExecuteResult, AppError> {
+    let pool = pool_for(&instances, DB_URL).await?;
+    execute_one(&pool, &Statement { query, params }).await
 }
 
 #[tauri::command]
