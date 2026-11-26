@@ -12,7 +12,10 @@ import { D } from "../../../lib/money";
 
 const at = (asOf: string, isToday: boolean) => {
   const out = portfolioOutputs(portfolio, assumptions, isoDate(asOf));
-  const basis = asOfView(assumptions.baseDate, out.snapshot.asOf, isToday);
+  const basis = asOfView(
+    { baseDate: assumptions.baseDate, asOf: out.snapshot.asOf },
+    isToday,
+  );
   return { out, basis };
 };
 
@@ -115,7 +118,10 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
     // mixed at 01.10.2026: "future" is bought in 2028, "dev" is owned, "inactive" is not
     // in the portfolio.
     const out = portfolioOutputs(mixed, assumptions, isoDate("2026-10-01"));
-    const basis = asOfView(assumptions.baseDate, out.snapshot.asOf, true);
+    const basis = asOfView(
+      { baseDate: assumptions.baseDate, asOf: out.snapshot.asOf },
+      true,
+    );
     const total = propertiesTotal(
       {
         snapshot: out.snapshot,

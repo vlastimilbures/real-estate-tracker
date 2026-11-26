@@ -30,7 +30,13 @@ export { monthlyFlow } from "../../engine";
  *  whole-year grid the projection/charts use. ≤ baseDate ⇒ 0 (the current snapshot).
  *  Months count on the month-end grid (ADR 0021), as value growth and the CPI index count
  *  them, so 31 Aug → 28 Feb is six months (ADR 0150). */
-export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
+/** The base date of the projection and the as-of date a view is read at. */
+interface AsOfDates {
+  baseDate: Date;
+  asOf: Date;
+}
+
+export function projectionYearForAsOf({ baseDate, asOf }: AsOfDates): number {
   const months = lastGridMonthOnOrBefore(baseDate, asOf);
   if (months <= 0) return 0;
   return Math.round(months / 12);
@@ -110,17 +116,17 @@ export function propertyTilesForAsOf(
         : snapshot;
   return {
     ...tiles,
-    owned: ownedOn(purchaseDate, basis, assumptions.baseDate, asOf),
+    owned: ownedOn(purchaseDate, basis, {
+      baseDate: assumptions.baseDate,
+      asOf,
+    }),
   };
 }
 
 /** The as-of basis of a resolved `asOf` (see `AsOfBasis`). */
-export function asOfView(
-  baseDate: Date,
-  asOf: Date,
-  isToday: boolean,
-): AsOfBasis {
-  const n = projectionYearForAsOf(baseDate, asOf);
+export function asOfView(dates: AsOfDates, isToday: boolean): AsOfBasis {
+  const { baseDate, asOf } = dates;
+  const n = projectionYearForAsOf(dates);
   if (n > 0)
     return {
       kind: "projection",
@@ -140,8 +146,7 @@ export function asOfView(
 export function ownedOn(
   purchaseDate: Date,
   basis: AsOfBasis,
-  baseDate: Date,
-  asOf: Date,
+  { baseDate, asOf }: AsOfDates,
 ): boolean {
   const by =
     basis.kind === "projection" ? edate(baseDate, basis.year * 12) : asOf;

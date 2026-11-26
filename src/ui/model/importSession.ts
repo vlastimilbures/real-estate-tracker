@@ -177,14 +177,23 @@ export type ImportPhase =
   | "confirming"
   | "ready";
 
-function phaseOf(
-  files: ImportFiles,
-  preview: CsvImportPreview | null,
-  failed: boolean,
-  toWrite: number,
-  importing: boolean,
-  confirming: boolean,
-): ImportPhase {
+interface PhaseInputs {
+  files: ImportFiles;
+  preview: CsvImportPreview | null;
+  failed: boolean;
+  toWrite: number;
+  importing: boolean;
+  confirming: boolean;
+}
+
+function phaseOf({
+  files,
+  preview,
+  failed,
+  toWrite,
+  importing,
+  confirming,
+}: PhaseInputs): ImportPhase {
   if (!hasAnyFile(files)) return "noFile";
   if (!allValid(files)) return "fileErrors";
   if (!preview) return failed ? "previewFailed" : "previewing";
@@ -209,14 +218,14 @@ export function sessionView(
   const confirming = s.confirming !== null && sameBasis(s.confirming, now);
   const counts = importCounts(preview?.items ?? []);
   const toWrite = counts.added + counts.updated;
-  const phase = phaseOf(
-    s.files,
+  const phase = phaseOf({
+    files: s.files,
     preview,
-    previewFailure !== null,
+    failed: previewFailure !== null,
     toWrite,
     importing,
     confirming,
-  );
+  });
   return {
     phase,
     preview,
