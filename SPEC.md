@@ -663,7 +663,9 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - Repositories (`src/data`) expose typed CRUD; the engine never imports the DB — the app
   loads rows, maps them to engine inputs through hand-rolled runtime guards (ADR 0048),
   calls the engine, renders outputs.
-- Every multi-step write runs inside one transaction owned by a Rust command (ADR 0014).
+- Every write runs in a Rust command: one statement through `db_execute`, several in one
+  transaction through `db_transaction` (ADR 0014, ADR 0270). The webview's SQL plugin only
+  loads and reads.
 - Migrations are versioned; before upgrading an existing database the app writes a verified
   `pre-migration-v<from>-to-v<to>-<stamp>.sqlite` copy to the `backups/` folder next to it.
   Each step commits on its own; a failed step is rolled back. The schema starts at version
@@ -676,7 +678,9 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - The assumptions row is written on that first run only. A database that later lacks it is
   not repaired from the sample values: startup stops with `ROW_INVALID` on the error screen,
   which offers Restore a backup… (ADR 0252).
-- Errors are typed (`DataError` codes) and logged to a rotating local `app.log`.
+- Errors are typed (`DataError` codes) and logged to a rotating local `app.log`. A failed
+  Rust command carries a stable code (`CommandError`, ADR 0270), and the log line for it
+  records that code (ADR 0270 point 7, which amends ADR 0147).
 - A write that commits but whose read-back fails stops on the startup error screen ("Your
   last change was saved, but the data could not be read back."); nothing is undone, later
   queued writes are refused, and Try again only reads (ADR 0228).
@@ -848,7 +852,8 @@ price crash**, each with a legend and one line of help (ADR 0102).
   testing (ADR 0026, ADR 0249).
 - **Privacy & security:** offline; no network calls, enforced by a strict Content Security
   Policy, least-privilege Tauri capabilities and a navigation guard. File dialogs and writes
-  run in Rust; the webview never handles file paths (ADR 0064). Data, backup and log
+  run in Rust; the webview never handles file paths (ADR 0064). The SQL plugin only loads
+  and reads: it has no `execute` permission (ADR 0270). Data, backup and log
   locations are listed in `docs/release.md`.
 - **Platform:** Apple Silicon, macOS 13 or later; ad-hoc signed with the hardened runtime, no
   App Sandbox (ADR 0009, ADR 0063).
@@ -860,8 +865,8 @@ price crash**, each with a legend and one line of help (ADR 0102).
   sidebar.
 - **Accessibility & UX:** keyboard-navigable forms, translated validation messages, WCAG 2.2
   AA basics checked by an axe scan per screen (`pnpm ux:capture`, ADR 0057), the accounting
-  colour conventions (negatives red, etc.), macOS menu shortcuts (⌘N, ⌘1–⌘5, ⌘W
-  hides the window).
+  colour conventions (negatives red, etc.), macOS menu shortcuts (⌘N, ⌘1–⌘5, ⌘, for
+  Settings, ⌘W hides the window).
 
 ## 9. Screens (UI)
 
