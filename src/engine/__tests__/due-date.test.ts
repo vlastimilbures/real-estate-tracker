@@ -14,9 +14,9 @@ import { paymentOffset } from "../loan/calendar";
 import type { AmortizationRow, MortgageBlock } from "../types";
 import { assumptions, BASE_DATE, portfolio } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
+import { isoOf } from "./support/dates";
 
 const javorova = portfolio.mortgages.find((m) => m.propertyId === "javorova")!;
-const iso = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;
 const paid = (r: AmortizationRow) =>
   r.interest.plus(r.principal).greaterThan(0);
 
@@ -24,20 +24,22 @@ const paid = (r: AmortizationRow) =>
 function expectOwnCadence(block: MortgageBlock, rows: AmortizationRow[]) {
   const offset = paymentOffset(block, assumptions.baseDate);
   for (const r of rows) {
-    const want = paid(r) ? iso(edate(block.startDate, offset + r.month)) : null;
-    expect(iso(r.dueDate), `month ${r.month}`).toBe(want);
+    const want = paid(r)
+      ? (isoOf(edate(block.startDate, offset + r.month)) ?? null)
+      : null;
+    expect(isoOf(r.dueDate) ?? null, `month ${r.month}`).toBe(want);
   }
 }
 
 describe("ADR 0164: amortization rows carry the payment due date", () => {
   it("Javorova: payment 56 is due 17.01.2031, its grid date stays 07.02.2031", () => {
     const rows = buildSchedule(javorova, assumptions);
-    expect(iso(rows[0]!.date)).toBe("2026-07-07");
-    expect(iso(rows[0]!.dueDate)).toBe("2026-06-17");
-    expect(iso(rows[55]!.date)).toBe("2031-02-07");
-    expect(iso(rows[55]!.dueDate)).toBe("2031-01-17");
+    expect(isoOf(rows[0]!.date) ?? null).toBe("2026-07-07");
+    expect(isoOf(rows[0]!.dueDate) ?? null).toBe("2026-06-17");
+    expect(isoOf(rows[55]!.date) ?? null).toBe("2031-02-07");
+    expect(isoOf(rows[55]!.dueDate) ?? null).toBe("2031-01-17");
     expect(rows[56]!.ratePa.toString()).toBe("0.045");
-    expect(iso(rows[56]!.dueDate)).toBe("2031-02-17");
+    expect(isoOf(rows[56]!.dueDate) ?? null).toBe("2031-02-17");
   });
 
   it("Javorova: every payment is due on the 17th, on the loan's own cadence", () => {
@@ -55,7 +57,7 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
     expect(first).toBeGreaterThan(0);
     expect(rows.slice(0, first).every((r) => r.dueDate === null)).toBe(true);
     expect(rows[first - 1]!.drawn.toString()).toBe("4200000");
-    expect(iso(rows[first]!.dueDate)).toBe("2028-04-15");
+    expect(isoOf(rows[first]!.dueDate) ?? null).toBe("2028-04-15");
     expectOwnCadence(future, rows);
   });
 
@@ -68,7 +70,7 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
       monthlyInstalment: money("5000"),
     };
     const rows = buildSchedule(block, assumptions);
-    const dues = rows.filter(paid).map((r) => iso(r.dueDate));
+    const dues = rows.filter(paid).map((r) => isoOf(r.dueDate) ?? null);
     expect(dues.slice(0, 3)).toEqual([
       "2027-02-28",
       "2027-03-31",
@@ -86,7 +88,7 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
     const rows = buildSchedule(block, assumptions);
     const drawRow = rows.findIndex((r) => r.drawn.greaterThan(0));
     expect(rows[drawRow]!.dueDate).toBeNull();
-    expect(iso(rows[drawRow + 1]!.dueDate)).toBe("2026-10-10");
+    expect(isoOf(rows[drawRow + 1]!.dueDate) ?? null).toBe("2026-10-10");
     expect(rows[drawRow + 1]!.principal.toString()).toBe("0");
     expectOwnCadence(block, rows);
     expectOwnCadence(devBlock, buildSchedule(devBlock, assumptions));
@@ -106,8 +108,8 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
       expect(r.interest.isZero(), `m${r.month} interest`).toBe(true);
       expect(r.principal.isZero(), `m${r.month} principal`).toBe(true);
       expect(r.endBalance.greaterThan(0), `m${r.month} balance`).toBe(true);
-      expect(iso(r.dueDate), `m${r.month} due date`).toBe(
-        iso(edate(block.startDate, offset + r.month)),
+      expect(isoOf(r.dueDate) ?? null, `m${r.month} due date`).toBe(
+        isoOf(edate(block.startDate, offset + r.month)) ?? null,
       );
     }
   });
@@ -124,7 +126,7 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
       ],
     };
     const rows = buildSchedule(block, assumptions);
-    expect(iso(rows[55]!.dueDate)).toBe("2031-01-17");
+    expect(isoOf(rows[55]!.dueDate) ?? null).toBe("2031-01-17");
     expect(rows[55]!.endBalance.toString()).toBe("0");
     expect(rows.slice(56).every((r) => r.dueDate === null)).toBe(true);
   });
@@ -147,8 +149,8 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
         assumptions,
       );
       expect(s.refinances[0]!.month).toBe(56);
-      expect(iso(s.rows[55]!.dueDate)).toBe("2031-01-17");
-      expect(iso(s.rows[56]!.dueDate)).toBe("2031-02-17");
+      expect(isoOf(s.rows[55]!.dueDate) ?? null).toBe("2031-01-17");
+      expect(isoOf(s.rows[56]!.dueDate) ?? null).toBe("2031-02-17");
     });
 
     it("a replaced handover row has none; the successor pays on its own day", () => {
@@ -158,7 +160,7 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
       );
       expect(s.refinances[0]!.month).toBe(56);
       expect(s.rows[55]!.dueDate).toBeNull();
-      expect(iso(s.rows[56]!.dueDate)).toBe("2031-02-10");
+      expect(isoOf(s.rows[56]!.dueDate) ?? null).toBe("2031-02-10");
     });
 
     it("a replaced handover row paying the owner's prepayment is due on the owner's day", () => {
@@ -180,14 +182,14 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
       expect(s.rows[55]!.interest.plus(s.rows[55]!.principal).toString()).toBe(
         "0",
       );
-      expect(iso(s.rows[55]!.dueDate)).toBe("2031-01-17");
+      expect(isoOf(s.rows[55]!.dueDate) ?? null).toBe("2031-01-17");
     });
 
     /** The Financing payoff, from the schedule and blocks. */
     const payoff = (blocks: MortgageBlock[]) => {
       const s = propertySchedule(blocks, assumptions);
       const loan = propertyLoanExposure(blocks, assumptions, s, BASE_DATE)!;
-      return { s, at: iso(loan.loan.payoffDate) };
+      return { s, at: isoOf(loan.loan.payoffDate) ?? null };
     };
     /** Grid month of the schedule's last payment (interest, principal or prepaid). */
     const lastPaid = (rows: AmortizationRow[]) =>
@@ -198,7 +200,9 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
       for (const start of ["2031-01-17", "2031-01-10"]) {
         const { s, at } = payoff([javorova, refi(start, "1386000")]);
         // The successor draws in grid month 56: payment 1 is in grid month 57.
-        expect(at).toBe(iso(edate(isoDate(start), lastPaid(s.rows) - 56)));
+        expect(at).toBe(
+          isoOf(edate(isoDate(start), lastPaid(s.rows) - 56)) ?? null,
+        );
       }
     });
 
@@ -228,13 +232,17 @@ describe("ADR 0164: amortization rows carry the payment due date", () => {
     const s = propertySchedule(dev, assumptions);
     const last = s.rows.map(paid).lastIndexOf(true) + 1;
     const offset = paymentOffset(devBlock, assumptions.baseDate);
-    expect(payoffOf(dev)).toBe(iso(edate(devBlock.startDate, offset + last)));
+    expect(payoffOf(dev)).toBe(
+      isoOf(edate(devBlock.startDate, offset + last)) ?? null,
+    );
   });
 });
 
 function payoffOf(blocks: MortgageBlock[]) {
   const s = propertySchedule(blocks, assumptions);
-  return iso(
-    propertyLoanExposure(blocks, assumptions, s, BASE_DATE)!.loan.payoffDate,
+  return (
+    isoOf(
+      propertyLoanExposure(blocks, assumptions, s, BASE_DATE)!.loan.payoffDate,
+    ) ?? null
   );
 }

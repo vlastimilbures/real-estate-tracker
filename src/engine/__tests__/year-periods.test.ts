@@ -17,10 +17,10 @@ import type {
 import { assumptions, portfolio } from "./support/seed";
 import { mixed } from "./support/mixed";
 import { mortgageBlock } from "../loanBlock";
+import { isoOf } from "./support/dates";
 
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 const periods = (p: ProjectionYear[]) =>
-  p.map((y) => [y.year, iso(y.periodStart), iso(y.periodEnd)]);
+  p.map((y) => [y.year, isoOf(y.periodStart), isoOf(y.periodEnd)]);
 
 describe("projection year periods (D-22)", () => {
   const proj = portfolioProjection(portfolio, assumptions);

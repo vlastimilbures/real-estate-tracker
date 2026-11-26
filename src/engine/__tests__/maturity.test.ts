@@ -11,8 +11,8 @@ import { portfolioSnapshot } from "../metrics";
 import type { IsoDate, MortgageBlock, Portfolio } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock } from "./support/mixed";
+import { isoOf } from "./support/dates";
 
-const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 const block = (propertyId: string) =>
   portfolio.mortgages.find((m) => m.propertyId === propertyId)!;
 const withContract = (b: MortgageBlock, d: string): MortgageBlock => ({
@@ -22,9 +22,9 @@ const withContract = (b: MortgageBlock, d: string): MortgageBlock => ({
 
 describe("impliedMaturity (D-29)", () => {
   it("is the last payment's due date for the seed loans (P02 §5)", () => {
-    expect(iso(impliedMaturity(block("javorova")))).toBe("2051-05-17");
-    expect(iso(impliedMaturity(block("lipova")))).toBe("2051-11-15");
-    expect(iso(impliedMaturity(block("dubova")))).toBe("2040-12-12");
+    expect(isoOf(impliedMaturity(block("javorova")))).toBe("2051-05-17");
+    expect(isoOf(impliedMaturity(block("lipova")))).toBe("2051-11-15");
+    expect(isoOf(impliedMaturity(block("dubova")))).toBe("2040-12-12");
   });
 
   it("is null for a development loan", () => {
@@ -48,7 +48,10 @@ describe("maturityMismatch (D-29)", () => {
   it("reports both dates when they differ by more than one month", () => {
     for (const d of ["2040-11-11", "2041-01-13", "2035-06-30"]) {
       const m = maturityMismatch(withContract(arg, d));
-      expect(m && [iso(m.implied), iso(m.contract)]).toEqual(["2040-12-12", d]);
+      expect(m && [isoOf(m.implied), isoOf(m.contract)]).toEqual([
+        "2040-12-12",
+        d,
+      ]);
     }
   });
 

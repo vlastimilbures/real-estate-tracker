@@ -16,6 +16,7 @@ import { loadPortfolio } from "./support/reads";
 import { upsertAssumptions } from "../repositories";
 import { SEED_ASSUMPTIONS } from "../seed";
 import { storedLoan as block } from "../../engine/__tests__/support/loan";
+import { isoOf } from "../../engine/__tests__/support/dates";
 
 const withEvents: MortgageBlock = {
   ...block,
@@ -56,8 +57,6 @@ async function withProperty(): Promise<TestSql> {
   return sql;
 }
 
-const iso = (d: Date | undefined) => d?.toISOString().slice(0, 10);
-
 describe("migration v9 — prepayments and recasts (ADR 0109)", () => {
   it("upgrades a v8 database, keeping its loans with no events", async () => {
     const sql = await schemaAt(8);
@@ -86,19 +85,19 @@ describe("migration v9 — prepayments and recasts (ADR 0109)", () => {
     await insertRow(sql, { ...mortgageBlockToRow(withEvents) });
     const [m] = (await loadPortfolio(sql)).mortgages;
     expect(
-      m.prepayments?.map((p) => [iso(p.date), p.amount.toString(), p.effect]),
+      m.prepayments?.map((p) => [isoOf(p.date), p.amount.toString(), p.effect]),
     ).toEqual([
       ["2027-01-20", "100000", "lowerInstalment"],
       ["2031-03-12", "500000", "shortenTerm"],
     ]);
     expect(m.prepayments?.[1].fee?.toString()).toBe("2500.5");
     expect(m.prepayments?.[0].fee).toBeUndefined();
-    expect(m.recasts?.map((r) => iso(r.date))).toEqual([
+    expect(m.recasts?.map((r) => isoOf(r.date))).toEqual([
       "2031-03-12",
       "2033-03-12",
     ]);
     expect(m.recasts?.[0].instalment?.toString()).toBe("18000");
-    expect(iso(m.recasts?.[1].maturity)).toBe("2050-03-12");
+    expect(isoOf(m.recasts?.[1].maturity)).toBe("2050-03-12");
     sql.db.close();
   });
 

@@ -9,20 +9,19 @@ import {
   valuationClosedBy,
 } from "../effectiveDating";
 import type { Lease, Valuation } from "../types";
-
-const iso = (d: Date) => d.toISOString().slice(0, 10);
+import { isoOf } from "./support/dates";
 
 describe("dayBefore", () => {
   it("steps back within a month", () =>
-    expect(iso(dayBefore(isoDate("2026-07-15")))).toBe("2026-07-14"));
+    expect(isoOf(dayBefore(isoDate("2026-07-15")))).toBe("2026-07-14"));
   it("crosses a month end", () =>
-    expect(iso(dayBefore(isoDate("2026-07-01")))).toBe("2026-06-30"));
+    expect(isoOf(dayBefore(isoDate("2026-07-01")))).toBe("2026-06-30"));
   it("crosses a year end", () =>
-    expect(iso(dayBefore(isoDate("2026-01-01")))).toBe("2025-12-31"));
+    expect(isoOf(dayBefore(isoDate("2026-01-01")))).toBe("2025-12-31"));
   it("lands on a leap day", () =>
-    expect(iso(dayBefore(isoDate("2028-03-01")))).toBe("2028-02-29"));
+    expect(isoOf(dayBefore(isoDate("2028-03-01")))).toBe("2028-02-29"));
   it("skips Feb 29 in a common year", () =>
-    expect(iso(dayBefore(isoDate("2027-03-01")))).toBe("2027-02-28"));
+    expect(isoOf(dayBefore(isoDate("2027-03-01")))).toBe("2027-02-28"));
 });
 
 interface Row {
