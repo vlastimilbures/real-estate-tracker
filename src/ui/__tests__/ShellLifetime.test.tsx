@@ -165,6 +165,7 @@ describe("chrome lifetime across pages (#483, ADR 0263)", () => {
   it("measures the top bar again on every page, and stops when it leaves", async () => {
     const observed: Element[] = [];
     let disconnects = 0;
+    // eslint-disable-next-line no-restricted-syntax -- it records what the top bar observes and counts disconnects
     vi.stubGlobal(
       "ResizeObserver",
       class {

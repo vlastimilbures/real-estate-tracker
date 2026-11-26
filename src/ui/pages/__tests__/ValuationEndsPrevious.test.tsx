@@ -14,6 +14,7 @@ import type { Sql } from "../../../data/sql";
 import { openMemorySql } from "../../../data/__tests__/betterSqlite";
 import { migrate } from "../../../data/migrations";
 import { seedIfEmpty } from "../../../data/seed";
+import { isoOf } from "../../../engine/__tests__/support/dates";
 
 const en = getDict("en");
 const d = en.propertyDetail;
@@ -35,8 +36,6 @@ const javorova = () =>
     .getState()
     .portfolio!.valuations.filter((v) => v.propertyId === "javorova");
 const valuation = (id: string) => javorova().find((v) => v.id === id);
-const iso = (d: Date | undefined) => d?.toISOString().slice(0, 10);
-
 /** The panel on the store's current rows, as Property detail renders it. */
 function Live() {
   const portfolio = usePortfolioStore((s) => s.portfolio);
@@ -69,9 +68,9 @@ describe("adding a valuation ends the previous open-ended one (ADR 0227)", () =>
     expect(valuation("v-javorova")?.validTo).toBeUndefined();
     await addValuation();
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(iso(valuation("v-javorova")?.validTo)).toBe("2027-05-31");
+    expect(isoOf(valuation("v-javorova")?.validTo)).toBe("2027-05-31");
     const added = javorova().find((v) => v.id !== "v-javorova")!;
-    expect(iso(added.validFrom)).toBe("2027-06-01");
+    expect(isoOf(added.validFrom)).toBe("2027-06-01");
     expect(added.marketValue.toString()).toBe("11000000");
     expect(added.validTo).toBeUndefined();
     expect(screen.getByText("31.05.2027")).toBeTruthy();
@@ -83,6 +82,6 @@ describe("adding a valuation ends the previous open-ended one (ADR 0227)", () =>
     expect(javorova()).toHaveLength(2);
     expect(valuation("v-javorova")?.validTo).toBeUndefined();
     const added = javorova().find((v) => v.id !== "v-javorova")!;
-    expect(iso(added.validTo)).toBe("2027-12-31");
+    expect(isoOf(added.validTo)).toBe("2027-12-31");
   });
 });

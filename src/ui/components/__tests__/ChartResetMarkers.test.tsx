@@ -9,17 +9,14 @@ import { en } from "../../../i18n/en";
 import { D } from "../../../lib/money";
 import { fmtCzk } from "../../../lib/format";
 import type { ResetMarker } from "../../model/financing";
+import { stubResizeObserver } from "../../../__tests__/support/dom";
 
 const realRect = HTMLElement.prototype.getBoundingClientRect;
 const realMatchMedia = window.matchMedia;
 beforeAll(() => {
   // Recharts' ResponsiveContainer needs a ResizeObserver and a measured box; jsdom has
   // neither, so the chart would not render at all.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
+  stubResizeObserver();
   HTMLElement.prototype.getBoundingClientRect = () =>
     ({
       width: 480,

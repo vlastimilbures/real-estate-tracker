@@ -15,10 +15,9 @@ import {
 import { useUiStore } from "../../../state/uiStore";
 import { en } from "../../../i18n/en";
 import { isoDate, money, type Lease, type Valuation } from "../../../engine";
+import { isoOf } from "../../../engine/__tests__/support/dates";
 
 const ok = async (): Promise<MutationResult> => ({ ok: true });
-const iso = (d: Date | undefined) => d?.toISOString().slice(0, 10);
-
 const valuations: Valuation[] = [
   {
     id: "v-old",
@@ -85,7 +84,7 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(spies.addValuation).toHaveBeenCalledTimes(1);
     const [added] = spies.addValuation.mock.calls[0] as unknown as [Valuation];
-    expect(iso(added.validFrom)).toBe("2026-07-01");
+    expect(isoOf(added.validFrom)).toBe("2026-07-01");
     expect(added.validTo).toBeUndefined();
     expect(formOpen()).toBe(false);
   });
@@ -104,7 +103,7 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(spies.addLease).toHaveBeenCalledTimes(1);
     const [added] = spies.addLease.mock.calls[0] as unknown as [Lease];
-    expect(iso(added.startDate)).toBe("2026-07-01");
+    expect(isoOf(added.startDate)).toBe("2026-07-01");
   });
 
   it("adds plainly when the new record starts before the open one", async () => {
@@ -140,7 +139,7 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(spies.addValuation).toHaveBeenCalledTimes(1);
     const [added] = spies.addValuation.mock.calls[0] as unknown as [Valuation];
-    expect(iso(added.validTo)).toBe("2027-06-30");
+    expect(isoOf(added.validTo)).toBe("2027-06-30");
   });
 
   it("lease: adds plainly when the new one has an end date (#121)", async () => {
@@ -156,7 +155,7 @@ describe("ending the previous open-ended record (ADR 0227, 0163)", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(spies.addLease).toHaveBeenCalledTimes(1);
     const [added] = spies.addLease.mock.calls[0] as unknown as [Lease];
-    expect(iso(added.endDate)).toBe("2027-06-30");
+    expect(isoOf(added.endDate)).toBe("2027-06-30");
   });
 
   it("editing a valuation changes no other row", async () => {

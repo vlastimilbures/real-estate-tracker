@@ -144,6 +144,7 @@ describe("useSectionSpy (ADR 0107)", () => {
 
   it("moves the band when the topbar grows (the section nav wraps, ADR 0158)", () => {
     let resized: ResizeObserverCallback = () => {};
+    // eslint-disable-next-line no-restricted-syntax -- it keeps the callback to fire a resize
     vi.stubGlobal(
       "ResizeObserver",
       class {

@@ -5,14 +5,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { ChartCard } from "../charts";
+import { stubResizeObserver } from "../../../__tests__/support/dom";
 
 beforeAll(() => {
   // Recharts' ResponsiveContainer needs a ResizeObserver; jsdom has none.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
+  stubResizeObserver();
 });
 
 const rows = [

@@ -7,17 +7,14 @@ import { act, render, screen } from "@testing-library/react";
 import { ChartCard, Tip } from "../charts";
 import { seriesTipItems } from "../../model/chartData";
 import { useUiStore } from "../../../state/uiStore";
+import { stubResizeObserver } from "../../../__tests__/support/dom";
 
 const realRect = HTMLElement.prototype.getBoundingClientRect;
 const realMatchMedia = window.matchMedia;
 beforeAll(() => {
   // Recharts' ResponsiveContainer needs a ResizeObserver and a measured box; jsdom has
   // neither, so the chart would not render at all.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
+  stubResizeObserver();
   HTMLElement.prototype.getBoundingClientRect = () =>
     ({
       width: 480,

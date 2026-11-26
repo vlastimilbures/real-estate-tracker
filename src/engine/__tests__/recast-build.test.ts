@@ -17,6 +17,7 @@ import {
 } from "./reference/eventHarness";
 import { devBlock } from "./support/mixed";
 import { assumptions } from "./support/seed";
+import { isoOf } from "./support/dates";
 
 const J = SEED_LOANS.javorova;
 /** `devBlock` (support/mixed.ts) as a reference loan. */
@@ -59,8 +60,6 @@ const recastAt56 = (issue: string | null): Outcome => [
   issue,
 ];
 
-const iso = (d: Date) => d.toISOString().slice(0, 10);
-
 function expectMatchesReference(loans: RefLoan[], outcomes: Outcome[]) {
   const { e, r } = chainBoth(loans);
   // Every column agrees, and every reference row past the engine's last is idle.
@@ -68,7 +67,7 @@ function expectMatchesReference(loans: RefLoan[], outcomes: Outcome[]) {
   // maxDev reads the instalment only where the reference pays; elsewhere it is 0.
   const idle = e.rows.filter((_, i) => !r.rows[i].payment.greaterThan(0));
   expect(idle.every((x) => x.instalment.isZero())).toBe(true);
-  expect(e.rows.map((x) => [x.month, iso(x.date)])).toEqual(
+  expect(e.rows.map((x) => [x.month, isoOf(x.date)])).toEqual(
     r.rows.slice(0, e.rows.length).map((x) => [x.month, x.date]),
   );
   // The grid ends at the last payment, or at the horizon when that comes later.
@@ -102,7 +101,7 @@ function expectMatchesReference(loans: RefLoan[], outcomes: Outcome[]) {
     e.eventOutcomes.map((o) => [
       o.blockId,
       o.kind,
-      iso(o.date),
+      isoOf(o.date),
       o.month,
       o.issue,
     ]),

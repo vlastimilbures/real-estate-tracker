@@ -30,6 +30,7 @@ import { TIGHT, toBlock } from "./reference/eventHarness";
 import { isValid, loanWithEvents, share, shockOf } from "./reference/loanGen";
 import { fcRuns } from "./support/fcRuns";
 import { assumptions as A0 } from "./support/seed";
+import { isoOf } from "./support/dates";
 
 // Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
 const SEED = 20261005;
@@ -42,7 +43,6 @@ const at = (base: string, extra: Extra = {}): Assumptions => ({
   baseDate: isoDate(base),
   ...extra,
 });
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 const days = (a: string, b: string) =>
   (Date.parse(b) - Date.parse(a)) / 86_400_000;
 const sum = (rows: AmortizationRow[], f: (r: AmortizationRow) => Decimal) =>
@@ -65,7 +65,7 @@ const lastPaying = (rows: AmortizationRow[]) =>
 function landing(base: string, date: string): number {
   if (date <= base) return 1;
   let m = 1;
-  while (iso(edate(isoDate(base), m)) < date) m++;
+  while (isoOf(edate(isoDate(base), m)) < date) m++;
   return m;
 }
 
@@ -100,7 +100,7 @@ function checkShift(
   const moved = (loan.prepayments ?? []).filter((p) => inWindow(p.date));
   if ((loan.recasts ?? []).some((r) => inWindow(r.date))) return "skipped";
   const first = moved[0]?.date;
-  const nextGrid = iso(edate(isoDate(b1), 1));
+  const nextGrid = isoOf(edate(isoDate(b1), 1));
   if (first && draws.some((x) => x.date > first && x.date <= nextGrid))
     return "skipped";
   // Under b2 the window's events follow payment o, under b1 payment o+1. Their term
@@ -115,7 +115,7 @@ function checkShift(
   // prepayment only, as at the reset); not when a tranche re-amortizes o+1 (D-41); nor
   // when another event also follows o or o+1 (the window's prepayment then shares a
   // period with it: the last effect wins, §5).
-  const dueO = iso(edate(block.startDate, o));
+  const dueO = isoOf(edate(block.startDate, o));
   const fix = loan.fixationMonths;
   const shock = extra.rateShock;
   const termComparable =
@@ -143,7 +143,7 @@ function checkShift(
     const e = s.eventOutcomes.filter(
       (x) =>
         x.kind === "prepayment" &&
-        iso(x.date) === p.date &&
+        isoOf(x.date) === p.date &&
         x.requested.equals(String(p.amount)),
     )[n];
     if (!e) throw new Error(`no outcome for ${p.date}`);
@@ -178,7 +178,7 @@ function checkShift(
     }
     const key = (e: LoanEventOutcome) => [
       e.kind,
-      iso(e.date),
+      isoOf(e.date),
       e.month,
       e.issue,
       e.applied.toFixed(6),
@@ -279,7 +279,7 @@ function checkEnd(loan: RefLoan, base: string, extra: Extra = {}): void {
   // No balloon unless the inputs ask for one.
   const prev = paying.at(-2);
   if (!prev || prev.month !== last.month - 1) return;
-  const due = (p: number) => iso(edate(block.startDate, p));
+  const due = (p: number) => isoOf(edate(block.startDate, p));
   const asked =
     s.eventOutcomes.some(
       (e) =>
@@ -312,11 +312,11 @@ const shifted = fc
   .map(([g, x]) => {
     const { loan, base } = g;
     const block = toBlock(loan);
-    const lastDue = iso(
+    const lastDue = isoOf(
       edate(block.startDate, paymentsDueBy(block, isoDate(base))),
     );
     const room = days(lastDue, base);
-    const b1 = iso(addDays(isoDate(lastDue), Math.floor(x * room)));
+    const b1 = isoOf(addDays(isoDate(lastDue), Math.floor(x * room)));
     return { loan, b1, b2: base, extra: shockOf(g).extra };
   })
   .filter(({ loan, b1, b2 }) => loan.start <= b1 && b1 < b2);
@@ -571,7 +571,7 @@ const hasR101Shape = (loan: RefLoan, base: string) =>
 const has228Shape = (loan: RefLoan, base: string) => {
   const block = toBlock(loan);
   const o = paymentsDueBy(block, isoDate(base));
-  const dueO = iso(edate(block.startDate, o));
+  const dueO = isoOf(edate(block.startDate, o));
   return (
     o >= 1 &&
     (loan.prepayments ?? []).some(
