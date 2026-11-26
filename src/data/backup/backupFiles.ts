@@ -5,16 +5,15 @@
 // transaction (ADR 0014): on any failure the current data stays.
 import type { Sql } from "../sql";
 import { stamp } from "../migrations";
-import { messageOf } from "../errors";
-import {
-  saveFailureDetail,
-  type SaveFileOptions,
-  type SaveOutcome,
+import { FileStepError, type RestoreIssue } from "../errors";
+import type {
+  SaveFileOptions,
+  SaveOutcome,
 } from "../../platform/saveFileTypes";
 import { openBackupFile, writeAppBackup } from "../../platform/appBackupFile";
 import { isCommandError } from "../../platform/commandError";
 import { BACKUP_MAX_BYTES, exportToJson, type BackupFile } from "./format";
-import { backupTooLarge, parseBackupText, type RestoreIssue } from "./validate";
+import { backupTooLarge, parseBackupText } from "./validate";
 import {
   prepareRestore,
   type BackupSummary,
@@ -22,36 +21,6 @@ import {
 } from "./restorePlan";
 
 export type ExportOutcome = SaveOutcome;
-
-/** The file step of Backup & Restore that failed: the export through the save dialog,
- *  the read of a picked restore file (an unplugged disk, a file not downloaded from
- *  iCloud: nothing is known about its content, ADR 0147), or the pre-restore safety
- *  backup (nothing changed). */
-export type FileStep = "export" | "read" | "safety";
-
-/** The English message each step starts with: the log line's text (ADR 0147). */
-const STEP_MESSAGE: Readonly<Record<FileStep, string>> = {
-  export: "Could not save the backup",
-  read: "Could not read the backup file",
-  safety: "Could not save the safety backup",
-};
-
-/** A Backup & Restore file step failed. The failure stays its `cause`, so the error log
- *  finds a failed command's Rust code in it (ADR 0270 point 7). */
-export class FileStepError extends Error {
-  readonly step: FileStep;
-  /** The underlying failure, for display: for an export, the save's OS text without
-   *  its English wrapper (ADR 0193). */
-  readonly detail: string;
-  constructor(step: FileStep, cause: unknown) {
-    const detail =
-      step === "export" ? saveFailureDetail(cause) : messageOf(cause);
-    super(`${STEP_MESSAGE[step]}: ${detail}`, { cause });
-    this.name = "FileStepError";
-    this.step = step;
-    this.detail = detail;
-  }
-}
 
 /** What `exportBackup` needs from outside the data layer (ADR 0072): the one
  *  clock read of the export, its local calendar day for the file name, and the

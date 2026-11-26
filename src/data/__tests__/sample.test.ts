@@ -10,9 +10,9 @@ import {
   clearSample,
   dismissSampleBanner,
   loadSample,
-  SampleNotEmptyError,
   seedIfEmpty,
 } from "../seed";
+import { SampleNotEmptyError } from "../errors";
 import { confirmRestore, exportToJson, FileStepError } from "../backup";
 import { checkInputRules } from "../../state/restoreRules";
 import {

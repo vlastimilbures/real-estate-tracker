@@ -6,7 +6,7 @@ import {
   type RestoreErrorCode,
   type RestoreIssue,
 } from "../data/backup";
-import { SampleNotEmptyError } from "../data/seed";
+import { SampleNotEmptyError } from "../data/errors";
 import { SaveFileError } from "../platform/saveFileTypes";
 import type { CsvImportPreview } from "../import/csvImport";
 import { toWriteError, type WriteError } from "./writeError";

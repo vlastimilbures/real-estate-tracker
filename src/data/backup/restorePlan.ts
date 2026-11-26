@@ -41,12 +41,8 @@ import {
   type BackupFile,
   type BackupTable,
 } from "./format";
-import {
-  RestoreError,
-  invalid,
-  validateBackup,
-  type RestoreIssue,
-} from "./validate";
+import { RestoreError, type RestoreIssue } from "../errors";
+import { invalid, validateBackup } from "./validate";
 
 /** The engine's input rules plus the whole-number form bounds over
  *  the restored rows (assumptions absent ⇒ portfolio rules only). Injected by the
