@@ -27,23 +27,13 @@ import type { Dictionary } from "../../i18n";
 import type { Decimal } from "../../lib/money";
 import { rangeProblems, type IntRange } from "../../lib/rules";
 import { loanWarnings, type LoanWarning } from "./propertyDetail";
+import { COST_FIELDS, type CostField } from "./holdingCosts";
 import type { PropertyFormTarget, PropertySection } from "./sectionNav";
 
 /** A valuation more than this many months old at the as-of date is stale. */
 export const VALUATION_STALE_MONTHS = 12;
 /** A lease ending within this many months of the as-of date (that day included). */
 export const LEASE_ENDING_MONTHS = 3;
-
-/** The holding-cost fields, in the Holding costs form's order. */
-const COST_FIELDS = [
-  "propertyTaxYr",
-  "insuranceYr",
-  "svjMonthly",
-  "otherYr",
-  "mgmtPctRent",
-  "maintPctRent",
-] as const;
-export type CostField = (typeof COST_FIELDS)[number];
 
 /** One data-check finding for a property. */
 export type DataFinding =
@@ -284,7 +274,9 @@ function defaultsOf(
   const rentIndexation = property.rentIndexOverridePa === undefined;
   if (appreciation || rentIndexation)
     out.push({ kind: "growthDefault", appreciation, rentIndexation });
-  const fields = COST_FIELDS.filter((f) => cost?.[f] === undefined);
+  const fields = COST_FIELDS.map(([field]) => field).filter(
+    (f) => cost?.[f] === undefined,
+  );
   if (fields.length > 0) out.push({ kind: "costDefaults", fields });
   return out;
 }

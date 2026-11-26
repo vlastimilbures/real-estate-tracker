@@ -8,7 +8,6 @@ import {
   LEASE_ENDING_MONTHS,
   VALUATION_STALE_MONTHS,
   findingFix,
-  type CostField,
   type DataCheckFix,
   type DataCheckItem,
   type DataFinding,
@@ -16,6 +15,7 @@ import {
   type FindingOf,
   type OutOfRange,
 } from "./dataCheck";
+import { costFieldLabel } from "./holdingCosts";
 import { loanWarningText } from "./propertyDetail";
 
 /** One property's place in a grouped line: the chip that links to its fix. A portfolio
@@ -171,7 +171,7 @@ const FINDING_TEXT: {
         : d.growthRentIndexation,
   costDefaults: (t, f) =>
     t.dataCheck.costDefaults(
-      f.fields.map((field) => costLabel(t, field)).join(", "),
+      f.fields.map((field) => costFieldLabel(t, field)).join(", "),
     ),
   fundingUnknown: ({ dataCheck: d }, f) =>
     f.future ? d.fundingUnknownFuture : d.fundingUnknown,
@@ -211,17 +211,4 @@ export function fixLabel(
     case "assumptions":
       return t.dataCheck.goTo(t.settings.tabs.assumptions);
   }
-}
-
-function costLabel(t: Pick<Dictionary, "propertyDetail">, f: CostField) {
-  const d = t.propertyDetail;
-  const labels: Record<CostField, string> = {
-    propertyTaxYr: d.fieldPropertyTax,
-    insuranceYr: d.fieldInsurance,
-    svjMonthly: d.fieldSvjMo,
-    otherYr: d.fieldOther,
-    mgmtPctRent: d.fieldMgmtPct,
-    maintPctRent: d.fieldMaintPct,
-  };
-  return labels[f];
 }
