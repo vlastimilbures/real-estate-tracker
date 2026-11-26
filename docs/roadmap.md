@@ -2,8 +2,8 @@
 
 What is not done yet, in plain language. Ideas and bugs are welcome as
 [GitHub issues](https://github.com/vlastimilbures/real-estate-tracker/issues). IDs in brackets (`DR-nnn`) are legacy references. They no longer appear in
-`src` code comments, which `scripts/check-comment-refs.mjs` enforces. They remain in test
-comments, Rust comments and config files (ADR 0081).
+`src` code comments, which `scripts/check-comment-refs.mjs` enforces. They remain in tests, the
+Rust shell, config, the capture harness and docs (ADR 0081).
 
 ## Done: the 2026-10 reviews
 
@@ -16,15 +16,19 @@ Every issue from the 2026-10 pre-release review
 #101–#178) is closed; each closed issue links the ADR or PR that resolved it. New work is
 tracked as [GitHub issues](https://github.com/vlastimilbures/real-estate-tracker/issues).
 
-## In progress: the 2026-11 reviews
+## In progress: the 2026-11 code review
 
-- **Code review** (architecture, maintainability, edge-case realism). Tracked in
-  [#435](https://github.com/vlastimilbures/real-estate-tracker/issues/435), label
-  [`code-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Acode-review-2026-11).
-  61 issues are closed and 13 are open (26 Nov 2026). The tracking issue is still open.
-- **UX/UI review.** Label
-  [`ux-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Aux-review-2026-11).
-  30 issues are closed and 2 are open (26 Nov 2026).
+The code review (architecture, maintainability, edge-case realism) is tracked in
+[#435](https://github.com/vlastimilbures/real-estate-tracker/issues/435). Its open issues:
+[`code-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=is%3Aissue+is%3Aopen+label%3Acode-review-2026-11).
+
+## The 2026-11 UX/UI review
+
+Every work issue is closed. The tracking issue
+[#392](https://github.com/vlastimilbures/real-estate-tracker/issues/392) and the decisions left for
+the owner ([#415](https://github.com/vlastimilbures/real-estate-tracker/issues/415)) are open. Open
+issues:
+[`ux-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=is%3Aissue+is%3Aopen+label%3Aux-review-2026-11).
 
 ## Feature ideas (no issue yet)
 
@@ -87,18 +91,19 @@ product's positioning changes.
 - **Mutation score.** The engine scores ~98.7 % under Stryker (the weekly run breaks below 98 %).
   The surviving mutants are equivalent (no observable difference), defaults no caller can
   reach, or the text of engine error messages, which the UI never shows. (DR-168)
-- **Bundle size.** Startup JavaScript is ~275 kB gzip plus the active UI dictionary
-  (~22–29 kB), down from ~329 kB; every page but the Dashboard and Properties, and the date
-  picker calendar, load on first use, and the other dictionaries load only on a language
-  switch. Most of the rest is the main chunk (~159 kB gzip), which holds Recharts, which the
-  Dashboard needs at start. The largest chunk is the lazy-loaded spreadsheet export
-  library (~257 kB gzip).
-  (DR-009)
+- **Bundle size.** Startup JavaScript is ~275 kB gzip plus the active UI dictionary (~22–29 kB),
+  as `vite build` reports for the entry chunk and the chunks `dist/index.html` preloads
+  (2026-11-26). That is up from the ~234 kB plus ~19–24 kB recorded on 2026-10-04, after lazy
+  pages, the calendar and the dictionaries had brought it down from ~329 kB. Every page but the
+  Dashboard and Properties, and the date picker calendar, load on first use, and the other
+  dictionaries load only on a language switch. More than half of it is the entry chunk (~159 kB),
+  which includes Recharts (the Dashboard needs it at start). The largest chunk is the lazy-loaded
+  spreadsheet export library (~257 kB gzip). (DR-009)
 - **Type tightening.** A few helpers still take loose `Record<string, string>` drafts (DR-081); stored
   boolean flags are typed as numbers at the database boundary (DR-080); `D()` still accepts a
   JS `number` (DR-078).
-- **Tests.** The three optional Playwright smoke tests (two spec files) (ADR 0006) run nightly and on manual dispatch
-  (`e2e.yml`), not on every pull request.
+- **Tests.** The three optional Playwright smoke tests (two spec files, ADR 0006) run nightly and
+  on manual dispatch (`e2e.yml`), not on every pull request.
 - **Row editor focus.** Adding a prepayment or maturity-change row does not move focus to
   its date, and removing one leaves focus on the next row's button or the page (PR #100
   review).
