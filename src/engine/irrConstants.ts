@@ -1,5 +1,5 @@
-// The levered IRR's search settings (ADR 0079). Changing one moves outputs and needs
-// an approved decision.
+// The levered IRR's search settings (ADR 0079). Changing one moves outputs and needs an
+// approved decision.
 import { D } from "../lib/money";
 
 /** IRR bisection bracket: annual rates from −90 % to +100 %. */

@@ -192,9 +192,9 @@ export function inForceOrUpcoming<T>(
 }
 
 /**
- * Ascending by start date. Same-start records cannot be stored (the v7 UNIQUE keys); `Array.prototype.sort` is stable, so for in-memory inputs such as tests they
- * keep their input order: `lastOnOrBefore` picks the last of them and `firstAfter` the
- * first.
+ * Ascending by start date. Same-start records cannot be stored (the v7 UNIQUE keys);
+ * `Array.prototype.sort` is stable, so for in-memory inputs such as tests they keep their
+ * input order: `lastOnOrBefore` picks the last of them and `firstAfter` the first.
  */
 export function byStart<T>(getStart: (x: T) => Date) {
   return (a: T, b: T) => getStart(a).getTime() - getStart(b).getTime();

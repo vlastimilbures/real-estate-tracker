@@ -57,7 +57,8 @@ export function impliedMaturity(block: MortgageBlock): IsoDate | null {
 
 /**
  * The implied and contract maturities when they differ by more than one month (ADR 0029),
- * else null. One month absorbs the rounding of the derived term (NPER). The warning itself is UI.
+ * else null. One month absorbs the rounding of the derived term (NPER). The warning
+ * itself is UI.
  */
 export function maturityMismatch(
   block: MortgageBlock,

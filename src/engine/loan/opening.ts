@@ -113,9 +113,9 @@ export function simulateToBaseDate(
 }
 
 /**
- * Opening state of a plain loan at baseDate: its payments due so far replayed month
- * by month (ADR 0235), with the reset from the true fixation end (ADR 0030) and
- * the events (ADR 0109). A plain loan has no tranches, so nothing is counted.
+ * Opening state of a plain loan at baseDate: its payments due so far replayed month by
+ * month (ADR 0235), with the reset from the true fixation end (ADR 0030) and the events
+ * (ADR 0109). A plain loan has no tranches, so nothing is counted.
  */
 export function plainOpening(
   block: PlainLoan,
@@ -129,11 +129,11 @@ export function plainOpening(
 }
 
 /**
- * Debt outstanding at baseDate on one block: 0 for a loan drawn after baseDate, even
- * when it draws in grid month 1 (ADR 0033); else the balance the schedule opens
- * from, plus a tranche dated after the last payment due and on/before baseDate (ADR 0024).
- * A tranche dated after baseDate is new debt in the month it lands, not opening debt,
- * even when it lands in grid month 1 (ADR 0024).
+ * Debt outstanding at baseDate on one block: 0 for a loan drawn after baseDate, even when
+ * it draws in grid month 1 (ADR 0033); else the balance the schedule opens from, plus a
+ * tranche dated after the last payment due and on/before baseDate (ADR 0024). A tranche
+ * dated after baseDate is new debt in the month it lands, not opening debt, even when it
+ * lands in grid month 1 (ADR 0024).
  */
 export function openingBalance(
   block: MortgageBlock,

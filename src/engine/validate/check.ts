@@ -143,9 +143,9 @@ export function checkAmount<T extends Decimal | undefined>(
   else if (bad(amount)) issue(code);
 }
 
-/** ADR 0038 shares and ADR 0075 non-negative costs on the assumption defaults
- *  (`prefix` "defaults."), and the same bounds on a holding-cost row (ADR 0036).
- *  The Kč fields are reported first, then the shares. */
+/** ADR 0038 shares and ADR 0075 non-negative costs on the assumption defaults (`prefix`
+ *  "defaults."), and the same bounds on a holding-cost row (ADR 0036). The Kč fields are
+ *  reported first, then the shares. */
 export function checkCostRanges<P extends "" | "defaults.">(
   c: CostDefaults | HoldingCost,
   prefix: P,

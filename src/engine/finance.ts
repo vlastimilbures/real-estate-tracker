@@ -5,7 +5,8 @@
 // type = 0), so every result is the same to the last of the 40 digits.
 //
 // They do not validate: an instalment that never covers the interest gives NaN or
-// Infinity, which the engine refuses upstream (ADR 0017, `assertLoanInputs` / `termMonths`).
+// Infinity, which the engine refuses upstream (ADR 0017, `assertLoanInputs` /
+// `termMonths`).
 import { ONE, type Decimal } from "../lib/money";
 
 /**

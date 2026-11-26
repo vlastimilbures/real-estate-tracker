@@ -1,14 +1,14 @@
 // Monthly amortization schedules with the Czech fixation reset (SPEC §4.4).
 //
-// One month step (`stepMonth`: the first draw, the payoff guard, or payment p —
-// tranche terms, re-amortization trigger, `amortizeMonth` — then its prepayments and
-// recasts) drives every loan: the baseDate grid of a plain or a development loan, and
-// the catch-up from startDate to baseDate. The catch-up opens every development loan
-// running at baseDate, and a plain loan once the rate of its last payment due differs
-// from the contract rate (fixation ended, ADR 0030) or an event is dated by baseDate
-// (ADR 0109). The loans differ only as data in the `Run`, each difference named:
-//   • payoff guard — the grid emits zero rows once the balance is repaid; the
-//     catch-up (`replay`) has none;
+// One month step (`stepMonth`: the first draw, the payoff guard, or payment p — tranche
+// terms, re-amortization trigger, `amortizeMonth` — then its prepayments and recasts)
+// drives every loan: the baseDate grid of a plain or a development loan, and the catch-up
+// from startDate to baseDate. The catch-up opens every development loan running at
+// baseDate, and a plain loan once the rate of its last payment due differs from the
+// contract rate (fixation ended, ADR 0030) or an event is dated by baseDate (ADR 0109).
+// The loans differ only as data in the `Run`, each difference named:
+//   • payoff guard — the grid emits zero rows once the balance is repaid; the catch-up
+//     (`replay`) has none;
 //   • re-amortization trigger — a tranche landing, the end of interest-only, or a rate
 //     change (ADR 0024); a plain loan has no tranches (empty draw maps) and no
 //     interest-only months (no completion), so for it a rate change only. Any loan
@@ -21,13 +21,12 @@
 //   • instalment during interest-only — the catch-up adopts the interest as the
 //     instalment in force; the grid keeps the pre-interest-only instalment.
 //
-// Calendar (ADR 0021): rows sit on the baseDate grid EDATE(baseDate, m), but each
-// row carries payment number p = offset + m: paymentsDueAtBase + m (running loan),
+// Calendar (ADR 0021): rows sit on the baseDate grid EDATE(baseDate, m), but each row
+// carries payment number p = offset + m: paymentsDueAtBase + m (running loan),
 // m − drawMonth (future loan), or the catch-up's months 1 − steps to 0. Its rate and
-// interest-only are read on that payment's due date EDATE(start, p) (ADR 0129 §2). So
-// the payment due on the fixation end is still at the fixed rate, and a
-// clamped month-end due date counts as paid. Tranche landing stays on the
-// grid.
+// interest-only are read on that payment's due date EDATE(start, p) (ADR 0129 §2). So the
+// payment due on the fixation end is still at the fixed rate, and a clamped month-end due
+// date counts as paid. Tranche landing stays on the grid.
 import { ZERO, type Decimal } from "../../lib/money";
 import { edate } from "../dates";
 import { dueDate } from "../loanTerm";
@@ -159,9 +158,8 @@ export interface Run {
   offset: number;
   /** The tranches each month draws before its split. */
   drawsByMonth: Map<number, Decimal>;
-  /** The tranches dated after baseDate, by grid month: the new debt a row draws.
-   *  A tranche on/before baseDate that lands in grid month 1 is opening
-   *  debt (ADR 0024). */
+  /** The tranches dated after baseDate, by grid month: the new debt a row draws. A
+   *  tranche on/before baseDate that lands in grid month 1 is opening debt (ADR 0024). */
   newDebtByMonth: Map<number, Decimal>;
   /** The part of grid month 1's tranches a late-window event already counted in the
    *  terms it set: no second contract-term restore or agreed-instalment deferral for

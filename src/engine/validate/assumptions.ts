@@ -1,5 +1,5 @@
-// The assumptions' checks: fields, level ranges, cost defaults and shocks (ADR 0037, ADR 0038,
-// ADR 0128).
+// The assumptions' checks: fields, level ranges, cost defaults and shocks (ADR 0037,
+// ADR 0038, ADR 0128).
 import type { Decimal } from "../../lib/money";
 import type { Assumptions, CostDefaults, ShockBand } from "../types";
 import {

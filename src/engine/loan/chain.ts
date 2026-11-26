@@ -218,11 +218,10 @@ function handoverDrawn(
 /**
  * The owner's balance going into the handover month `d` (`before`, what the successor
  * pays off unless the owner's month-d row is kept) and the balance carried into the
- * merged row: the handover's net new debt is what the successor draws, less
- * the predecessor balance it pays off, plus anything the kept row itself drew. In grid
- * month 1 that is the row's opening balance before its tranches: the owner's row there
- * is never itself a handover, as two blocks starting within a month are refused
- * (ADR 0226 §2).
+ * merged row: the handover's net new debt is what the successor draws, less the
+ * predecessor balance it pays off, plus anything the kept row itself drew. In grid month
+ * 1 that is the row's opening balance before its tranches: the owner's row there is never
+ * itself a handover, as two blocks starting within a month are refused (ADR 0226 §2).
  */
 function handoverBalances(
   head: AmortizationRow[],
@@ -280,8 +279,8 @@ function cutAt(
 /**
  * Drop each block's tranches dated after its successor's start: the successor replaces
  * the block from that date, so they are never drawn, even one in the successor's draw
- * month that the kept draw row would otherwise carry (ADR 0027). Its prepayments
- * and recasts dated after that start go too, and are reported (ADR 0109).
+ * month that the kept draw row would otherwise carry (ADR 0027). Its prepayments and
+ * recasts dated after that start go too, and are reported (ADR 0109).
  */
 function untilSuccessor(links: ChainLink[]): {
   chain: MortgageBlock[];
@@ -313,9 +312,9 @@ export const EMPTY_PROPERTY_SCHEDULE: PropertySchedule = Object.freeze({
 
 /**
  * One property's schedule on the baseDate grid, following its refinance chain: each
- * successor block starting after baseDate replaces its predecessor from the grid month
- * it draws in (ADR 0027), with the handovers it made. Blocks on the same start
- * overlap and raise DUPLICATE_BLOCK_START (ADR 0027). No block ⇒ no rows.
+ * successor block starting after baseDate replaces its predecessor from the grid month it
+ * draws in (ADR 0027), with the handovers it made. Blocks on the same start overlap and
+ * raise DUPLICATE_BLOCK_START (ADR 0027). No block ⇒ no rows.
  */
 export function propertySchedule(
   blocks: MortgageBlock[],

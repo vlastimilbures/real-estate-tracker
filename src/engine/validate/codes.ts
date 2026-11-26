@@ -54,9 +54,10 @@ type CostField =
 /**
  * @internal Each entity's fields an error can name (ADR 0251 §4), exported for tests.
  * The assumptions name a default both bare (NON_FINITE_NUMBER) and as `defaults.<key>`
- * (its range), a known mismatch left as it is. An extra default key the type does not name is reported
- * as given (`Object.keys(a.defaults)`), outside this list: unreachable from the app, and
- * it is left as it is too.
+ * (its range): two spellings of one field, so both are listed. One spelling would change
+ * the field an error names, which the UI reads to place its message, so it needs a
+ * decision of its own. An extra default key the type does not name is reported as given
+ * (`Object.keys(a.defaults)`), outside this list: the app never writes one.
  */
 export const VALIDATION_FIELDS = {
   assumptions: [
@@ -143,12 +144,13 @@ export interface EngineValidationError {
 }
 
 /** The gates that raise a code: "data" is corrupt data (ADR 0037) and "range" the ranges
- *  (ADR 0038, ADR 0128), raised at every entry point by `assertInputs` / `assertAssumptions`;
- *  "loan" is an invalid loan (ADR 0017, ADR 0036), raised by `assertLoanInputs`. A code with no
- *  gate is raised on its own path: `assertBlockStarts`, `assertAsOf`, or a write-time
- *  rule (LEASE_OVERLAP). INSTALMENT_BELOW_INTEREST and ZERO_RATE_ZERO_INSTALMENT keep the
- *  "loan" gate for a loan without a term and are also raised by a write-time rule for a
- *  loan with one (`instalmentBelowInterestErrors`, ADR 0264). */
+ *  (ADR 0038, ADR 0128), raised at every entry point by `assertInputs` /
+ *  `assertAssumptions`; "loan" is an invalid loan (ADR 0017, ADR 0036), raised by
+ *  `assertLoanInputs`. A code with no gate is raised on its own path:
+ *  `assertBlockStarts`, `assertAsOf`, or a write-time rule (LEASE_OVERLAP).
+ *  INSTALMENT_BELOW_INTEREST and ZERO_RATE_ZERO_INSTALMENT keep the "loan" gate for a
+ *  loan without a term and are also raised by a write-time rule for a loan with one
+ *  (`instalmentBelowInterestErrors`, ADR 0264). */
 type Gate = "data" | "range" | "loan";
 
 /** Every code's gates, in one table: a code left out fails `tsc` (#479). */

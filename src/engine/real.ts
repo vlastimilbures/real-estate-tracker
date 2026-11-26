@@ -1,5 +1,5 @@
-// Real terms (ADR 0023): money in prices of the projection start (baseDate), deflated
-// by the cumulative CPI index `cpiIndex` — the same index the real KPIs use, so a scenario's
+// Real terms (ADR 0023): money in prices of the projection start (baseDate), deflated by
+// the cumulative CPI index `cpiIndex` — the same index the real KPIs use, so a scenario's
 // inflation shock reaches every real figure. With no shock the index is (1+inflation)^t.
 // Also: the snapshot read off a projection year (ADR 0019), so an as-of date inside the
 // horizon shows the projected year the charts plot.

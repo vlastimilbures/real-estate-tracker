@@ -64,8 +64,8 @@ export function buildCpiIndex(assumptions: ValidAssumptions): Decimal[] {
   return cpi;
 }
 
-/** `buildCpiIndex` for callers outside the engine: raises the ADR 0037 / ADR 0038 problems of
- *  the assumptions first (ADR 0075). */
+/** `buildCpiIndex` for callers outside the engine: raises the ADR 0037 / ADR 0038
+ *  problems of the assumptions first (ADR 0075). */
 export function cpiIndex(assumptions: Assumptions): Decimal[] {
   return buildCpiIndex(assertAssumptions(assumptions));
 }
@@ -149,11 +149,11 @@ export function renewedLease(leases: Lease[], basis: Date): Lease | undefined {
 }
 
 /**
- * The rent of every grid month (ADR 0080): the lease in force on the month's
- * grid date `edate(baseDate, m)` (ADR 0021), from the first month on/after the basis date;
- * no lease in force ⇒ no rent (a gap between leases). The last lease (latest start)
- * keeps renting past its end date — treated as renewed — unless it ended before the
- * basis date. Each lease's rent is indexed from its own turn-on year.
+ * The rent of every grid month (ADR 0080): the lease in force on the month's grid date
+ * `edate(baseDate, m)` (ADR 0021), from the first month on/after the basis date; no lease
+ * in force ⇒ no rent (a gap between leases). The last lease (latest start) keeps renting
+ * past its end date — treated as renewed — unless it ended before the basis date. Each
+ * lease's rent is indexed from its own turn-on year.
  */
 function buildRentPlan(
   leases: Lease[],

@@ -1,7 +1,7 @@
 // The owner's cash outside net cash flow, by projection year (SPEC §4.6, #117):
 // acquisitions out, net refinance cash in (ADR 0027), prepayments and their fees out
-// (ADR 0109), and the debt service paid before a future buy turns on (ADR 0124).
-// Net cash flow minus it is the owner's flow the cumulative cash flow and IRR sum.
+// (ADR 0109), and the debt service paid before a future buy turns on (ADR 0124). Net cash
+// flow minus it is the owner's flow the cumulative cash flow and IRR sum.
 import { ZERO, type Decimal } from "../lib/money";
 import {
   acquisitionSummary,
@@ -127,12 +127,12 @@ export function prePurchaseDebtService(
 }
 
 /**
- * Cash outside net cash flow by projection year (index 0..N) for `properties` (the
- * active ones): acquisitions out (down payment and the principal repaid before
- * baseDate, less a later first loan's principal in; `acquisitionOutflows`), net
- * refinance cash in (ADR 0027), prepayments and their fees out (ADR 0109; read from `rows`,
- * the projection of the same properties), and the debt service paid before a future
- * buy turns on (ADR 0124; `prePurchase`, computed here unless the caller has it).
+ * Cash outside net cash flow by projection year (index 0..N) for `properties` (the active
+ * ones): acquisitions out (down payment and the principal repaid before baseDate, less a
+ * later first loan's principal in; `acquisitionOutflows`), net refinance cash in
+ * (ADR 0027), prepayments and their fees out (ADR 0109; read from `rows`, the projection
+ * of the same properties), and the debt service paid before a future buy turns on
+ * (ADR 0124; `prePurchase`, computed here unless the caller has it).
  */
 export function cashOutsideNetCf(
   properties: Property[],

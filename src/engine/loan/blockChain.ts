@@ -1,5 +1,5 @@
-// A property's refinance chain (ADR 0027): the block that drives its schedule,
-// the later blocks that replace it in turn, and when a successor has replaced a block.
+// A property's refinance chain (ADR 0027): the block that drives its schedule, the later
+// blocks that replace it in turn, and when a successor has replaced a block.
 import { firstAfter, inForceOrUpcoming, isOnOrBefore } from "../dates";
 import { drawMonth } from "../loanTerm";
 import type { MortgageBlock } from "../types";

@@ -1,9 +1,9 @@
-// The one-pass engine run the app's recompute path uses. The separate public
-// calls each rebuild every loan schedule (and the KPIs rebuild the projection); this
-// builds the schedules once and shares them. The results are exactly those of the
-// separate calls, and its steps run in the same order as before, so the same error is
-// raised first. The projection + KPIs sequence (`runPortfolio`) lives in kpis.ts, shared
-// with `projectionAndKpis`.
+// The one-pass engine run the app's recompute path uses. The separate public calls each
+// rebuild every loan schedule (and the KPIs rebuild the projection); this builds the
+// schedules once and shares them. The results are exactly those of the separate calls,
+// and its steps run in the same order as before, so the same error is raised first. The
+// projection + KPIs sequence (`runPortfolio`) lives in kpis.ts, shared with
+// `projectionAndKpis`.
 import {
   propertySchedules,
   scheduleRows,

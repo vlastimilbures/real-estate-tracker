@@ -32,16 +32,16 @@ type IrrResult =
   { rate: Decimal; reason: null } | { rate: null; reason: IrrNoRateReason };
 
 /**
- * IRR via bisection on the decimal NPV (ADR 0079). NOT_UNIQUE when an NPV scan
- * over [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes would
+ * IRR via bisection on the decimal NPV (ADR 0079). NOT_UNIQUE when an NPV scan over
+ * [−90 %, +1000 %] finds more than one root (counting cash-flow sign changes would
  * wrongly flag a vector with a future purchase). Otherwise the root is bracketed in
  * [−90 %, +100 %], then the upper bound widens in steps to +1000 %; a bracket end at the
  * root is the IRR (ADR 0121); NO_ROOT when no bracket holds one.
  */
 export function irrResult(cashflows: Decimal[]): IrrResult {
   // Horner's rule in the discount factor v = 1/(1+rate): one multiply-add per cash flow
-  // instead of a `pow` each. Only the NPV's sign and the tolerance test are
-  // read, so the result is the same bisection midpoint (irr-equivalence.test.ts).
+  // instead of a `pow` each. Only the NPV's sign and the tolerance test are read, so the
+  // result is the same bisection midpoint (irr-equivalence.test.ts).
   const npv = (rate: Decimal): Decimal => {
     const v = ONE.div(ONE.plus(rate));
     return cashflows.reduceRight((acc, cf) => acc.times(v).plus(cf), ZERO);
@@ -133,11 +133,11 @@ function bisect(
 }
 
 /**
- * Net-worth growth. A multiple or a growth rate needs a *positive* opening equity base, so
- * both multiples and both CAGRs are null when equity0 ≤ 0 — no growth base, shown as "—"
- * (ADR 0034, ADR 0126). A CAGR also needs a positive end: a negative base to the power 1/N is
- * NaN (ADR 0017), so it is null when the end net worth ≤ 0. `greaterThan`, because
- * `isPositive()` is also true for ZERO. Real CAGR is taken off the CPI-deflated
+ * Net-worth growth. A multiple or a growth rate needs a *positive* opening equity base,
+ * so both multiples and both CAGRs are null when equity0 ≤ 0 — no growth base, shown as
+ * "—" (ADR 0034, ADR 0126). A CAGR also needs a positive end: a negative base to the
+ * power 1/N is NaN (ADR 0017), so it is null when the end net worth ≤ 0. `greaterThan`,
+ * because `isPositive()` is also true for ZERO. Real CAGR is taken off the CPI-deflated
  * net worth — identical to (1+cagr)/(1+infl)−1 under constant inflation, so parity holds.
  * The real multiple divides that same deflated net worth by equity0 (CPI₀ = 1, so equity0
  * is already in base-date Kč; ADR 0087).

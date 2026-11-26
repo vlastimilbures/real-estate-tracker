@@ -35,14 +35,13 @@ export function fixationExpired(block: MortgageBlock, baseDate: Date): boolean {
  * fixation end is still at the fixed rate (ADR 0021):
  *   • on/before `rateFixedUntil` → the block's own entered rate;
  *   • after it → `postFixationResetRatePa`.
- * For a floating block `rateFixedUntil` is baseDate (or its later start), so the
- * payments due by baseDate are at its entered rate (ADR 0162).
- * A scenario `rateShock` elevates the post-fixation rate by `deltaPa` for the first
- * `durationYears` after that date (a temporary spike at refix), then it reverts to
- * `postFixationResetRatePa`. Only payments due after baseDate are shocked: a what-if
- * never reprices history or the opening balance. With no `rateShock` there are two
- * states: the fixed rate, then the reset rate. The schedule re-amortizes the
- * instalment on every change this returns.
+ * For a floating block `rateFixedUntil` is baseDate (or its later start), so the payments
+ * due by baseDate are at its entered rate (ADR 0162). A scenario `rateShock` elevates the
+ * post-fixation rate by `deltaPa` for the first `durationYears` after that date (a
+ * temporary spike at refix), then it reverts to `postFixationResetRatePa`. Only payments
+ * due after baseDate are shocked: a what-if never reprices history or the opening
+ * balance. With no `rateShock` there are two states: the fixed rate, then the reset rate.
+ * The schedule re-amortizes the instalment on every change this returns.
  */
 export function rateAt(
   date: Date,

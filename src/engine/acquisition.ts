@@ -93,9 +93,9 @@ export function repaidBeforeBase(
   );
 }
 
-/** A loan's initial principal plus its tranches dated on or before the start of the
- *  block that replaces it: the schedule's cut (ADR 0027), so a tranche it never draws does
- *  not count (ADR 0119 §3). */
+/** A loan's initial principal plus its tranches dated on or before the start of the block
+ *  that replaces it: the schedule's cut (ADR 0027), so a tranche it never draws does not
+ *  count (ADR 0119 §3). */
 function principalUntilReplaced(
   block: MortgageBlock,
   blocks: MortgageBlock[],

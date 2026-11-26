@@ -113,8 +113,8 @@ function snapshotIncome(
 }
 
 /**
- * One property's snapshot at `asOf`. Pass its `schedule` (the rows from `propertySchedules`
- * on the same inputs) to reuse it; an omitted one is built here.
+ * One property's snapshot at `asOf`. Pass its `schedule` (the rows from
+ * `propertySchedules` on the same inputs) to reuse it; an omitted one is built here.
  */
 // eslint-disable-next-line max-params -- public API with app and test callers (#480)
 export function propertySnapshot(
@@ -225,8 +225,8 @@ function portfolioStocks(st: ReturnType<typeof stocksOf>) {
 }
 
 /**
- * Portfolio snapshot at `asOf`. Pass `schedules` (the rows from `propertySchedules` on the
- * same inputs) to reuse them; omitted ones are built here.
+ * Portfolio snapshot at `asOf`. Pass `schedules` (the rows from `propertySchedules` on
+ * the same inputs) to reuse them; omitted ones are built here.
  * @internal test seam: tests pin it; the app runs `portfolioOutputs`.
  */
 export function portfolioSnapshot(

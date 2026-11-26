@@ -166,11 +166,11 @@ export interface PlainLoan extends LoanBase {
 
 /**
  * A development loan (gradual utilization): tranche draws and/or interest-only until
- * completion. Not a clean annuity, so the term cannot come from NPER and
- * `loanTermYears` is required. The schedule derives the instalment from that
- * term (ADR 0031, `scheduledInstalment`); the entered `monthlyInstalment` is not used.
- * `isDevLoan` is the runtime test; a block with an empty `draws` array and no
- * `completionDate` still runs as a plain loan.
+ * completion. Not a clean annuity, so the term cannot come from NPER and `loanTermYears`
+ * is required. The schedule derives the instalment from that term (ADR 0031,
+ * `scheduledInstalment`); the entered `monthlyInstalment` is not used. `isDevLoan` is the
+ * runtime test; a block with an empty `draws` array and no `completionDate` still runs as
+ * a plain loan.
  */
 export interface DevelopmentLoan extends LoanBase {
   loanTermYears: number;
@@ -287,7 +287,8 @@ export interface PortfolioSnapshot {
 
 export interface AmortizationRow {
   month: number; // 1-based, from baseDate
-  /** Grid date EDATE(baseDate, month): the projection buckets the row by it (ADR 0021). */
+  /** Grid date EDATE(baseDate, month): the projection buckets the row by it
+   *  (ADR 0021). */
   date: IsoDate;
   /** Due date of the payment this row carries, on the paying block's own cadence
    *  EDATE(startDate, p) (ADR 0164). Null when no payment is due: an undrawn month,
@@ -297,10 +298,10 @@ export interface AmortizationRow {
   instalment: Decimal;
   interest: Decimal;
   principal: Decimal;
-  /** New debt drawn in this grid month, dated after baseDate: a loan's draw
-   *  or a tranche, not a refinance (ADR 0130). Debt dated on/before baseDate is
-   *  opening debt. So endBalance = previous endBalance − principal − prepaid +
-   *  drawn + refinanced, from the baseDate debt (`openingDebt`). */
+  /** New debt drawn in this grid month, dated after baseDate: a loan's draw or a tranche,
+   *  not a refinance (ADR 0130). Debt dated on/before baseDate is opening debt. So
+   *  endBalance = previous endBalance − principal − prepaid + drawn + refinanced, from
+   *  the baseDate debt (`openingDebt`). */
   drawn: Decimal;
   /** A refinance handover's difference: the successor's draw less the predecessor
    *  balance it pays off (ADR 0130). Zero in every other month. */
@@ -348,16 +349,16 @@ export interface Refinance {
   month: number;
   /** Predecessor balance the successor pays off. */
   paidOff: Decimal;
-  /** The successor's initial principal (ADR 0027); a tranche it draws in the handover month is
-   *  new debt in the row's `drawn`, not refinance cash (ADR 0176). */
+  /** The successor's initial principal (ADR 0027); a tranche it draws in the handover
+   *  month is new debt in the row's `drawn`, not refinance cash (ADR 0176). */
   drawn: Decimal;
 }
 
 export interface ProjectionYear {
   year: number; // 0..horizon
   calendarYear: number;
-  // ADR 0022: the year's grid months are the dates (periodStart, periodEnd]; year 0 is the
-  // baseDate point (periodStart = periodEnd = baseDate).
+  // ADR 0022: the year's grid months are the dates (periodStart, periodEnd]; year 0 is
+  // the baseDate point (periodStart = periodEnd = baseDate).
   periodStart: IsoDate;
   periodEnd: IsoDate;
   // stocks
@@ -382,9 +383,9 @@ export interface ProjectionYear {
   principal: Decimal;
   debtService: Decimal;
   netCashFlow: Decimal;
-  // New debt drawn in the year (0 in year 0); with principal, prepaid and
-  // refinanced it explains the balance move: balance[t] = balance[t−1] − principal[t]
-  // − prepaid[t] + draws[t] + refinanced[t].
+  // New debt drawn in the year (0 in year 0); with principal, prepaid and refinanced it
+  // explains the balance move: balance[t] = balance[t−1] − principal[t] − prepaid[t] +
+  // draws[t] + refinanced[t].
   draws: Decimal;
   // ADR 0166: the change in committed debt from new borrowing: draws[t] less the part
   // that was already committed (a development tranche), plus the undrawn part of a loan
@@ -423,8 +424,8 @@ export interface PortfolioYear extends ProjectionYear {
   ratePa: null;
 }
 
-/** Why a levered IRR has no value: no root in the search range, or the NPV
- *  has more than one root there. */
+/** Why a levered IRR has no value: no root in the search range, or the NPV has more than
+ *  one root there. */
 export type IrrNoRateReason = "NO_ROOT" | "NOT_UNIQUE";
 
 export interface PortfolioKPIs {

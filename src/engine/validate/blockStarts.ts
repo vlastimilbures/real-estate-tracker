@@ -1,5 +1,5 @@
 // Blocks of one property on one start date, or within a month of each other (ADR 0027,
-// ADR 0027, ADR 0226 §2).
+// ADR 0226 §2).
 import { edate, isAfter, isOnOrBefore } from "../dates";
 import { EngineInputError } from "../errors";
 import type { MortgageBlock } from "../types";
@@ -60,9 +60,9 @@ export function refinancesWithinAMonth(
 const startError = (code: ValidationCode, b: MortgageBlock) =>
   rowError({ entity: "mortgage", id: b.id }, code, "startDate");
 
-/** Raise DUPLICATE_BLOCK_START for overlapping blocks of one property (ADR 0027),
- *  then REFINANCE_WITHIN_A_MONTH for blocks starting within a month of the one they
- *  replace (ADR 0226 §2). */
+/** Raise DUPLICATE_BLOCK_START for overlapping blocks of one property (ADR 0027), then
+ *  REFINANCE_WITHIN_A_MONTH for blocks starting within a month of the one they replace
+ *  (ADR 0226 §2). */
 export function assertBlockStarts(blocks: MortgageBlock[]): void {
   const quick = refinancesWithinAMonth(blocks);
   const errors = [

@@ -9,16 +9,16 @@ import type {
 
 /**
  * True when the block uses development-loan features — gradual tranche draws or an
- * interest-only-until-completion period. Plain single-draw loans return false: they
- * open from `plainOpening` and run with no tranches and no interest-only months.
+ * interest-only-until-completion period. Plain single-draw loans return false: they open
+ * from `plainOpening` and run with no tranches and no interest-only months.
  */
 export function isDevLoan(block: MortgageBlock): block is DevelopmentLoan {
   return (block.draws?.length ?? 0) > 0 || block.completionDate != null;
 }
 
 /**
- * Type stored or entered loan fields as a `MortgageBlock`, returning the same object.
- * Not value-checked: a development loan without a term can exist in the DB, and
+ * Type stored or entered loan fields as a `MortgageBlock`, returning the same object. Not
+ * value-checked: a development loan without a term can exist in the DB, and
  * `validateInputs` / `termMonths` reject it (ADR 0017). The one sanctioned
  * `as MortgageBlock` (ADR 0074).
  */
@@ -29,10 +29,10 @@ export function mortgageBlock(fields: MortgageBlockFields): MortgageBlock {
 
 /**
  * The block as it runs until a successor starting on `date` replaces it: its tranches,
- * prepayments and recasts dated after `date` dropped (ADR 0027, ADR 0109); the same
- * block when none is. Built through `mortgageBlock`; the term stays, so cutting tranches
- * never leaves a development loan without one. A development loan left with no tranche
- * and no completion date counts as a plain loan (`isDevLoan`).
+ * prepayments and recasts dated after `date` dropped (ADR 0027, ADR 0109); the same block
+ * when none is. Built through `mortgageBlock`; the term stays, so cutting tranches never
+ * leaves a development loan without one. A development loan left with no tranche and no
+ * completion date counts as a plain loan (`isDevLoan`).
  */
 export function cutAfter(block: MortgageBlock, date: Date): MortgageBlock {
   const keep = (e: { date: Date }) => isOnOrBefore(e.date, date);

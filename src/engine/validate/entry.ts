@@ -67,8 +67,8 @@ function raiseEntryErrors(errors: EngineValidationError[]): void {
   if (raised.length > 0) throw new EngineInputError(raised);
 }
 
-/** Raise the ADR 0037 / ADR 0038 problems of the assumptions (entry points without a portfolio);
- *  otherwise return them branded valid. */
+/** Raise the ADR 0037 / ADR 0038 problems of the assumptions (entry points without a
+ *  portfolio); otherwise return them branded valid. */
 export function assertAssumptions(assumptions: Assumptions): ValidAssumptions {
   const errors: EngineValidationError[] = [];
   checkAssumptions(
@@ -81,10 +81,10 @@ export function assertAssumptions(assumptions: Assumptions): ValidAssumptions {
 }
 
 /**
- * Raise an EngineInputError listing every ADR 0037 / ADR 0038 problem in the inputs (validateInputs
- * order), instead of computing NaN, a rolled-over date or a silent first-row pick;
- * otherwise return them as `ValidInputs` (the assumptions checked as `assertAssumptions`
- * checks them, the portfolio as well).
+ * Raise an EngineInputError listing every ADR 0037 / ADR 0038 problem in the inputs
+ * (validateInputs order), instead of computing NaN, a rolled-over date or a silent
+ * first-row pick; otherwise return them as `ValidInputs` (the assumptions checked as
+ * `assertAssumptions` checks them, the portfolio as well).
  */
 export function assertInputs(
   portfolio: Portfolio,

@@ -1,5 +1,5 @@
-// One mortgage block's checks (ADR 0017, ADR 0036, ADR 0037) and the loan asserts: the one path into
-// checkMortgage.
+// One mortgage block's checks (ADR 0017, ADR 0036, ADR 0037) and the loan asserts: the
+// one path into checkMortgage.
 import type { Decimal } from "../../lib/money";
 import {
   derivedTermProblem,
@@ -192,10 +192,10 @@ function blockErrors(
 }
 
 /**
- * Raise an EngineInputError when a loan the engine is about to compute has a ADR 0017
- * problem, instead of letting it become a NaN term, an endless schedule or vanished
- * debt. Every ADR 0017 problem of the block is listed, and a
- * non-finite principal or instalment (ADR 0251 §2).
+ * Raise an EngineInputError when a loan the engine is about to compute has an ADR 0017
+ * problem, instead of letting it become a NaN term, an endless schedule or vanished debt.
+ * Every ADR 0017 problem of the block is listed, and a non-finite principal or instalment
+ * (ADR 0251 §2).
  */
 export function assertLoanInputs(block: MortgageBlock): void {
   raise(blockErrors(block, raisedByLoanGate));
