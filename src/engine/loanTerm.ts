@@ -16,11 +16,35 @@ import { EngineInputError } from "./errors";
 import { MAX_LOAN_TERM_MONTHS } from "./loanConstants";
 import { monthlyRate, yearsToMonths } from "./units";
 
+/** The first month's interest at the block's own principal and entered rate. */
+function firstMonthInterest(block: MortgageBlock): Decimal {
+  return block.initialPrincipal.times(monthlyRate(block.interestRatePa));
+}
+
+/**
+ * Why the entered instalment cannot repay the loan (D-17, DR-014), or undefined when it
+ * can: at 0 % it must be positive; otherwise it must exceed the first month's interest.
+ * Expects finite principal and rate.
+ */
+function instalmentProblem(
+  block: MortgageBlock,
+): { code: ValidationCode; field: "monthlyInstalment" } | undefined {
+  const field = "monthlyInstalment";
+  if (block.interestRatePa.isZero()) {
+    return block.monthlyInstalment.greaterThan(ZERO)
+      ? undefined
+      : { code: "ZERO_RATE_ZERO_INSTALMENT", field };
+  }
+  return block.monthlyInstalment.lessThanOrEqualTo(firstMonthInterest(block))
+    ? { code: "INSTALMENT_BELOW_INTEREST", field }
+    : undefined;
+}
+
 /**
  * Why a loan's term cannot come from its instalment (NPER), or undefined when it can
  * (or when an explicit `loanTermYears` makes NPER irrelevant): a development loan
- * needs an explicit term; at 0 % the instalment must be positive; otherwise it must
- * exceed the first month's interest (DR-014). Expects finite principal and rate.
+ * needs an explicit term; otherwise the instalment must repay it (`instalmentProblem`).
+ * Expects finite principal and rate.
  */
 export function derivedTermProblem(block: MortgageBlock):
   | {
@@ -32,18 +56,7 @@ export function derivedTermProblem(block: MortgageBlock):
   if (isDevLoan(block)) {
     return { code: "MISSING_TERM_FOR_DEV_LOAN", field: "loanTermYears" };
   }
-  const field = "monthlyInstalment";
-  if (block.interestRatePa.isZero()) {
-    return block.monthlyInstalment.greaterThan(ZERO)
-      ? undefined
-      : { code: "ZERO_RATE_ZERO_INSTALMENT", field };
-  }
-  const firstInterest = block.initialPrincipal.times(
-    monthlyRate(block.interestRatePa),
-  );
-  return block.monthlyInstalment.lessThanOrEqualTo(firstInterest)
-    ? { code: "INSTALMENT_BELOW_INTEREST", field }
-    : undefined;
+  return instalmentProblem(block);
 }
 
 /**
