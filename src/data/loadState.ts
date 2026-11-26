@@ -1,4 +1,4 @@
-// The full load (DR-134): everything the app shows, read in one point-in-time snapshot
+// The full load: everything the app shows, read in one point-in-time snapshot
 // and mapped to engine inputs. The engine never imports this file.
 import type { Sql } from "./sql";
 import { DataError } from "./errors";
@@ -37,7 +37,7 @@ const PORTFOLIO_QUERIES = [
   "SELECT * FROM holding_costs ORDER BY id",
 ] as const;
 const ASSUMPTIONS_QUERY = "SELECT * FROM assumptions WHERE id = 1";
-// Creation order (DR-181): older yyyy-mm-dd rows sort before same-day timestamps, by id.
+// Creation order: older yyyy-mm-dd rows sort before same-day timestamps, by id.
 const SCENARIOS_QUERY = "SELECT * FROM scenarios ORDER BY created_at, id";
 
 // Properties are listed by name in Czech order, numbers by value (ADR 0127: ids are random).
@@ -73,7 +73,7 @@ function toAssumptions(rows: unknown[]): Assumptions {
   return rowToAssumptions(rows[0] as AssumptionsRow);
 }
 
-/** Everything the app shows, as one point-in-time snapshot (DR-134). */
+/** Everything the app shows, as one point-in-time snapshot. */
 export interface LoadedState {
   portfolio: Portfolio;
   assumptions: Assumptions;
@@ -83,7 +83,7 @@ export interface LoadedState {
 }
 
 /** The portfolio, assumptions, scenarios and the sample and backup state, read in one
- *  snapshot so a write landing mid-load cannot mix states (DR-134). */
+ *  snapshot so a write landing mid-load cannot mix states. */
 export async function loadState(sql: Sql): Promise<LoadedState> {
   const results = await sql.selectSnapshot([
     ...[...PORTFOLIO_QUERIES, ASSUMPTIONS_QUERY, SCENARIOS_QUERY].map(

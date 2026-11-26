@@ -1,5 +1,5 @@
-// The app's database opener: open, migrate and seed (#465, moved from the portfolio
-// store). The store calls it from `init` unless a test injects its own opener.
+// The app's database opener: open, migrate and seed. The portfolio store calls it from
+// `init` unless a test injects its own opener.
 import type { Sql } from "./sql";
 import { migrate } from "./migrations";
 import { seedIfEmpty } from "./seed";

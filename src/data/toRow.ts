@@ -1,4 +1,4 @@
-// Engine input → row (#471, split out of mappers.ts): the write half of the mapper
+// Engine input → row: the write half of the mapper
 // boundary. Money and rates become TEXT decimal strings, dates TEXT ISO yyyy-mm-dd
 // (CLAUDE.md §5); the extra fields kept for DB fidelity are passed alongside.
 import type { Decimal } from "../lib/money";
@@ -54,7 +54,7 @@ export function propertyToRow(p: Property, extra: PropertyExtras): PropertyRow {
     appreciation_override_pa: dtext(p.appreciationOverridePa),
     rent_index_override_pa: dtext(p.rentIndexOverridePa),
     // Only an explicit false deactivates: a value that skipped the required flag (a cast,
-    // an untyped caller) stays active, as rowToProperty reads a NULL (#629 review).
+    // an untyped caller) stays active, as rowToProperty reads a NULL.
     active: p.active === false ? 0 : 1,
     own_cash: dtext(p.funding?.ownCash),
     transaction_costs: dtext(p.funding?.transactionCosts),

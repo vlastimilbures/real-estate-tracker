@@ -1,4 +1,4 @@
-// Reading a backup file's text (P5b): the size cap (D-53), the JSON parse and the
+// Reading a backup file's text: the size cap (ADR 0053), the JSON parse and the
 // top-level shape and version check, and the error a refused file raises. The rows are
 // checked by the restore plan (restorePlan.ts).
 import type { ValidationCode } from "../../engine";
@@ -6,7 +6,7 @@ import type { IntRange } from "../../lib/rules";
 import { BACKUP_MAX_BYTES, SCHEMA_HEAD, type BackupFile } from "./format";
 
 export type RestoreErrorCode =
-  /** Larger than BACKUP_MAX_BYTES (D-53). */
+  /** Larger than BACKUP_MAX_BYTES (ADR 0053). */
   | "BACKUP_TOO_LARGE"
   /** Not JSON at all. */
   | "BACKUP_NOT_JSON"
@@ -64,7 +64,7 @@ export const invalid = (detail: string) =>
     },
   );
 
-/** The D-53 size rejection (also raised by Rust before reading a picked file). */
+/** The size rejection (ADR 0053; also raised by Rust before reading a picked file). */
 export function backupTooLarge(): RestoreError {
   return new RestoreError(
     "BACKUP_TOO_LARGE",
@@ -72,7 +72,7 @@ export function backupTooLarge(): RestoreError {
   );
 }
 
-/** Size check (D-53), JSON parse and shape check of a backup file's text. */
+/** Size check (ADR 0053), JSON parse and shape check of a backup file's text. */
 export function parseBackupText(text: string): BackupFile {
   if (new TextEncoder().encode(text).length > BACKUP_MAX_BYTES)
     throw backupTooLarge();

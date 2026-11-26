@@ -1,6 +1,6 @@
-// The backup file format (P5b): what a backup holds, the columns a restore may write, and
-// how the file is read from the database. A backup carries the database schema version
-// (DR-038), so a restore can upgrade an older file and refuse a newer one.
+// The backup file format: what a backup holds, the columns a restore may write, and
+// how the file is read from the database. A backup carries the database schema version,
+// so a restore can upgrade an older file and refuse a newer one.
 import type { Sql } from "../sql";
 import { PORTFOLIO_TABLES } from "../repositories";
 import { SCHEMA_HEAD } from "../migrations";
@@ -10,12 +10,12 @@ import { snapshot } from "../snapshot";
 /** The newest schema this app writes and reads (the last migration). */
 export { SCHEMA_HEAD };
 
-/** D-53: a backup file larger than this is refused before it is parsed. */
+/** A backup file larger than this is refused before it is parsed (ADR 0053). */
 export const BACKUP_MAX_BYTES = 20 * 1024 * 1024;
 
 export interface BackupFile {
-  /** The database schema version the file was written at (1 in every file written
-   *  before P5b, whatever the database version was). */
+  /** The database schema version the file was written at (1 in every file written by
+   *  an app version that did not record it, whatever the database version was). */
   schemaVersion: number;
   exportedAt: string;
   tables: Record<string, Record<string, unknown>[]>;
@@ -31,14 +31,14 @@ export type BackupTable = (typeof BACKUP_TABLES)[number];
 
 /** The columns a restore may write, per table (current schema, src/data/schema.ts).
  *  Restore refuses any other key: backup keys become SQL identifiers, so they must never
- *  come from the file unchecked (DR-017). A drift test pins the schema description to the
+ *  come from the file unchecked. A drift test pins the schema description to the
  *  migrated database. */
 export const BACKUP_COLUMNS = columnNames(TABLES) as Record<
   BackupTable,
   readonly string[]
 >;
 
-/** Every backup table and the schema version, read in one snapshot (DR-134), so a write
+/** Every backup table and the schema version, read in one snapshot, so a write
  *  that commits during the export is wholly in or wholly out of the file (ADR 0132).
  *  `now` becomes `exportedAt`: the caller reads the clock once and names the file from
  *  the same moment (ADR 0149 §6). */

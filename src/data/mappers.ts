@@ -2,8 +2,8 @@
 // the TEXT-decimal / ISO-date DB representation is converted to/from engine types
 // (decimal.js, branded Money / Rate / IsoDate). The engine itself never imports this file — data flows
 // DB → mappers → engine, one way (CLAUDE.md §4). The row writers live in toRow.ts and
-// the mortgage event JSON in loanEventsJson.ts (#471), the scenario overrides JSON in
-// scenarioOverrides.ts (#472); this module re-exports the writers, so the boundary keeps
+// the mortgage event JSON in loanEventsJson.ts, the scenario overrides JSON in
+// scenarioOverrides.ts; this module re-exports the writers, so the boundary keeps
 // one import path.
 import { mortgageBlock } from "../engine";
 import * as g from "./guards";
@@ -27,7 +27,8 @@ export const toColumn = (field: string) =>
 
 // --- DB row shapes (all money/rates TEXT, dates TEXT ISO), from src/data/schema.ts ---
 
-/** `active` is NOT NULL since v4; a NULL still reads as active (legacy row). */
+/** The `active` column is NOT NULL (default 1); the row type still admits NULL, which
+ *  reads as active. */
 export type PropertyRow = Omit<RowOf<"properties">, "active"> & {
   active: number | null;
 };
@@ -60,7 +61,7 @@ export function rowToProperty(r: PropertyRow): Property {
       "rent_index_override_pa",
       r.rent_index_override_pa,
     ),
-    active: r.active === 0 ? false : true, // NULL (legacy row) / 1 ⇒ active
+    active: r.active === 0 ? false : true, // 1 (or a NULL) ⇒ active
     funding: rowToFunding(ref, r),
   };
 }
@@ -87,8 +88,8 @@ function rowToFunding(
 export function rowToMortgageBlock(r: MortgageBlockRow): MortgageBlock {
   const ref = { table: "mortgage_blocks", id: r.id };
   // Stored rows are not value-checked here: a development loan without a term can exist
-  // in the DB and the engine rejects it at termMonths (DR-051; entry-point rejection is
-  // D-17). mortgageBlock keeps the object exactly as built.
+  // in the DB and the engine rejects it at termMonths (entry-point rejection is
+  // ADR 0017). mortgageBlock keeps the object exactly as built.
   return mortgageBlock({
     id: r.id,
     propertyId: r.property_id,
@@ -183,7 +184,7 @@ export function rowToAssumptions(r: AssumptionsRow): StoredAssumptions {
 }
 
 export function rowToScenario(r: ScenarioRow): Scenario {
-  // created_at only orders the list in SQL (DR-181); the app never reads it (ADR 0123).
+  // created_at only orders the list in SQL; the app never reads it (ADR 0123).
   return {
     id: r.id,
     name: g.text({ table: "scenarios", id: r.id }, "name", r.name),
@@ -200,13 +201,13 @@ export function scenarioToRow(s: Scenario, createdAt: Date): ScenarioRow {
     id: s.id,
     name: s.name,
     overrides: serializeOverrides(s.overrides),
-    // A full ISO timestamp, so same-day scenarios keep their creation order (DR-181).
+    // A full ISO timestamp, so same-day scenarios keep their creation order.
     created_at: createdAt.toISOString(),
   };
 }
 
-/** The v1 key set, kept on this path for the restore test, which imports it from here
- *  unchanged (#472).
+/** The v1 key set, re-exported on this path for the restore test, which imports it from
+ *  here.
  *  @internal */
 export { V1_KEYS } from "./scenarioOverrides";
 

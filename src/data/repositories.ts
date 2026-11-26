@@ -2,7 +2,7 @@
 // load (loadState.ts). The app's own flags live in appMeta.ts. The engine never imports
 // this file.
 //
-// One write convention (#471): every write takes engine values (domain objects), maps them
+// One write convention: every write takes engine values (domain objects), maps them
 // to rows here and only here, builds its statements, and hands them to `run`. Reads return
 // engine inputs.
 import type { Sql, SqlStatement } from "./sql";
@@ -30,7 +30,7 @@ import {
   type PropertyRow,
 } from "./mappers";
 
-// The six portfolio tables, in FK-safe insert order (properties first).
+// The portfolio tables, in FK-safe insert order (properties first).
 export const PORTFOLIO_TABLES = [
   "properties",
   "mortgage_blocks",
@@ -74,12 +74,12 @@ export function updateStatement(
 interface Write {
   statements: SqlStatement[];
   /** An update/delete by id must hit its row; zero rows means it no longer exists
-   *  (DR-082) — an error, not a silent success. */
+   *  — an error, not a silent success. */
   target?: { table: string; id: string };
 }
 
 /** Run `write`: a single statement through `execute`, several through `transaction`, so
- *  they all commit or none does (D-14). */
+ *  they all commit or none does (ADR 0014). */
 async function run(sql: Sql, { statements, target }: Write): Promise<void> {
   const [only, ...rest] = statements;
   if (!only || rest.length > 0) {
@@ -318,8 +318,8 @@ export async function countProperties(sql: Sql): Promise<number> {
 }
 
 /**
- * The full load and the backup-recency writers, kept on this path for the backup, restore
- * and migration tests, which import them from here unchanged (#471). The app imports
+ * The full load and the backup-recency writers, re-exported on this path for the backup,
+ * restore and migration tests, which import them from here. The app imports
  * loadState.ts and appMeta.ts.
  * @internal
  */

@@ -1,5 +1,5 @@
 // The CSV import plan (ADR 0096): every parsed row matched against the stored rows
-// (D-55) and classified as add / update / unchanged, the write statements, and the
+// (ADR 0049) and classified as add / update / unchanged, the write statements, and the
 // merged result checked against the engine's input rules. Pure: no IO; csvImport.ts reads
 // the stored rows and writes the plan.
 import type { SqlStatement } from "../data/sql";
@@ -66,7 +66,7 @@ export interface ImportItem {
   row: number;
   kind: ImportKind;
   propertyId: string;
-  /** The stored spelling for a match (D-55), else the CSV's. */
+  /** The stored spelling for a match (ADR 0049), else the CSV's. */
   propertyName: string;
   /** A child row's key date (`valid_from` / `start_date`); `null` for a property. */
   date: string | null;
@@ -101,7 +101,8 @@ export interface CsvImportPreview {
 
 export type CsvImportProblemCode =
   | { code: "unknownProperty"; value: string }
-  /** The merged data breaks an engine input rule (D-17, D-27, D-37, D-42). */
+  /** The merged data breaks an engine input rule (ADR 0017, ADR 0024, ADR 0027,
+   *  ADR 0037). */
   | { code: "inputRule"; rule: ValidationCode }
   /** The CSV row makes a stored loan event break a rule (ADR 0160). */
   | {
@@ -319,7 +320,7 @@ function childInputs(batch: CsvImportBatch): ChildInput[] {
         interest_rate_pa: m.interest_rate_pa,
         monthly_instalment: m.monthly_instalment,
         loan_term_years: m.loan_term_years,
-        // Blank ⇒ keep the stored maturity (DR-129). Draws and the interest-only date
+        // Blank ⇒ keep the stored maturity. Draws and the interest-only date
         // are not CSV columns, so they are never touched.
         contract_maturity_date: m.contract_maturity_date ?? undefined,
       }),
@@ -405,7 +406,7 @@ function nameIndex(stored: Iterable<PropertyRow>) {
   };
 }
 
-/** The plan, built one CSV row at a time against the stored rows (D-55). */
+/** The plan, built one CSV row at a time against the stored rows (ADR 0049). */
 class PlanBuilder {
   private readonly statements: SqlStatement[] = [];
   private readonly problems: CsvImportProblem[] = [];
@@ -449,7 +450,7 @@ class PlanBuilder {
   }
 
   /** Add or update a property. An existing property keeps its id, stored spelling and
-   *  active flag; CSV doesn't model activation (D-55). */
+   *  active flag; CSV doesn't model activation (ADR 0049). */
   addProperty(p: PropertyInput): void {
     const existing = this.names.find(p.name);
     const { fields } = p;
@@ -525,8 +526,7 @@ class PlanBuilder {
       this.statements.push(updateStatement(table, row.id, c.fields));
     } else {
       // A stored row whose date was edited after an earlier import keeps the id
-      // generated from its old date; suffix a fresh id instead of clashing on the key
-      // (DR-137).
+      // generated from its old date; suffix a fresh id instead of clashing on the key.
       const base = `${propId}-csv-${tag}-${c.date}`;
       let id = base;
       for (let n = 2; child.rows.has(id); n++) id = `${base}-${n}`;
@@ -612,7 +612,7 @@ class PlanBuilder {
   }
 }
 
-/** Match every row against `tables` (D-55), build the write statements and check the
+/** Match every row against `tables` (ADR 0049), build the write statements and check the
  *  merged result against the engine's input rules. A new property's id comes from
  *  `newPropertyId(key)`, keyed by its matching name (ADR 0127). Pure: `tables` is not
  *  modified. */

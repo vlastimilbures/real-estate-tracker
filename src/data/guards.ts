@@ -1,8 +1,8 @@
-// Runtime guards at the DB → engine boundary (D-48, DR-037). Hand-rolled, no schema
+// Runtime guards at the DB → engine boundary (ADR 0048). Hand-rolled, no schema
 // library. They check SHAPE only: a stored value can be read as what its column holds
 // (a finite decimal string, a real calendar date, a number). VALUE rules (ranges,
 // end ≥ start, loan sanity) stay with the engine's validateInputs, which raises at
-// every entry point (D-37/D-38) — they are not duplicated here.
+// every entry point (ADR 0037, ADR 0038) — they are not duplicated here.
 //
 // A failure throws DataError("ROW_INVALID") naming table, row id and column — never the
 // value, so the error is safe to log.

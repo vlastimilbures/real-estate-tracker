@@ -1,8 +1,8 @@
 // The JSON event columns of a mortgage block (draws, prepayments, recasts; ADR 0109,
 // ADR 0184), both ways: stored JSON → sorted engine events, and back. Part of the mapper
-// boundary (mappers.ts, toRow.ts), split out of mappers.ts (#471). Each column is one
-// `eventCodec` (#472): the shared list rules (NULL/empty, JSON array, known keys, a valid
-// date, sorted by date) live there, the column adds only its own fields.
+// boundary (mappers.ts, toRow.ts). Each column is one `eventCodec`: the shared list rules
+// (NULL/empty, JSON array, known keys, a valid date, sorted by date) live there, the
+// column adds only its own fields.
 import { money } from "../engine";
 import { DataError } from "./errors";
 import * as g from "./guards";

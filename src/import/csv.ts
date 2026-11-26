@@ -1,8 +1,8 @@
-// CSV import (replaces xlsx importer). Pure parse + validate — no IO, no DB, no React.
+// CSV import. Pure parse + validate — no IO, no DB, no React.
 // DB write is in csvImport.ts; this file is fully unit-testable in Node.
 //
-// P5b: a file is read strictly — UTF-8 only, `,` delimiter, `.` decimal point (D-49),
-// at most 2 MB and 5,000 data rows (D-53), every row as wide as the header — and each
+// A file is read strictly — UTF-8 only, `,` delimiter, `.` decimal point (ADR 0049), at
+// most 2 MB and 5,000 data rows (ADR 0053), every row as wide as the header — and each
 // error names the physical file line and column, so it can be found in an editor.
 import Papa from "papaparse";
 import { D } from "../lib/money";
@@ -25,7 +25,7 @@ import {
   type ColumnSpec,
 } from "./columns";
 
-/** D-53: per-file limits, checked before any row is validated. */
+/** Per-file limits (ADR 0053), checked before any row is validated. */
 export const CSV_MAX_BYTES = 2 * 1024 * 1024;
 export const CSV_MAX_ROWS = 5000;
 
@@ -123,7 +123,7 @@ export interface ParsedMortgageRow extends Located {
   interest_rate_pa: string;
   monthly_instalment: string;
   loan_term_years: Cell<number>; // optional; blank ⇒ derive term from instalment
-  /** Optional; blank ⇒ a re-import keeps the stored value (DR-129). */
+  /** Optional; blank ⇒ a re-import keeps the stored value. */
   contract_maturity_date: Cell<string>;
 }
 
@@ -156,7 +156,7 @@ const lineError = (
 const fileError = (error: CsvErrorCode, row = 0): RawFile =>
   lineError(row, "", error);
 
-/** UTF-8 text of the bytes, or `null` when they are not valid UTF-8 (D-49). The
+/** UTF-8 text of the bytes, or `null` when they are not valid UTF-8 (ADR 0049). The
  *  decoder drops a leading BOM. */
 function decodeUtf8(bytes: Uint8Array): string | null {
   try {
@@ -169,12 +169,13 @@ function decodeUtf8(bytes: Uint8Array): string | null {
 interface Decoded {
   /** The text with one newline convention and no leading BOM. */
   text: string;
-  /** The bytes were not valid UTF-8 (D-49): undecodable bytes are U+FFFD in `text`. */
+  /** The bytes were not valid UTF-8 (ADR 0049): undecodable bytes are U+FFFD in
+   *  `text`. */
   notUtf8: boolean;
 }
 
-/** The source's text, or `undefined` when it is over the size limit (D-53). A string is
- *  measured as its UTF-8 bytes. */
+/** The source's text, or `undefined` when it is over the size limit (ADR 0053). A
+ *  string is measured as its UTF-8 bytes. */
 function decodeSource(source: CsvSource): Decoded | undefined {
   const size =
     typeof source === "string"
@@ -213,8 +214,8 @@ function scanLines(text: string): ScannedLine[] {
     return newlinesSeen;
   };
   Papa.parse<string[]>(text, {
-    delimiter: ",", // no auto-detection: a `;` file is rejected (D-49)
-    skipEmptyLines: "greedy", // blank and whitespace-only lines (DR-109)
+    delimiter: ",", // no auto-detection: a `;` file is rejected (ADR 0049)
+    skipEmptyLines: "greedy", // blank and whitespace-only lines
     step: (r) => {
       const cursor = r.meta.cursor;
       const end = text[cursor - 1] === "\n" ? cursor - 1 : cursor;
@@ -360,7 +361,7 @@ class RowCtx {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(v))
       return this.fail(field, { code: "invalidDate", value: v });
     const [y, m, d] = v.split("-").map(Number) as [number, number, number];
-    // A real calendar date — 2026-02-31 is refused, not rolled over (DR-035).
+    // A real calendar date — 2026-02-31 is refused, not rolled over.
     if (!calendarDay(y, m, d))
       return this.fail(field, { code: "impossibleDate", value: v });
     // New dates start on the date floor (lib/rules.ts), as in the form (ADR 0149 §5).
@@ -370,14 +371,14 @@ class RowCtx {
   }
 
   private decimal(field: string, v: string, rule: DecimalRule): string | null {
-    // Plain decimal notation only: no exponent, hex, `+`, `Infinity` or grouping
-    // (DR-036). Parsed straight from the string — never via Number() (CLAUDE.md §5).
+    // Plain decimal notation only: no exponent, hex, `+`, `Infinity` or grouping.
+    // Parsed straight from the string — never via Number() (CLAUDE.md §5).
     if (!PLAIN_DECIMAL.test(v)) {
       const code = DECIMAL_COMMA.test(v) ? "decimalComma" : "invalidNumber";
       return this.fail(field, { code, value: v });
     }
     const d = D(v);
-    // The same bounds the v7 CHECKs and the engine already apply (D-37, D-38).
+    // The same bounds the schema CHECKs and the engine apply (ADR 0037, ADR 0038).
     if (rule === "amount" && d.isNegative())
       return this.fail(field, { code: "negativeAmount", value: v });
     if (rule === "unitRate" && outsideUnitRate(d))
@@ -392,13 +393,13 @@ class RowCtx {
     range: IntRange,
     belowMin?: "notPositive",
   ): number | null {
-    // Whole, unsigned, plain digits (DR-027): 12.7, -3, 1e2 and 0x10 are refused.
+    // Whole, unsigned, plain digits: 12.7, -3, 1e2 and 0x10 are refused.
     if (!WHOLE_DIGITS.test(v))
       return this.fail(field, { code: "invalidInteger", value: v });
     const n = Number(v);
     if (belowMin && n < range.min)
       return this.fail(field, { code: belowMin, value: v });
-    // The forms' bounds (ADR 0075), applied to CSV by ADR 0076 (DR-177).
+    // The forms' bounds (ADR 0075), applied to CSV by ADR 0076.
     if (!inRange(n, range))
       return this.fail(field, { code: "outOfRange", value: v, ...range });
     return n;
@@ -429,7 +430,7 @@ class RowCtx {
 /** `amount`: money, never negative · `unitRate`: a fraction in 0–1 · `any`: signed. */
 type DecimalRule = "amount" | "unitRate" | "any";
 
-/** Czech-Excel style `1 234,5` / `0,0169` (D-49). */
+/** Czech-Excel style `1 234,5` / `0,0169` (ADR 0049). */
 const DECIMAL_COMMA = /^-?\d{1,3}([ \u00A0]\d{3})*,\d+$|^-?\d+,\d+$/;
 
 type Values = ReadonlyMap<string, unknown>;
@@ -486,7 +487,7 @@ type NamesMatch<R, C extends readonly ColumnSpec[]> = [RowColumns<R>] extends [
 /** Read every record by the column specs; rows with errors are dropped. A row keeps the
  *  template's key order, an absent column as an own key holding `undefined`, and `line`
  *  last. A row whose natural key repeats an earlier row's is a fatal duplicate, reported
- *  on the last key column. The key is the property name (`propertyKey`, D-55; NFC,
+ *  on the last key column. The key is the property name (`propertyKey`, ADR 0049; NFC,
  *  ADR 0237), plus the key date for a child file. It counts once its own cells are
  *  valid, even if another cell of the row is not, so every duplicate shows in one round
  *  (ADR 0185 §3). */

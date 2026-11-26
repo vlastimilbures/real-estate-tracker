@@ -12,7 +12,7 @@
 // a database at version 8 or later upgrades step by step; an older one is refused before
 // anything is written.
 //
-// Safety (P5a): migrations are forward-only. Before the first pending step of an existing
+// Safety: migrations are forward-only. Before the first pending step of an existing
 // database the runner checks integrity and writes a verified backup; each step then runs
 // in ONE transaction together with its schema_migrations row, so it applies completely or
 // not at all.
@@ -22,8 +22,8 @@ import { BASELINE } from "./baseline";
 import { MIGRATIONS, type Migration } from "./steps";
 
 /**
- * The baseline and the steps, kept on this path for the migration tests and the Rust
- * fixture test, which import them from here unchanged (#472).
+ * The baseline and the steps, re-exported on this path for the migration tests and the
+ * Rust fixture test, which import them from here.
  * @internal
  */
 export { BASELINE, MIGRATIONS };
@@ -45,7 +45,7 @@ const RECORD_STEP =
   "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)";
 
 /** A migration's SQL as ONE statement text: every adapter runs a multi-statement
- *  text whole inside the transaction (DR-084), so tests and the app run the same DDL. */
+ *  text whole inside the transaction, so tests and the app run the same DDL. */
 function migrationText(text: string): SqlStatement[] {
   return text.trim() ? [{ query: text }] : [];
 }
@@ -135,7 +135,7 @@ async function appliedVersions(sql: Sql): Promise<Set<number>> {
 }
 
 /** A database this app cannot upgrade is refused before anything is written: newer than
- *  head (DR-022), or older than the baseline (ADR 0230). */
+ *  head, or older than the baseline (ADR 0230). */
 function refuseUnsupported(from: number): void {
   if (from > SCHEMA_HEAD) {
     throw new DataError(
@@ -179,7 +179,7 @@ async function safetyCopy(sql: Sql, label: string): Promise<string> {
 /**
  * Apply every step whose version is newer than what's recorded, in order. Idempotent:
  * re-running is a no-op once all versions are present. For an existing database, nothing
- * is migrated without a verified backup (P5a); one below the baseline or above head is
+ * is migrated without a verified backup; one below the baseline or above head is
  * refused unchanged.
  */
 export async function migrate(

@@ -210,7 +210,7 @@ function sampleStatements(): SqlStatement[] {
   ];
 }
 
-/** Seed the sample portfolio on the first run only (D-16): once the `sample_seeded`
+/** Seed the sample portfolio on the first run only (ADR 0016): once the `sample_seeded`
  *  flag is in `app_meta`, an empty portfolio stays empty. Assumes `migrate` has run.
  *  The assumptions row is written on that true first run only (no flag, no property),
  *  and only where none exists;
@@ -250,9 +250,9 @@ export class SampleNotEmptyError extends Error {
 }
 
 /** "Load sample portfolio" (ADR 0112): only into an empty portfolio, in one transaction
- *  (D-14) — the first-run sample records, the `sample_active` marker, and the banner shown
- *  again. Assumptions and `sample_seeded` are untouched. Nothing is replaced, so no safety
- *  backup. */
+ *  (ADR 0014) — the first-run sample records, the `sample_active` marker, and the banner
+ *  shown again. Assumptions and `sample_seeded` are untouched. Nothing is replaced, so no
+ *  safety backup. */
 export async function loadSample(sql: Sql): Promise<void> {
   if ((await countProperties(sql)) > 0) throw new SampleNotEmptyError();
   await sql.transaction([
@@ -266,12 +266,12 @@ export async function loadSample(sql: Sql): Promise<void> {
 export const dismissSampleBanner = (sql: Sql): Promise<void> =>
   setFlag(sql, SAMPLE_DISMISSED);
 
-/** "Clear sample and start my own" (ADR 0094): write and verify a safety backup (D-52),
- *  then in one transaction (D-14) delete the sample properties — their records go with
- *  them through ON DELETE CASCADE — and the sample markers. Only a property that still
- *  has a sample id and its seeded name is deleted, so an own or renamed flat stays
- *  (ADR 0127). `sample_seeded` stays, so the sample is never reseeded. The assumptions
- *  are untouched. Returns the safety backup's name. */
+/** "Clear sample and start my own" (ADR 0094): write and verify a safety backup
+ *  (ADR 0052), then in one transaction (ADR 0014) delete the sample properties — their
+ *  records go with them through ON DELETE CASCADE — and the sample markers. Only a
+ *  property that still has a sample id and its seeded name is deleted, so an own or
+ *  renamed flat stays (ADR 0127). `sample_seeded` stays, so the sample is never
+ *  reseeded. The assumptions are untouched. Returns the safety backup's name. */
 export async function clearSample(
   sql: Sql,
   now: Date = new Date(),

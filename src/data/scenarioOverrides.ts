@@ -1,13 +1,13 @@
-// The scenario overrides JSON column, both ways (#472, moved out of mappers.ts). Version 1
-// (P5a, DR-037) is the only stored shape: the writer always stamps `version: 1`.
+// The scenario overrides JSON column, both ways. Version 1 is the only stored shape: the
+// writer always stamps `version: 1`.
 //
-// The reader also takes the legacy shape: JSON without `version`, written before P5a. It
-// may hold the flat `valueShockPct` and a `valueShock` without `atYear` (both a year-0
-// crash). Old backup files still carry it, so restore upgrades every scenario with
-// `upgradeLegacyOverrides` before reading it (backup/restorePlan.ts). The legacy rules
-// below (`LEGACY_KEYS`, the `atYear` default in `readValueShock`, `legacyValueShock`) are
-// FROZEN: never change them. A new version gets its own reader. The upgrade writes with
-// today's v1 serialiser.
+// The reader also takes the legacy shape: JSON without `version`, written by older app
+// versions. It may hold the flat `valueShockPct` and a `valueShock` without `atYear`
+// (both a year-0 crash). Old backup files still carry it, so restore upgrades every
+// scenario with `upgradeLegacyOverrides` before reading it (backup/restorePlan.ts). The
+// legacy rules below (`LEGACY_KEYS`, the `atYear` default in `readValueShock`,
+// `legacyValueShock`) are FROZEN: never change them. A new version gets its own reader.
+// The upgrade writes with today's v1 serialiser.
 import type { Decimal } from "../lib/money";
 import { rate } from "../engine";
 import { DataError } from "./errors";
@@ -33,7 +33,7 @@ export const V1_KEYS = new Set<string>([
 ]);
 /**
  * Frozen: the keys a legacy (unversioned) overrides JSON may hold, spelt out so a change
- * to the v1 keys never changes what an old backup may contain (#472).
+ * to the v1 keys never changes what an old backup may contain.
  * @internal
  */
 export const LEGACY_KEYS: ReadonlySet<string> = new Set<string>([
@@ -189,7 +189,7 @@ export function parseOverrides(
 /**
  * The overrides of a backup scenario (v1 or legacy) as stored v1 JSON, or throw
  * SCENARIO_INVALID. Restore runs it on every scenario before reading the rows, so the
- * database only ever holds v1 (what the old migration 8 did to stored rows).
+ * database only ever holds v1.
  */
 export function upgradeLegacyOverrides(
   scenarioName: string,

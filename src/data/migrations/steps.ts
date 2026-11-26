@@ -1,5 +1,5 @@
-// The schema steps after the version 8 baseline (#472: split out of the runner), one per
-// version, each applied in its own transaction by the runner in index.ts.
+// The schema steps after the version 8 baseline, one per version, each applied in its own
+// transaction by the runner in index.ts.
 
 export interface Migration {
   version: number;

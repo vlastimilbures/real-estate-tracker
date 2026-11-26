@@ -1,4 +1,4 @@
-// The CURRENT schema of every backed-up table, in one place (#470): columns (in table
+// The CURRENT schema of every backed-up table, in one place: columns (in table
 // order), unique keys and named CHECKs. Backup's column whitelist and defaults, restore's
 // unique keys and the row types are derived from it; a drift test pins it to a freshly
 // migrated database (src/data/__tests__/schema.test.ts). The migrations themselves stay
@@ -91,7 +91,7 @@ export const TABLES = {
       // JSON [{date, amount}] or NULL
       opt("draws", "json", 3),
       opt("interest_only_until", "date", 3),
-      // D-29
+      // ADR 0029: the contract's maturity date, or NULL
       opt("contract_maturity_date", "date", 6),
       // ADR 0109: JSON [{date, amount, effect, fee?}] or NULL
       opt("prepayments", "json", 9),
@@ -135,7 +135,7 @@ export const TABLES = {
       opt("svj_monthly", "money"),
       opt("other_yr", "money"),
     ],
-    // One row per property (DUPLICATE_HOLDING_COST, D-37).
+    // One row per property (DUPLICATE_HOLDING_COST, ADR 0037).
     unique: [["property_id"]],
     checks: checksOf("holding_costs"),
   },

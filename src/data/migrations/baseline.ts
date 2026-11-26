@@ -1,5 +1,5 @@
-// The frozen version 8 schema (ADR 0230), split out of the runner (#472). Never edit it:
-// a schema change is a new step in steps.ts.
+// The frozen version 8 schema (ADR 0230), applied by the runner in index.ts. Never edit
+// it: a schema change is a new step in steps.ts.
 
 /**
  * The schema at version 8 (ADR 0230): the DDL exactly as steps 1–8 left it in

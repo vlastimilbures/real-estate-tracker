@@ -1,4 +1,4 @@
-// Whole-database Backup & Restore (#471): the file format and export (format.ts), reading
+// Whole-database Backup & Restore: the file format and export (format.ts), reading
 // a file (validate.ts), the pure restore plan (restorePlan.ts) and the Tauri file
 // orchestration (backupFiles.ts). This module is their public face.
 import { BACKUP_COLUMNS, exportToJson } from "./format";
@@ -25,8 +25,8 @@ export {
 } from "./backupFiles";
 
 /**
- * The steps the app runs only inside the functions above, kept on this path for the
- * backup and restore tests, which import them from here unchanged (#471).
+ * The steps the app runs only inside the functions above, re-exported on this path for
+ * the backup and restore tests, which import them from here.
  * @internal
  */
 export {
