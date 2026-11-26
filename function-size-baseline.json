@@ -1,9 +1,4 @@
 {
-  "src/state/uiStore.ts": {
-    "lines": {
-      "Arrow function (useUiStore: create)": 138
-    }
-  },
   "src/ui/components/charts.tsx": {
     "complexity": {
       "Function 'ChartCard'": 18
