@@ -11,7 +11,8 @@ import {
   Moon,
   Monitor,
 } from "lucide-react";
-import { useUiStore, type Route, type Theme } from "../../state/uiStore";
+import { useUiStore, type Theme } from "../../state/uiStore";
+import { swapShownRoute } from "../../state/shellMemory";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { BrandMark } from "./BrandMark";
 import { BackupHint } from "./BackupHint";
@@ -232,12 +233,12 @@ function focusOffPage(content: HTMLElement): boolean {
 function Content({ children }: { children: ReactNode }) {
   const route = useUiStore((s) => s.route);
   const ref = useRef<HTMLDivElement>(null);
-  // The route shown last; the column outlives a page change (ADR 0263).
-  const shown = useRef<Route>(route);
   useEffect(() => {
+    // The route shown last, kept in module state: the chrome mounts again when the app
+    // comes back to the ready state, maybe on another page (ADR 0263).
+    const before = swapShownRoute(route);
     const content = ref.current;
-    if (shown.current === route || !content) return;
-    shown.current = route;
+    if (before === null || before === route || !content) return;
     if (focusOffPage(content))
       content
         .querySelector<HTMLElement>("#main")

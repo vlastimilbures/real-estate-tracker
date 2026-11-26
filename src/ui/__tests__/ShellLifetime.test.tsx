@@ -6,7 +6,8 @@
 // it and the sidebar's scroll position. Each page still mounts its own frame (top bar and
 // main region), so a kept banner is announced on its page only (ADR 0189, ADR 0194). A
 // switch between a page's own variants, or to another property, keeps both.
-// shellMemory keeps the banners already shown, so each test loads fresh modules (#256).
+// shellMemory keeps the last shown route and the banners already shown, so each test
+// loads fresh modules (#256).
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -253,6 +254,24 @@ describe("focus across pages (#483, ADR 0146, ADR 0263)", () => {
       screen.queryByText(en.errorBoundary.invalidDataTitle),
     ).not.toBeNull();
     expect(document.activeElement).toBe(guide);
+  });
+
+  it("a page change while the chrome is gone moves focus to main when it comes back", async () => {
+    render(<App />);
+    // The startup error screen replaces the chrome; the route changes meanwhile (the
+    // native menu), and the chrome mounts again on the new page.
+    act(() =>
+      usePortfolioStore.setState({
+        status: { kind: "readBackFailed", refused: [] },
+      } as never),
+    );
+    expect(sidebar()).toBeNull();
+    await go("properties");
+    act(() =>
+      usePortfolioStore.setState({ status: { kind: "ready" } } as never),
+    );
+    await waitFor(() => expect(title()?.textContent).toBe(en.properties.title));
+    await waitFor(() => expect(document.activeElement?.id).toBe("main"));
   });
 });
 
