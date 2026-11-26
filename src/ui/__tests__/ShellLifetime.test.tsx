@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 //
-// #483: pins of how long the app's chrome lives, before the shell is split into a layout
-// rendered once and a frame each page renders. Today every page renders its own shell, so
-// a page change, and the page boundary's fallback coming or going, mounts the chrome
-// again: its nodes are new, focus inside it is lost, the sidebar starts at the top, and a
-// kept banner is no longer announced (ADR 0146, ADR 0189, ADR 0194). A switch between a
-// page's own variants, or to another property, keeps it. These tests hold that lifetime.
-// shellMemory keeps the last shown route, so each test loads fresh modules (#256).
+// #483, ADR 0263: how long the app's chrome and a page's frame live. While the app is
+// ready the chrome (skip link, sidebar) is mounted once: a page change, a page's code
+// loading, and the page boundary's fallback coming or going keep its nodes, the focus in
+// it and the sidebar's scroll position. Each page still mounts its own frame (top bar and
+// main region), so a kept banner is announced on its page only (ADR 0189, ADR 0194). A
+// switch between a page's own variants, or to another property, keeps both.
+// shellMemory keeps the banners already shown, so each test loads fresh modules (#256).
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -22,6 +22,13 @@ const sidebar = () => document.querySelector("aside.sidebar");
 const shell = () => document.querySelector<HTMLElement>(".shell");
 const title = () => document.querySelector(".page-title");
 const banner = () => document.querySelector(".error-banner");
+const content = () => document.querySelector<HTMLElement>(".content");
+/** Whether `el` and its parents are shown: Suspense hides with display: none. */
+const displayed = (el: Element | null) => {
+  for (let at = el; at; at = at.parentElement)
+    if ((at as HTMLElement).style.display === "none") return false;
+  return el !== null;
+};
 
 const loan = portfolio.mortgages[0];
 // An instalment below the monthly interest breaks D-17: the engine refuses the inputs.
@@ -68,13 +75,34 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("chrome lifetime across pages (#483)", () => {
-  it("a page change mounts the sidebar again", async () => {
+describe("chrome lifetime across pages (#483, ADR 0263)", () => {
+  it("keeps the sidebar on every page change", async () => {
     render(<App />);
     const before = sidebar();
+    expect(before).not.toBeNull();
     await go("properties");
-    expect(sidebar()).not.toBeNull();
-    expect(sidebar()).not.toBe(before);
+    expect(sidebar()).toBe(before);
+    await go("guide");
+    await waitFor(() => expect(title()?.textContent).toBe(en.guide.title));
+    expect(sidebar()).toBe(before);
+    const [a] = portfolio.properties;
+    await act(async () => useUiStore.getState().openProperty(a!.id));
+    await waitFor(() => expect(title()?.textContent).toBe(a!.name));
+    expect(sidebar()).toBe(before);
+    expect(document.querySelectorAll(".shell")).toHaveLength(1);
+  });
+
+  it("keeps the sidebar's scroll position across pages", async () => {
+    render(<App />);
+    // jsdom does no layout and keeps no scroll offset: the node holds it here, as the
+    // browser's scroll box does.
+    Object.defineProperty(sidebar()!, "scrollTop", {
+      value: 120,
+      writable: true,
+    });
+    await go("settings");
+    await waitFor(() => expect(title()?.textContent).toBe(en.settings.title));
+    expect(sidebar()?.scrollTop).toBe(120);
   });
 
   it("a switch between a page's variants keeps the sidebar and the title", async () => {
@@ -163,18 +191,24 @@ describe("chrome lifetime across pages (#483)", () => {
     expect(root.style.getPropertyValue("--topbar-h")).toBe("0px");
   });
 
-  it("hides the whole chrome while a page's code loads for the first time", async () => {
+  it("keeps the sidebar on screen while a page's code loads for the first time", async () => {
     render(<App />);
+    const before = sidebar();
     act(() => navigate("guide"));
-    // The old page and its chrome stay in the DOM, hidden, until the new page is ready.
-    expect(shell()?.style.display).toBe("none");
-    await waitFor(() => expect(title()?.textContent).toBe(en.guide.title));
+    // The content column, with the old page in it, is hidden until the new page is
+    // ready; the sidebar stays.
+    expect(displayed(content())).toBe(false);
+    expect(sidebar()).toBe(before);
+    expect(displayed(sidebar())).toBe(true);
     expect(shell()?.style.display).toBe("");
+    await waitFor(() => expect(title()?.textContent).toBe(en.guide.title));
+    expect(displayed(content())).toBe(true);
+    expect(sidebar()).toBe(before);
     expect(document.querySelectorAll(".shell")).toHaveLength(1);
   });
 });
 
-describe("focus across pages (#483, ADR 0146)", () => {
+describe("focus across pages (#483, ADR 0146, ADR 0263)", () => {
   it("a sidebar click moves focus to the new page's main region", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -208,17 +242,17 @@ describe("focus across pages (#483, ADR 0146)", () => {
     outside.remove();
   });
 
-  it("a crash screen coming in drops focus from the sidebar to the page body", async () => {
+  it("a crash screen coming in leaves focus on the sidebar", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     render(<App />);
-    screen.getByRole("button", { name: en.nav.guide }).focus();
-    // Same route: the page boundary's fallback replaces the shell, focus is lost and
-    // stays lost (no route change, so it is not moved to main).
+    const guide = screen.getByRole("button", { name: en.nav.guide });
+    guide.focus();
+    // Same route: the page boundary's fallback replaces the page only, in the same chrome.
     act(() => usePortfolioStore.setState({ portfolio: broken } as never));
     expect(
       screen.queryByText(en.errorBoundary.invalidDataTitle),
     ).not.toBeNull();
-    expect(document.activeElement).toBe(document.body);
+    expect(document.activeElement).toBe(guide);
   });
 });
 
@@ -265,14 +299,13 @@ describe("announcements across pages (#483, ADR 0189, ADR 0194)", () => {
   });
 });
 
-describe("the page boundary's fallback (#483, ADR 0146)", () => {
-  it("shows the sidebar, the page title, no lens and the notice in a chrome of its own", async () => {
+describe("the page boundary's fallback (#483, ADR 0146, ADR 0263)", () => {
+  it("shows the page title, no lens and the notice in the same chrome", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     render(<App />);
     const before = sidebar();
     act(() => usePortfolioStore.setState({ portfolio: broken } as never));
-    expect(sidebar()).not.toBeNull();
-    expect(sidebar()).not.toBe(before);
+    expect(sidebar()).toBe(before);
     expect(title()?.textContent).toBe(en.dashboard.title);
     expect(
       screen.queryByRole("group", { name: en.shell.nominalOrReal }),
@@ -280,12 +313,11 @@ describe("the page boundary's fallback (#483, ADR 0146)", () => {
     expect(
       screen.queryByText(en.errorBoundary.invalidDataTitle),
     ).not.toBeNull();
-    const fallback = sidebar();
     // Recovery: valid data again on another page.
     act(() => usePortfolioStore.setState({ portfolio } as never));
     await go("properties");
     expect(title()?.textContent).toBe(en.properties.title);
-    expect(sidebar()).not.toBe(fallback);
+    expect(sidebar()).toBe(before);
     expect(screen.queryByText(en.errorBoundary.invalidDataTitle)).toBeNull();
   });
 });
