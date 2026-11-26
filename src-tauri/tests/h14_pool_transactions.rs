@@ -8,13 +8,14 @@
 //! They never touch the real database.
 
 use sqlx::{Executor, Pool, Row, Sqlite};
-use std::path::PathBuf;
 
-fn temp_db(name: &str) -> (PathBuf, String) {
-    let path = std::env::temp_dir().join(format!("ret-h14-{}-{}.sqlite", name, std::process::id()));
-    let _ = std::fs::remove_file(&path);
-    let url = format!("sqlite:{}?mode=rwc", path.display());
-    (path, url)
+mod common;
+use common::TempDir;
+
+fn temp_db(name: &str) -> (TempDir, String) {
+    let dir = TempDir::new(&format!("h14-{name}"));
+    let url = common::plugin_url(&dir.join("db.sqlite"));
+    (dir, url)
 }
 
 async fn open(url: &str) -> Pool<Sqlite> {
@@ -72,7 +73,7 @@ async fn foreign_keys_on_for_every_pooled_connection() {
     }
     drop(held);
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(path);
 }
 
 /// Even strictly sequential, awaited calls are not atomic: a connection goes back to the
@@ -92,7 +93,7 @@ async fn sequential_begin_rollback_is_not_atomic_either() {
     let _ = pool.execute("ROLLBACK").await;
     assert_eq!(count(&url, "p").await, 1, "the row leaked past ROLLBACK");
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(path);
 }
 
 /// H-14 CONFIRMED: when any other call is in flight (a UI reload, a second save), the
@@ -121,7 +122,7 @@ async fn begin_via_pool_is_not_atomic_under_concurrency() {
     assert_eq!(count(&url, "p").await, 1, "ROLLBACK did not undo it");
     drop(a);
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(path);
 }
 
 /// The batch alternative (J-13 option a): one `execute` carrying the whole
@@ -152,5 +153,5 @@ async fn single_batch_runs_on_one_connection_and_is_atomic() {
     // 'c' is not visible to other readers: its transaction never committed.
     assert_eq!(count(&url, "p").await, 2);
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(path);
 }

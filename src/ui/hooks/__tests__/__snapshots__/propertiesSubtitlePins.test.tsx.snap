@@ -1,0 +1,146 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the Properties subtitle by day > mixed 1`] = `
+[
+  [
+    "2026-06-07",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+        "future:false",
+        "dev:true",
+        "inactive:true",
+      ],
+      "subtitle": "6 apartments · as of 07.06.2026 · amounts in Kč, flows per year",
+      "total": "Total, owned active properties",
+    },
+  ],
+  [
+    "2026-10-01",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+        "future:false",
+        "dev:true",
+        "inactive:true",
+      ],
+      "subtitle": "6 apartments · as of 01.10.2026 · amounts in Kč, flows per year",
+      "total": "Total, owned active properties",
+    },
+  ],
+  [
+    "2027-06-07",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+        "future:false",
+        "dev:true",
+        "inactive:true",
+      ],
+      "subtitle": "6 apartments · as of 07.06.2027 (projection year Y1 · 2027, Jul 2026 – Jun 2027) · amounts in Kč, flows per year",
+      "total": "Total, owned active properties",
+    },
+  ],
+  [
+    "2031-06-20",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+        "future:true",
+        "dev:true",
+        "inactive:true",
+      ],
+      "subtitle": "6 apartments · as of 20.06.2031 (projection year Y5 · 2031, Jul 2030 – Jun 2031) · amounts in Kč, flows per year",
+      "total": "Total, active properties",
+    },
+  ],
+  [
+    "2040-01-15",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+        "future:true",
+        "dev:true",
+        "inactive:true",
+      ],
+      "subtitle": "6 apartments · as of 15.01.2040 (projection year Y14 · 2040, Jul 2039 – Jun 2040) · amounts in Kč, flows per year",
+      "total": "Total, active properties",
+    },
+  ],
+]
+`;
+
+exports[`the Properties subtitle by day > sample 1`] = `
+[
+  [
+    "2026-06-07",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+      ],
+      "subtitle": "3 apartments · as of 07.06.2026 · amounts in Kč, flows per year",
+      "total": "Total",
+    },
+  ],
+  [
+    "2026-10-01",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+      ],
+      "subtitle": "3 apartments · as of 01.10.2026 · amounts in Kč, flows per year",
+      "total": "Total",
+    },
+  ],
+  [
+    "2027-06-07",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+      ],
+      "subtitle": "3 apartments · as of 07.06.2027 (projection year Y1 · 2027, Jul 2026 – Jun 2027) · amounts in Kč, flows per year",
+      "total": "Total",
+    },
+  ],
+  [
+    "2031-06-20",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+      ],
+      "subtitle": "3 apartments · as of 20.06.2031 (projection year Y5 · 2031, Jul 2030 – Jun 2031) · amounts in Kč, flows per year",
+      "total": "Total",
+    },
+  ],
+  [
+    "2040-01-15",
+    {
+      "owned": [
+        "javorova:true",
+        "lipova:true",
+        "dubova:true",
+      ],
+      "subtitle": "3 apartments · as of 15.01.2040 (projection year Y14 · 2040, Jul 2039 – Jun 2040) · amounts in Kč, flows per year",
+      "total": "Total",
+    },
+  ],
+]
+`;

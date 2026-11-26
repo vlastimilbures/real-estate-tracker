@@ -19,10 +19,12 @@ import type { TableExport } from "./xlsxExport";
  *  the date names the year and its period, as Property detail labels it (ADR 0150). */
 export function propertiesSubtitle(
   t: Dictionary,
-  count: number,
-  asOf: Date,
-  basis: AsOfBasis,
-  baseDate: Date,
+  {
+    count,
+    asOf,
+    basis,
+    baseDate,
+  }: { count: number; asOf: Date; basis: AsOfBasis; baseDate: Date },
 ): string {
   const date = fmtDate(asOf);
   return [

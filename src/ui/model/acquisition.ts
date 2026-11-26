@@ -8,7 +8,7 @@ import type { Dictionary } from "../../i18n";
 /** A gap below this many Kč either way is rounding, not a warning (ADR 0119 §9). */
 const GAP_MIN = 1;
 
-export interface AcquisitionRow {
+interface AcquisitionRow {
   label: string;
   value: Decimal | null;
   /** Shown instead of a null value: "—" for not recorded, "None" for no loan. */

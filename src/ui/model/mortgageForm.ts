@@ -32,9 +32,8 @@ import type {
   Rate,
 } from "../../engine";
 import type { Decimal } from "../../lib/money";
-import { fmtCzk } from "../../lib/format";
+import { CZK, fmtCzk } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
-import { CZK } from "../../lib/currency";
 import { INT_RANGES } from "../../lib/rules";
 
 /**

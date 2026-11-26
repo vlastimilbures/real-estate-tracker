@@ -13,13 +13,13 @@ macro_rules! app_commands {
             db::db_transaction,
             db::db_select_snapshot,
             db::db_backup,
-            db::log_error,
+            error_log::log_error,
             perf::perf_enabled,
             perf::perf_report,
-            files::save_file,
-            files::open_backup_file,
-            files::write_app_backup,
-            files::reveal_data_dir,
+            dialogs::save_file,
+            dialogs::open_backup_file,
+            backup::write_app_backup,
+            reveal::reveal_data_dir,
             menu::set_menu_labels,
         }
     };

@@ -146,7 +146,7 @@ export function financingPanel(
 export const TIMELINE_ROWS = 8;
 
 /** One date on the timeline: a fixation end or another date of the window (ADR 0204). */
-export interface TimelineMark {
+interface TimelineMark {
   kind: FinancingEventKind;
   label: string;
   date: string;
@@ -187,10 +187,9 @@ const KINDS: FinancingEventKind[] = [
 /** Time from the as-of date to `date`, as the remaining-term text (ADR 0117). */
 function timeLeft(
   t: Pick<Dictionary, "dashboard" | "propertyDetail">,
-  asOf: Date,
-  date: Date,
+  { from, to }: { from: Date; to: Date },
 ): string {
-  const months = monthsBetween(asOf, date);
+  const months = monthsBetween(from, to);
   return months < 1
     ? t.dashboard.financingInUnderMonth
     : t.dashboard.financingIn(remainingTermText(months, t.propertyDetail));
@@ -228,7 +227,7 @@ export function financingTimeline(
     kind,
     label: eventLabel(t, kind),
     date: fmtDate(date),
-    timeLeft: timeLeft(t, asOf, date),
+    timeLeft: timeLeft(t, { from: asOf, to: date }),
     amount,
     at: at(date),
   });
