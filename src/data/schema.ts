@@ -32,9 +32,10 @@ export interface TableSpec {
   readonly checks: readonly string[];
 }
 
-/** `assumptions.selling_cost_pct` (v11, ADR 0183): the value a restore or a write without
- *  one stores. The frozen v11 migration writes the same DEFAULT as a literal; the drift
- *  test pins this constant to the column's `dflt_value`. */
+/** `assumptions.selling_cost_pct` (v11, ADR 0183): the default a missing value gets, once,
+ *  at the DB: a restore of an older backup stores it, and the app seed uses it. The
+ *  frozen v11 migration writes the same DEFAULT as a literal; the drift test pins this
+ *  constant to the column's `dflt_value`. */
 export const SELLING_COST_DEFAULT = "0";
 
 const req = <N extends string, K extends ColumnKind>(

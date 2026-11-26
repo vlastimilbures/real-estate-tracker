@@ -28,6 +28,7 @@ import {
   SAMPLE_SEEDED,
 } from "./appMeta";
 import { writeSafetyBackup } from "./backup/backupFiles";
+import { SELLING_COST_DEFAULT } from "./schema";
 import { money } from "../engine";
 
 const BASE_DATE = isoDate("2026-06-07");
@@ -40,6 +41,7 @@ export const SEED_ASSUMPTIONS: StoredAssumptions = {
   postFixationResetRatePa: rate("0.045"),
   horizonYears: 30,
   inflationPa: rate("0.025"),
+  sellingCostPct: rate(SELLING_COST_DEFAULT), // the column default (ADR 0183)
   defaults: {
     propertyTaxYr: money("2550"),
     insuranceYr: money("2550"),

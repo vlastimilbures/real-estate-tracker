@@ -119,7 +119,7 @@ function toDraft(a: Assumptions): Record<string, string> {
     inflationPa: percentDraft(a.inflationPa),
     vacancyAllowance: percentDraft(a.vacancyAllowance),
     postFixationResetRatePa: percentDraft(a.postFixationResetRatePa),
-    sellingCostPct: percentDraft(a.sellingCostPct) || "0", // unset ⇒ 0 (ADR 0183)
+    sellingCostPct: percentDraft(a.sellingCostPct),
     propertyTaxYr: moneyDraft(a.defaults.propertyTaxYr),
     insuranceYr: moneyDraft(a.defaults.insuranceYr),
     svjMonthly: moneyDraft(a.defaults.svjMonthly),

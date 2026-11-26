@@ -143,7 +143,7 @@ describe("restore — selling costs (ADR 0183)", () => {
 });
 
 describe("mapper — selling costs", () => {
-  it("writes '0' when unset and reads it back as 0", () => {
+  it("writes the seed's default '0' and reads it back as 0", () => {
     const row = assumptionsToRow(seedAssumptions);
     expect(row.selling_cost_pct).toBe("0");
     expect(rowToAssumptions(row).sellingCostPct?.toString()).toBe("0");
