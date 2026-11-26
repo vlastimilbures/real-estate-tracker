@@ -21,7 +21,6 @@ import { Button } from "./Button";
 import { ErrorBanner } from "./layout";
 import { Modal } from "./Modal";
 import type { Portfolio } from "../../engine";
-import { type Dictionary } from "../../i18n";
 import { useDraftForm } from "../hooks/useDraftForm";
 import { useT } from "../hooks/useT";
 import { formWriteErrors, type ErrorField } from "../model/writeError";
@@ -143,7 +142,6 @@ function editDraft(
 
 /** The optional funding record, behind a toggle; values entered stay while it is shut. */
 function AcquisitionFields({
-  t,
   specs,
   open,
   onOpenChange,
@@ -152,7 +150,6 @@ function AcquisitionFields({
   set,
   bodyRef,
 }: {
-  t: Dictionary;
   specs: readonly FieldSpec[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -161,6 +158,7 @@ function AcquisitionFields({
   errors: Errors;
   set: SetField;
 }) {
+  const t = useT();
   const disclosure = useDisclosure({ open, onOpenChange });
   return (
     <>
@@ -204,7 +202,6 @@ function AcquisitionFields({
 
 /** The dialog's fields in their order: identity, garage, purchase, then Acquisition. */
 function PropertyFields({
-  t,
   form,
   errors,
   set,
@@ -212,7 +209,6 @@ function PropertyFields({
   setFundingOpen,
   fundingRef,
 }: {
-  t: Dictionary;
   form: PropertyFormState;
   errors: Errors;
   set: SetField;
@@ -220,6 +216,7 @@ function PropertyFields({
   setFundingOpen: (open: boolean) => void;
   fundingRef: RefObject<HTMLDivElement>;
 }) {
+  const t = useT();
   const specs = propertyFields(t);
   const part = (section: FieldSpec["section"]) =>
     specs.filter((s) => s.section === section);
@@ -240,7 +237,6 @@ function PropertyFields({
       </Field>
       <FieldsOf specs={part("purchase")} {...fields} />
       <AcquisitionFields
-        t={t}
         specs={part("funding")}
         open={fundingOpen}
         onOpenChange={setFundingOpen}
@@ -382,7 +378,6 @@ export function PropertyFormModal({
       }
     >
       <PropertyFields
-        t={t}
         form={form.draft}
         errors={form.errors}
         set={set}

@@ -316,6 +316,30 @@ Amends / Amended-by link.
 
 Refactors are behaviour-neutral and need no ADR.
 
+## What a component reads
+
+How a component gets the dictionary, the lens and the stores (#492, owner decision
+2026-11-26):
+
+1. **Dictionary.** A component calls `useT()`; `t` is never a component prop. A
+   component that needs the UI language itself (`DateCalendar`'s locale) reads it with the
+   language selector. A plain text-building function may take `t` (`startupText(t, e)`,
+   `mortgageColumns(t)`).
+2. **Lens.** The component that owns the lens toggle (`PageFrame`'s header) reads and sets
+   `mode`; a page reads `mode` from the UI store once, and a child that needs it takes it
+   as a prop. There is no `useMode()` hook.
+3. **Stores.**
+   - Display components (primitives, charts, tables, cells, inputs) take data and
+     callbacks as props and do not read the stores.
+   - A component that owns an app-wide interaction may read the stores with selectors and
+     writes only through store actions: the shell and layout, error boundaries, app-wide
+     dialogs and banners, navigation links, form modals, the export button, and shared
+     controls wired to an app-wide action: the edit guard, the write queue, or opening the
+     Guide (`EntityPanel`, `RowActions`, `MetricLabel`).
+   - A new component is a display component unless it owns such an interaction.
+   - Pages and `src/ui/hooks` read the stores with selectors and write through store
+     actions.
+
 ## Where a result is shown
 
 Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
