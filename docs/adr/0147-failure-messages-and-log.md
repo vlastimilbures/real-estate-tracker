@@ -10,6 +10,8 @@
 - Amended by: [0175](0175-verified-file-writes-error-codes-backup-folder.md) (decision 5: OS and SQLite error
   codes stay; decision 4: the preview failure banner has no dismiss; decision 7: the panic line is
   capped)
+- Amended by: [0270](0270-error-codes-from-rust.md) (decision 7: a line for a failed Rust command
+  also records its error code)
 
 ## Context
 
