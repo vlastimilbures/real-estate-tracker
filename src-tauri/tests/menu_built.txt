@@ -1,6 +1,7 @@
 # The native menu as macOS builds it (tests/menu_built.rs); lines starting with # are
 # skipped. Regenerate it when a macOS update changes how it shows the menu: run
-# `cargo test --test menu_built` and paste the "built menu" it prints below this header.
+# `cargo test --test menu_built` (or open the "Rust menu on macOS" CI job's log) and paste
+# the "built menu" it prints below this header.
 test
   About Real Estate Tracker
   ---
