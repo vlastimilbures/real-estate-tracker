@@ -98,8 +98,8 @@ export function firstGridMonthOnOrAfter(
 /**
  * The last month grid point on or before `date`: the number of k ≥ 1 with
  * EDATE(anchor, k) ≤ date (0 when there is none). With a loan's start as the anchor
- * this is the number of payments due by `date` (D-21): unlike `monthsBetween`, a
- * clamped month-end due date counts (start 31 Jan → due 28 Feb, DR-070).
+ * this is the number of payments due by `date` (ADR 0021): unlike `monthsBetween`, a
+ * clamped month-end due date counts (start 31 Jan → due 28 Feb).
  * An invalid date raises a RangeError: no due date ever passes it, so the walk would
  * never end (ADR 0247, #543). So does a step past the end of the Date range (year
  * 275760), which is an Invalid Date too. Two valid dates always give a whole month
@@ -192,10 +192,9 @@ export function inForceOrUpcoming<T>(
 }
 
 /**
- * Ascending by start date. Same-start records cannot be stored (the v7 UNIQUE keys,
- * DR-071); `Array.prototype.sort` is stable, so for in-memory inputs such as tests they
- * keep their input order: `lastOnOrBefore` picks the last of them and `firstAfter` the
- * first.
+ * Ascending by start date. Same-start records cannot be stored (the v7 UNIQUE keys);
+ * `Array.prototype.sort` is stable, so for in-memory inputs such as tests they keep their
+ * input order: `lastOnOrBefore` picks the last of them and `firstAfter` the first.
  */
 export function byStart<T>(getStart: (x: T) => Date) {
   return (a: T, b: T) => getStart(a).getTime() - getStart(b).getTime();

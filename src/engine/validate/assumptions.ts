@@ -1,5 +1,5 @@
-// The assumptions' checks: fields, level ranges, cost defaults and shocks (D-37, D-38,
-// ADR 0128).
+// The assumptions' checks: fields, level ranges, cost defaults and shocks (ADR 0037,
+// ADR 0038, ADR 0128).
 import type { Decimal } from "../../lib/money";
 import type { Assumptions, CostDefaults, ShockBand } from "../types";
 import {
@@ -18,7 +18,7 @@ import type { FieldOf } from "./codes";
 /** The assumptions' reporter: a problem on an assumption field. */
 type AssumptionReport = Report<FieldOf<"assumptions">>;
 
-/** A shock band's duration: whole years ≥ 0 (D-38). */
+/** A shock band's duration: whole years ≥ 0 (ADR 0038). */
 const badDuration = (band: ShockBand) =>
   !Number.isInteger(band.durationYears) || band.durationYears < 0;
 
@@ -77,7 +77,7 @@ const GROWTH_FIELDS = [
   "inflationPa",
 ] as const;
 
-/** D-38 and ADR 0128 §1–2 ranges of the assumption levels. */
+/** ADR 0038 and ADR 0128 §1–2 ranges of the assumption levels. */
 function checkLevelRanges(a: Assumptions, report: AssumptionReport): void {
   checkSigns(a, LEVEL_SIGNS, report);
 }
@@ -115,7 +115,7 @@ function checkShiftedLevel(
   if (outOfRange(level.plus(band.deltaPa))) report();
 }
 
-/** A value crash: a finite haircut within 0–1 at a whole year ≥ 0 (D-38, ADR 0128 §4,
+/** A value crash: a finite haircut within 0–1 at a whole year ≥ 0 (ADR 0038, ADR 0128 §4,
  *  ADR 0251 §3). */
 function checkValueShock(
   vs: Assumptions["valueShock"],

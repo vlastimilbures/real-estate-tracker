@@ -81,7 +81,7 @@ export function fixedHoldingCost(c: {
 /**
  * A property's holding-cost basis: the fixed annual cost and the management and
  * maintenance shares of rent, each field from its holding-cost row, else the assumption
- * default. One holding-cost row per property (DUPLICATE_HOLDING_COST, D-37).
+ * default. One holding-cost row per property (DUPLICATE_HOLDING_COST, ADR 0037).
  */
 export function holdingCostBasis(
   property: Property,
@@ -112,7 +112,7 @@ export function forProperty<T extends { propertyId: string }>(
  * for a future buy). Growth starts at the later of its validFrom
  * and the basis (baseDate, or purchaseDate for a future buy), so a valuation dated
  * after the basis re-anchors growth from its own validFrom. Shared by the snapshot and
- * the projection, so snapshot(baseDate + N y) == projection year N (D-32).
+ * the projection, so snapshot(baseDate + N y) == projection year N (ADR 0032).
  */
 export function valueAnchor(
   valuations: Valuation[],
@@ -137,8 +137,8 @@ export function valueAnchor(
   };
 }
 
-/** Years of growth from `anchor` to `asOf`: grid months / 12 by the D-21 month-end
- *  rule, so a clamped month-end (29 Feb → 28 Feb) counts (D-32, D-45); never negative. */
+/** Years of growth from `anchor` to `asOf`: grid months / 12 by the ADR 0021 month-end
+ *  rule, so a clamped month-end (29 Feb → 28 Feb) counts (ADR 0032); never negative. */
 export function growthYears(anchor: Date, asOf: Date): number {
   return monthsToYears(lastGridMonthOnOrBefore(anchor, asOf));
 }

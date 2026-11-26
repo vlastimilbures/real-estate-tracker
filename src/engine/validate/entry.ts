@@ -1,5 +1,5 @@
 // The entry points' validators: everything in a stable order, and the asserts on the
-// data and range codes (D-19, D-37, D-38).
+// data and range codes (ADR 0019, ADR 0037, ADR 0038).
 import { isAfter } from "../dates";
 import { EngineInputError } from "../errors";
 import type { Assumptions, Portfolio } from "../types";
@@ -27,7 +27,7 @@ export interface ValidInputs {
   readonly [validBrand]: true;
 }
 
-/** ASOF_BEFORE_BASEDATE when `asOf` precedes the projection window start (D-19). */
+/** ASOF_BEFORE_BASEDATE when `asOf` precedes the projection window start (ADR 0019). */
 function asOfProblem(
   asOf: Date,
   baseDate: Date,
@@ -37,7 +37,7 @@ function asOfProblem(
     : undefined;
 }
 
-/** Raise ASOF_BEFORE_BASEDATE for an as-of date before baseDate (D-19, DR-015). */
+/** Raise ASOF_BEFORE_BASEDATE for an as-of date before baseDate (ADR 0019). */
 export function assertAsOf(asOf: Date, baseDate: Date): void {
   const problem = asOfProblem(asOf, baseDate);
   if (problem) throw new EngineInputError([problem]);
@@ -46,7 +46,7 @@ export function assertAsOf(asOf: Date, baseDate: Date): void {
 /**
  * Every problem in the engine inputs, in a stable order (assumptions, then each
  * portfolio collection in input order). Empty when the inputs are valid. `asOf`, when
- * given, is checked against the projection window start (D-19).
+ * given, is checked against the projection window start (ADR 0019).
  */
 export function validateInputs(
   portfolio: Portfolio,
@@ -67,8 +67,8 @@ function raiseEntryErrors(errors: EngineValidationError[]): void {
   if (raised.length > 0) throw new EngineInputError(raised);
 }
 
-/** Raise the D-37 / D-38 problems of the assumptions (entry points without a portfolio);
- *  otherwise return them branded valid. */
+/** Raise the ADR 0037 / ADR 0038 problems of the assumptions (entry points without a
+ *  portfolio); otherwise return them branded valid. */
 export function assertAssumptions(assumptions: Assumptions): ValidAssumptions {
   const errors: EngineValidationError[] = [];
   checkAssumptions(
@@ -81,10 +81,10 @@ export function assertAssumptions(assumptions: Assumptions): ValidAssumptions {
 }
 
 /**
- * Raise an EngineInputError listing every D-37 / D-38 problem in the inputs (validateInputs
- * order), instead of computing NaN, a rolled-over date or a silent first-row pick;
- * otherwise return them as `ValidInputs` (the assumptions checked as `assertAssumptions`
- * checks them, the portfolio as well).
+ * Raise an EngineInputError listing every ADR 0037 / ADR 0038 problem in the inputs
+ * (validateInputs order), instead of computing NaN, a rolled-over date or a silent
+ * first-row pick; otherwise return them as `ValidInputs` (the assumptions checked as
+ * `assertAssumptions` checks them, the portfolio as well).
  */
 export function assertInputs(
   portfolio: Portfolio,

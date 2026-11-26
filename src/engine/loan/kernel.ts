@@ -64,7 +64,7 @@ export interface PaymentTerms {
  * is not null; an agreed instalment at least the interest — is split into interest
  * and principal. The payment at maturity
  * (`pay.atMaturity`: payment number ≥ term) pays the whole balance, so no residual
- * outlives the loan (D-40).
+ * outlives the loan (ADR 0021).
  */
 export function amortizeMonth(
   balanceIn: Decimal,
@@ -104,9 +104,9 @@ export function amortizeMonth(
 }
 
 /** Re-amortization trigger: a tranche landing, the end of interest-only, or a rate
- *  change (D-24). Between events the instalment holds. A plain loan has no tranches
+ *  change (ADR 0024). Between events the instalment holds. A plain loan has no tranches
  *  and no interest-only months, so for it this is a rate change only. (`greaterThan`,
- *  because `Decimal(0).isPositive()` is true — DR-102.) */
+ *  because `Decimal(0).isPositive()` is true.) */
 export function reamortizes(
   draw: Decimal,
   prev: { prevInterestOnly: boolean; prevRate: Decimal },

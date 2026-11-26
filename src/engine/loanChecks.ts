@@ -1,5 +1,5 @@
 // What the Data check reports on a loan block (SPEC §4.4): the closed-form health check
-// and implied vs contract maturity (D-29). The wording is UI (P7).
+// and implied vs contract maturity (ADR 0029). The wording is UI.
 import type { Decimal } from "../lib/money";
 import { annuityPayment, balanceAfter } from "./finance";
 import { edate, isAfter } from "./dates";
@@ -47,8 +47,8 @@ export function amortizationHealth(block: MortgageBlock): AmortizationHealth {
 }
 
 /**
- * The maturity the loan's own terms imply (D-29): the due date of its last payment,
- * `termMonths` after the start (D-08). Null for a development loan, whose term is
+ * The maturity the loan's own terms imply (ADR 0029): the due date of its last payment,
+ * `termMonths` after the start (ADR 0008). Null for a development loan, whose term is
  * explicit. Unchanged by a refix (constant maturity).
  */
 export function impliedMaturity(block: MortgageBlock): IsoDate | null {
@@ -56,8 +56,9 @@ export function impliedMaturity(block: MortgageBlock): IsoDate | null {
 }
 
 /**
- * The implied and contract maturities when they differ by more than one month (D-29),
- * else null. One month absorbs NPER rounding (P02 §5). The warning itself is UI (P7).
+ * The implied and contract maturities when they differ by more than one month (ADR 0029),
+ * else null. One month absorbs the rounding of the derived term (NPER). The warning
+ * itself is UI.
  */
 export function maturityMismatch(
   block: MortgageBlock,

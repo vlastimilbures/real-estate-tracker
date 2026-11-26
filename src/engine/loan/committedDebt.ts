@@ -15,17 +15,17 @@ import { afterSuccessor, chainLinks, replacedByMonth } from "./blockChain";
 
 /**
  * Development-loan principal not drawn yet at the end of grid month `month` (0 =
- * baseDate), counted as committed debt (ADR 0166): the initial principal while the
- * loan has not drawn it, plus the tranches still ahead. It follows the schedule's
- * grid, so committed debt = balance + this never drifts from the schedule: an item
- * lands in the first grid month on/after its date, and one dated on/before baseDate
- * is opening debt (D-44). Before its own draw month a property's first loan counts: on a flat owned at
- * baseDate it pays the developer, and a future buy's acquisition loan is already netted
- * by the down payment (ADR 0119 §3; a development loan always is, ADR 0168). A future
- * buy's later first plain loan pays its initial principal to the owner as cash (ADR 0119
- * §5), and a successor replaces a debt owed
- * before, so both count only from their own draw month. A loan stops at its successor's draw
- * month, and a tranche dated after the successor's start is never drawn.
+ * baseDate), counted as committed debt (ADR 0166): the initial principal while the loan
+ * has not drawn it, plus the tranches still ahead. It follows the schedule's grid, so
+ * committed debt = balance + this never drifts from the schedule: an item lands in the
+ * first grid month on/after its date, and one dated on/before baseDate is opening debt
+ * (ADR 0024). Before its own draw month a property's first loan counts: on a flat owned
+ * at baseDate it pays the developer, and a future buy's acquisition loan is already
+ * netted by the down payment (ADR 0119 §3; a development loan always is, ADR 0168). A
+ * future buy's later first plain loan pays its initial principal to the owner as cash
+ * (ADR 0119 §5), and a successor replaces a debt owed before, so both count only from
+ * their own draw month. A loan stops at its successor's draw month, and a tranche dated
+ * after the successor's start is never drawn.
  */
 export function undrawnPrincipal(
   property: Property,

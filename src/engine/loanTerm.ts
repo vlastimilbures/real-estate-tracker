@@ -1,6 +1,6 @@
-// A loan block's term and payment calendar (SPEC §4.4): its length in payments (D-08,
-// D-17), payment numbers and due dates on its own cadence (D-21, ADR 0109) and how many
-// grid months its schedule runs.
+// A loan block's term and payment calendar (SPEC §4.4): its length in payments (ADR 0008,
+// ADR 0017), payment numbers and due dates on its own cadence (ADR 0021, ADR 0109) and
+// how many grid months its schedule runs.
 import { ZERO, type Decimal } from "../lib/money";
 import { paymentsToRepay } from "./finance";
 import {
@@ -28,8 +28,8 @@ export type InstalmentCode = Extract<
 >;
 
 /**
- * Why the entered instalment cannot repay the loan (D-17, DR-014), or undefined when it
- * can: at 0 % it must be positive; otherwise it must exceed the first month's interest.
+ * Why the entered instalment cannot repay the loan (ADR 0017), or undefined when it can:
+ * at 0 % it must be positive; otherwise it must exceed the first month's interest.
  * Expects finite principal and rate.
  */
 export function instalmentProblem(
@@ -66,17 +66,16 @@ export function derivedTermProblem(block: MortgageBlock):
 }
 
 /**
- * Total amortization term in months. When the block carries an explicit
- * `loanTermYears` that is authoritative (loanTermYears*12); otherwise the term is
- * derived from the instalment via NPER (legacy behaviour — preserves the parity
- * targets). Drives the constant-maturity remaining term at refix and the schedule
- * length for a future-drawn loan.
+ * Total amortization term in months. When the block carries an explicit `loanTermYears`
+ * that is authoritative (loanTermYears*12); otherwise the term is derived from the
+ * instalment via NPER (ADR 0008). Drives the constant-maturity remaining term at refix
+ * and the schedule length for a future-drawn loan.
  */
 export function termMonths(block: MortgageBlock): number {
   if (block.loanTermYears != null) return yearsToMonths(block.loanTermYears);
   // A dev loan without a term, a 0 % loan with no instalment, or an instalment that
   // never covers the interest has no NPER term (NaN or Infinity): raise a typed error
-  // rather than emit an empty or endless schedule (D-17).
+  // rather than emit an empty or endless schedule (ADR 0017).
   const problem = derivedTermProblem(block);
   if (problem) {
     throw new EngineInputError([
@@ -96,14 +95,14 @@ export function paymentOnOrAfter(block: MortgageBlock, date: Date): number {
   return firstGridMonthOnOrAfter(block.startDate, date);
 }
 
-/** Payment number of the last payment due on or before `date` (DR-070): a recast
- *  maturity as the loan's last payment (ADR 0109). */
+/** Payment number of the last payment due on or before `date`: a recast maturity as the
+ *  loan's last payment (ADR 0109). */
 export function paymentsDueBy(block: MortgageBlock, date: Date): number {
   return lastGridMonthOnOrBefore(block.startDate, date);
 }
 
-/** Due date of payment `p`, EDATE(start, p) on the loan's own cadence (D-21); payment 0
- *  is the start. */
+/** Due date of payment `p`, EDATE(start, p) on the loan's own cadence (ADR 0021);
+ *  payment 0 is the start. */
 export function dueDate(block: MortgageBlock, p: number): IsoDate {
   return edate(block.startDate, p);
 }

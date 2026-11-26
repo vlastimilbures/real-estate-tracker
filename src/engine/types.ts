@@ -1,7 +1,7 @@
 // Engine domain & output types. Pure data — no React/Tauri/DB imports.
 // Money is Decimal (CLAUDE.md §5). Input amounts are branded `Money`, input rates
 // `Rate` and input dates `IsoDate` (UTC-midnight calendar days), see ./dates and
-// ./brands (D-25, ADR 0074). Outputs are plain Decimal.
+// ./brands (ADR 0025, ADR 0074). Outputs are plain Decimal.
 // The engine never reads the system clock: every time-dependent function takes
 // `baseDate` (or an `asOf`) explicitly.
 import type { Decimal } from "../lib/money";
@@ -143,8 +143,8 @@ interface LoanBase {
   fixationYears: number;
   interestRatePa: Rate;
   monthlyInstalment: Money;
-  /** Contract maturity date, when entered (D-29). Informational: the term stays
-   *  derived from the instalment (D-08); see `maturityMismatch`. */
+  /** Contract maturity date, when entered (ADR 0029). Informational: the term stays
+   *  derived from the instalment (ADR 0008); see `maturityMismatch`. */
   contractMaturityDate?: IsoDate | undefined;
   /** One-off prepayments, sorted by date (ADR 0109). They never make a plain loan a
    *  development loan. */
@@ -154,12 +154,11 @@ interface LoanBase {
 }
 
 /**
- * A plain single-draw annuity loan: no tranches, no interest-only period, so
- * `buildSchedule` reproduces the legacy schedule byte-for-byte (the parity gate).
+ * A plain single-draw annuity loan: no tranches, no interest-only period.
  */
 export interface PlainLoan extends LoanBase {
   /** Explicit term in years; when unset the term is derived from the instalment
-   *  via NPER (legacy behaviour — preserves the parity targets). */
+   *  via NPER (ADR 0008). */
   loanTermYears?: number | undefined;
   draws?: undefined;
   completionDate?: undefined;
@@ -167,11 +166,11 @@ export interface PlainLoan extends LoanBase {
 
 /**
  * A development loan (gradual utilization): tranche draws and/or interest-only until
- * completion. Not a clean annuity, so the term cannot come from NPER and
- * `loanTermYears` is required (DR-051). The schedule derives the instalment from that
- * term (D-31, `scheduledInstalment`); the entered `monthlyInstalment` is not used.
- * `isDevLoan` is the runtime test; a block with an empty `draws` array and no
- * `completionDate` still runs as a plain loan.
+ * completion. Not a clean annuity, so the term cannot come from NPER and `loanTermYears`
+ * is required. The schedule derives the instalment from that term (ADR 0031,
+ * `scheduledInstalment`); the entered `monthlyInstalment` is not used. `isDevLoan` is the
+ * runtime test; a block with an empty `draws` array and no `completionDate` still runs as
+ * a plain loan.
  */
 export interface DevelopmentLoan extends LoanBase {
   loanTermYears: number;
@@ -288,7 +287,8 @@ export interface PortfolioSnapshot {
 
 export interface AmortizationRow {
   month: number; // 1-based, from baseDate
-  /** Grid date EDATE(baseDate, month): the projection buckets the row by it (D-21). */
+  /** Grid date EDATE(baseDate, month): the projection buckets the row by it
+   *  (ADR 0021). */
   date: IsoDate;
   /** Due date of the payment this row carries, on the paying block's own cadence
    *  EDATE(startDate, p) (ADR 0164). Null when no payment is due: an undrawn month,
@@ -298,10 +298,10 @@ export interface AmortizationRow {
   instalment: Decimal;
   interest: Decimal;
   principal: Decimal;
-  /** New debt drawn in this grid month, dated after baseDate (DR-092): a loan's draw
-   *  or a tranche, not a refinance (ADR 0130). Debt dated on/before baseDate is
-   *  opening debt. So endBalance = previous endBalance − principal − prepaid +
-   *  drawn + refinanced, from the baseDate debt (`openingDebt`). */
+  /** New debt drawn in this grid month, dated after baseDate: a loan's draw or a tranche,
+   *  not a refinance (ADR 0130). Debt dated on/before baseDate is opening debt. So
+   *  endBalance = previous endBalance − principal − prepaid + drawn + refinanced, from
+   *  the baseDate debt (`openingDebt`). */
   drawn: Decimal;
   /** A refinance handover's difference: the successor's draw less the predecessor
    *  balance it pays off (ADR 0130). Zero in every other month. */
@@ -343,22 +343,22 @@ export interface LoanEventOutcome {
   issue: LoanEventIssue | null;
 }
 
-/** A successor block paying off its predecessor on the baseDate grid (D-27, D-47). */
+/** A successor block paying off its predecessor on the baseDate grid (ADR 0027). */
 export interface Refinance {
   /** Grid month the successor draws in. */
   month: number;
   /** Predecessor balance the successor pays off. */
   paidOff: Decimal;
-  /** The successor's initial principal (D-47); a tranche it draws in the handover month is
-   *  new debt in the row's `drawn`, not refinance cash (ADR 0176). */
+  /** The successor's initial principal (ADR 0027); a tranche it draws in the handover
+   *  month is new debt in the row's `drawn`, not refinance cash (ADR 0176). */
   drawn: Decimal;
 }
 
 export interface ProjectionYear {
   year: number; // 0..horizon
   calendarYear: number;
-  // D-22: the year's grid months are the dates (periodStart, periodEnd]; year 0 is the
-  // baseDate point (periodStart = periodEnd = baseDate).
+  // ADR 0022: the year's grid months are the dates (periodStart, periodEnd]; year 0 is
+  // the baseDate point (periodStart = periodEnd = baseDate).
   periodStart: IsoDate;
   periodEnd: IsoDate;
   // stocks
@@ -383,9 +383,9 @@ export interface ProjectionYear {
   principal: Decimal;
   debtService: Decimal;
   netCashFlow: Decimal;
-  // DR-092: new debt drawn in the year (0 in year 0); with principal, prepaid and
-  // refinanced it explains the balance move: balance[t] = balance[t−1] − principal[t]
-  // − prepaid[t] + draws[t] + refinanced[t].
+  // New debt drawn in the year (0 in year 0); with principal, prepaid and refinanced it
+  // explains the balance move: balance[t] = balance[t−1] − principal[t] − prepaid[t] +
+  // draws[t] + refinanced[t].
   draws: Decimal;
   // ADR 0166: the change in committed debt from new borrowing: draws[t] less the part
   // that was already committed (a development tranche), plus the undrawn part of a loan
@@ -424,8 +424,8 @@ export interface PortfolioYear extends ProjectionYear {
   ratePa: null;
 }
 
-/** Why a levered IRR has no value (DR-158): no root in the search range, or the NPV
- *  has more than one root there. */
+/** Why a levered IRR has no value: no root in the search range, or the NPV has more than
+ *  one root there. */
 export type IrrNoRateReason = "NO_ROOT" | "NOT_UNIQUE";
 
 export interface PortfolioKPIs {
@@ -433,15 +433,15 @@ export interface PortfolioKPIs {
   netWorthReal: Decimal;
   netWorthMultiple: Decimal | null; // null when equity₀ ≤ 0 (ADR 0126)
   netWorthMultipleReal: Decimal | null; // real net worth / equity₀ (ADR 0087, 0126)
-  cagrNominal: Decimal | null; // null when equity₀ ≤ 0 or the end ≤ 0 (D-34, ADR 0126)
+  cagrNominal: Decimal | null; // null when equity₀ ≤ 0 or the end ≤ 0 (ADR 0034, ADR 0126)
   cagrReal: Decimal | null;
   // Cumulative cash to owner: Σ cashToOwner_t, years 1..N (ADR 0161; the name predates it).
   cumulativeNetCashFlow: Decimal;
   cumulativeNetCashFlowReal: Decimal; // Σ flow_t / CPI_t (ADR 0087)
   firstCashFlowPositiveYear: number | null; // calendar year
-  firstCashFlowPositiveProjectionYear: number | null; // D-22: its projection year
+  firstCashFlowPositiveProjectionYear: number | null; // ADR 0022: its projection year
   debtFreeYear: number | null; // calendar year
-  debtFreeProjectionYear: number | null; // D-22: its projection year
+  debtFreeProjectionYear: number | null; // ADR 0022: its projection year
   leveredIrrNominal: Decimal | null;
   leveredIrrReal: Decimal | null;
   /** Why `leveredIrrNominal` is null; null when it has a value. */

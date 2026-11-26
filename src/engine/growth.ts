@@ -1,6 +1,6 @@
 // Single source of truth for the value-growth formula, shared by the current
 // snapshot and the projection. Both grow the same anchored value (metrics.ts
-// `valueAnchor`) by whole completed months / 12 (D-32), which is what makes the
+// `valueAnchor`) by whole completed months / 12 (ADR 0032), which is what makes the
 // "snapshot at baseDate+N == projection year N" invariant hold by construction.
 import { ONE, powYears, type Decimal, type Numeric } from "../lib/money";
 import { isAfter, isOnOrBefore } from "./dates";

@@ -1,6 +1,6 @@
-// Typed engine errors (D-17): the engine raises these instead of producing NaN,
+// Typed engine errors (ADR 0017): the engine raises these instead of producing NaN,
 // Infinity or an endless loop from input it cannot compute. The message names codes,
-// not user wording — translated messages belong to the UI (P7).
+// not user wording — translated messages belong to the UI.
 import type { EngineValidationError } from "./validate";
 
 const describe = (e: EngineValidationError) =>

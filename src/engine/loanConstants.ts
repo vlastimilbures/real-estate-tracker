@@ -1,5 +1,5 @@
-// Named loan and debt thresholds (DR-076). Values are unchanged from the literals they
-// replaced; changing one moves outputs and needs an approved decision.
+// Named loan and debt thresholds. Changing one moves outputs and needs an approved
+// decision.
 import { D } from "../lib/money";
 import { INT_RANGES } from "../lib/rules";
 import { yearsToMonths } from "./units";

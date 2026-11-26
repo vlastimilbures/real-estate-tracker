@@ -76,11 +76,11 @@ function runGrid(state: LoanState, run: Run): BlockSchedule {
 
 /**
  * The state a block's grid opens from. A future loan is undrawn, at the instalment
- * it opens with (`scheduledInstalment`, D-31). A running loan opens at its baseDate
+ * it opens with (`scheduledInstalment`, ADR 0031). A running loan opens at its baseDate
  * balance: the catch-up for a development loan, `plainOpening` for a plain one (its
  * payments replayed, ADR 0235), at the rate and interest-only of the last
  * payment made, not baseDate: a completion between the two must still trigger the
- * re-amortization at grid month 1 (D-24, ADR 0116).
+ * re-amortization at grid month 1 (ADR 0024, ADR 0116).
  */
 function openingState(
   block: MortgageBlock,
@@ -122,7 +122,7 @@ function openingState(
  * One block's schedule from baseDate: undrawn → draw → interest-only → amortizing →
  * repaid. It re-amortizes over the constant-maturity remaining term on a rate change
  * (fixation end, a scenario rate shock reverting), a tranche landing or the end of
- * interest-only (D-24), and emits zero rows once repaid (payoff guard). A plain loan
+ * interest-only (ADR 0024), and emits zero rows once repaid (payoff guard). A plain loan
  * has no tranches and no interest-only months and keeps its entered instalment.
  */
 export function buildBlockSchedule(
@@ -134,10 +134,10 @@ export function buildBlockSchedule(
   // Draws after the last payment due by baseDate emit in this baseDate-anchored loop
   // (a future loan: after baseDate); earlier ones were folded into the opening
   // balance by simulateToBaseDate. A tranche between that payment and baseDate lands
-  // in grid month 1 and re-amortizes there (D-41, DR-016).
+  // in grid month 1 and re-amortizes there (ADR 0024).
   // A tranche landing in grid month 1 is added before that row's split, so
   // `balanceAtMonth(schedule, 0)` includes it; the baseDate debt (`openingBalance`)
-  // counts only the tranches dated on/before baseDate (D-44).
+  // counts only the tranches dated on/before baseDate (ADR 0024).
   const drawnAfter = isAfter(block.startDate, baseDate)
     ? baseDate
     : lastPaymentDue(block, baseDate);
@@ -154,7 +154,7 @@ export function buildBlockSchedule(
       isAfter(d, baseDate),
     ),
     openingCounted: opening.counted,
-    // The first draw's instalment: its amount over the full term (D-46, DR-122).
+    // The first draw's instalment: its amount over the full term (ADR 0024).
     sizeFirst: isDevLoan(block)
       ? (balance) =>
           instalmentFor(balance, block.interestRatePa, block.loanTermYears)
