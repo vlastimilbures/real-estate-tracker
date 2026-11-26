@@ -3,6 +3,8 @@
 - Status: Accepted
 - Date: 2026-10-01
 - Source IDs: D-64
+- Amended by: [0270](0270-error-codes-from-rust.md) (the webview no longer gets
+  `sql:allow-execute`; writes go through the app's commands)
 
 ## Context
 
