@@ -317,6 +317,7 @@ it.
 | [0263](0263-chrome-stays-mounted.md)                           | The app's chrome stays mounted across pages                                                   | Accepted                                                             | #601, #483, #131                                   |
 | [0264](0264-loan-term-instalment-above-interest.md)            | A loan with a term must pay more than its first month's interest                              | Accepted                                                             | #597, #477, #435                                   |
 | [0265](0265-property-detail-invalid-hides-lens.md)             | Property detail with invalid data hides the Nominal/Real switch                               | Accepted                                                             | #607, #435                                         |
+| [0266](0266-one-text-button-class.md)                          | One text-button class: `.link-btn` becomes `.link-button.underlined`                          | Accepted                                                             | #495, #435                                         |
 
 <!-- adr-index:end -->
 
