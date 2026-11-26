@@ -21,6 +21,7 @@ const FUTURE_VALUE = 6_200_000;
 const PRINCIPAL = 2_000_000;
 
 const slovanske: Property = {
+  active: true,
   id: "slovanske",
   name: "Byt Slovanske",
   purchaseDate: PURCHASE,

@@ -87,7 +87,7 @@ export interface Property {
   purchasePrice: Money;
   appreciationOverridePa?: Rate | undefined;
   rentIndexOverridePa?: Rate | undefined;
-  active?: boolean | undefined; // false ⇒ excluded from portfolio aggregates & projections; default active
+  active: boolean; // false ⇒ excluded from portfolio aggregates & projections
   /** How the purchase was funded, as the owner recorded it (ADR 0119). Undefined ⇒
    *  nothing recorded. */
   funding?: AcquisitionFunding | undefined;

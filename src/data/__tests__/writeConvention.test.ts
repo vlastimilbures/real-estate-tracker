@@ -54,6 +54,7 @@ describe("one write convention (#471)", () => {
       {
         id: "p-x",
         name: "X",
+        active: true,
         purchaseDate: isoDate("2020-01-01"),
         purchasePrice: money("1"),
       },

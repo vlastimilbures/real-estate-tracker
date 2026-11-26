@@ -15,6 +15,7 @@ import { upsertAssumptions } from "../repositories";
 import { SEED_ASSUMPTIONS } from "../seed";
 
 const property: Property = {
+  active: true,
   id: "p1",
   name: "Flat One",
   purchaseDate: isoDate("2023-02-01"),

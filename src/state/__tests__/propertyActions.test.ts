@@ -75,9 +75,9 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     expect(
       (await usePortfolioStore.getState().setPropertyActive(id, false)).ok,
     ).toBe(true);
-    // The edit form's Property carries no `active` flag.
-    const edited = { ...pf().properties.find((p) => p.id === id)! };
-    delete edited.active;
+    // The edit form sends a PropertyEdit, which carries no `active` flag.
+    const { active, ...edited } = pf().properties.find((p) => p.id === id)!;
+    expect(active).toBe(false);
     const edit = await usePortfolioStore
       .getState()
       .editProperty({ ...edited, name: "Byt Renamed" }, noExtras);

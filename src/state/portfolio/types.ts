@@ -58,8 +58,8 @@ export interface StartupError {
 }
 
 /** What the property form sends: a property without its `active` flag. The form never
- *  sets the flag (Deactivate / Reactivate does, `setPropertyActive`), so an add stores
- *  it active and an edit keeps the stored flag (#480). */
+ *  sets the flag (Deactivate / Reactivate does, `setPropertyActive`): `addProperty` sets
+ *  `active: true`, and `editProperty` keeps the stored flag (#480). */
 export type PropertyEdit = Omit<Property, "active">;
 
 export interface PortfolioState {

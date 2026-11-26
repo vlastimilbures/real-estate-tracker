@@ -7,7 +7,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PropertyDetail } from "../PropertyDetail";
-import { usePortfolioStore } from "../../../state/portfolioStore";
+import {
+  usePortfolioStore,
+  type PropertyEdit,
+} from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
@@ -125,14 +128,15 @@ describe("Property detail Acquisition section (ADR 0119 §9)", () => {
   });
 
   it("after a save the line gives way to the table and focus lands on the section", async () => {
-    const editProperty = vi.fn(async (p: Property) => {
-      // The store reloads before the save resolves, as the real one does.
+    const editProperty = vi.fn(async (p: PropertyEdit) => {
+      // The store reloads before the save resolves, as the real one does, keeping the
+      // stored flag.
       act(() =>
         usePortfolioStore.setState((st) => ({
           portfolio: {
             ...st.portfolio!,
             properties: st.portfolio!.properties.map((x) =>
-              x.id === p.id ? p : x,
+              x.id === p.id ? { ...p, active: x.active } : x,
             ),
           },
         })),

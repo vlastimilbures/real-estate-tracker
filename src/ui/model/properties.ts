@@ -37,7 +37,7 @@ export function propertiesTotal(
   properties: readonly Property[],
   t: Pick<Dictionary, "properties">,
 ): PropertiesTotal | null {
-  const active = properties.filter((p) => p.active !== false);
+  const active = properties.filter((p) => p.active);
   if (active.length < 2) return null;
   const pending = active.some(
     (p) => !ownedOn(p.purchaseDate, basis, assumptions.baseDate, snapshot.asOf),

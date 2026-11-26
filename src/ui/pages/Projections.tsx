@@ -29,9 +29,7 @@ export function Projections() {
   const mode = useUiStore((s) => s.mode);
   // The chosen property's id, or null for the whole portfolio (ADR 0242 §1).
   const [propertyId, setPropertyId] = useState<string | null>(null);
-  const active = (portfolio?.properties ?? []).filter(
-    (p) => p.active !== false,
-  );
+  const active = (portfolio?.properties ?? []).filter((p) => p.active);
   const property = active.find((p) => p.id === propertyId);
   // A choice no longer listed becomes the portfolio and stays so if it returns (ADR 0242 §1).
   if (propertyId !== null && !property) setPropertyId(null);

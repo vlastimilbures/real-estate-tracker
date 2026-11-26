@@ -63,6 +63,7 @@ describe("atomic writes", () => {
     const p = {
       id: "p-new",
       name: "New flat",
+      active: true,
       purchaseDate: isoDate("2025-01-01"),
       purchasePrice: money("5000000"),
     };

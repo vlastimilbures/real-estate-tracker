@@ -28,6 +28,7 @@ const lenses = (p: Portfolio) => {
 const futureDev: Portfolio = {
   properties: [
     {
+      active: true,
       id: "dev",
       name: "Dev unit",
       purchaseDate: isoDate("2027-03-01"),

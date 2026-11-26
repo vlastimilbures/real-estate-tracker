@@ -14,6 +14,7 @@ import { assumptions, portfolio } from "./support/seed";
 import { KC, near } from "./support/tolerance";
 
 const owned: Property = {
+  active: true,
   id: "p",
   name: "Test flat",
   purchaseDate: isoDate("2020-01-01"),

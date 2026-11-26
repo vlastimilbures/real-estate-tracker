@@ -256,6 +256,7 @@ describe("toEquityChangeRows: development draws (ADR 0170)", () => {
     ...devOnly,
     properties: [
       {
+        active: true,
         id: "dev",
         name: "Dev unit",
         purchaseDate: isoDate("2027-03-01"),

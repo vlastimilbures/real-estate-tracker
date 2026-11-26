@@ -5,7 +5,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
 import { migrate } from "../migrations";
 import { setPropertyActive } from "../repositories";
-import { propertyToRow } from "../mappers";
+import { propertyToRow, rowToProperty } from "../mappers";
 import type { Property, IsoDate } from "../../engine";
 import { money } from "../../engine";
 import { insertProperty } from "./support/reads";
@@ -13,6 +13,7 @@ import { insertProperty } from "./support/reads";
 let sql: TestSql;
 
 const property: Property = {
+  active: true,
   id: "p1",
   name: "Test flat",
   purchaseDate: new Date(Date.UTC(2020, 0, 1)) as IsoDate,
@@ -62,4 +63,21 @@ describe("setPropertyActive preserves address & garage", () => {
     expect(r.address).toBe("Main St 1");
     expect(r.garage).toBe(1);
   });
+});
+
+// The engine's `active` is required (#480): a missing flag counts as active here, at the
+// mapper, and nowhere downstream. A restore of a backup without the column fills 1
+// (restore.test, "restores a legacy v1 file").
+describe("rowToProperty reads the active flag", () => {
+  const row = propertyToRow(property, { address: null, garage: null });
+  it.each([
+    [1, true],
+    [0, false],
+    [null, true],
+  ] as const)(
+    "reads %s as %s (NULL: a legacy row, active)",
+    (stored, active) => {
+      expect(rowToProperty({ ...row, active: stored }).active).toBe(active);
+    },
+  );
 });

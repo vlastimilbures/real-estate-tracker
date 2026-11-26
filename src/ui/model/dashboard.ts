@@ -271,9 +271,7 @@ export function dashboardFilter(
   portfolio: Pick<Portfolio, "properties"> | null,
   saved: readonly string[],
 ) {
-  const properties = (portfolio?.properties ?? []).filter(
-    (p) => p.active !== false,
-  );
+  const properties = (portfolio?.properties ?? []).filter((p) => p.active);
   const activeIds = new Set(properties.map((p) => p.id));
   const effectiveIds = saved.filter((id) => activeIds.has(id));
   return {

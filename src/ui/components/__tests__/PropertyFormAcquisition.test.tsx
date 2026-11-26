@@ -11,7 +11,10 @@ import { usePortfolioStore } from "../../../state/portfolioStore";
 import { getDict } from "../../../i18n";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { money, type Portfolio, type Property } from "../../../engine";
-import type { MutationResult } from "../../../state/portfolioStore";
+import type {
+  MutationResult,
+  PropertyEdit,
+} from "../../../state/portfolioStore";
 import { success } from "../../../__tests__/support/result";
 
 const en = getDict("en");
@@ -19,10 +22,10 @@ const f = en.propertyForm;
 
 const ok = (): Promise<MutationResult> => Promise.resolve({ ok: true });
 let addProperty: ReturnType<
-  typeof vi.fn<(p: Property) => Promise<MutationResult>>
+  typeof vi.fn<(p: PropertyEdit) => Promise<MutationResult>>
 >;
 let editProperty: ReturnType<
-  typeof vi.fn<(p: Property) => Promise<MutationResult>>
+  typeof vi.fn<(p: PropertyEdit) => Promise<MutationResult>>
 >;
 
 function withFunding(id: string, funding: Property["funding"]): Portfolio {

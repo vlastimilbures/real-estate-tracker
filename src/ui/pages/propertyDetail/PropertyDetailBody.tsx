@@ -62,7 +62,7 @@ export function PropertyDetailBody(p: PropertyDetailBodyProps) {
     <>
       <ActivationBanner
         propertyName={property.name}
-        isActive={property.active !== false}
+        isActive={property.active}
         confirmingDeactivate={activation.confirmingDeactivate}
         onConfirmDeactivate={activation.deactivate}
         onCancelDeactivate={() => activation.setConfirmingDeactivate(false)}

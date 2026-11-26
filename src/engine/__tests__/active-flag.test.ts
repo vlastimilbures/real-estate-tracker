@@ -55,8 +55,8 @@ describe("Deactivated property is excluded from projections & KPIs", () => {
 });
 
 describe("active is opt-out: reactivating restores the all-active numbers", () => {
-  // Setting active: true explicitly must equal the seed (active undefined) result —
-  // this is the parity guarantee for the new predicate.
+  // Setting active: true on every property must equal the seed (all active) result —
+  // this is the parity guarantee for the predicate.
   const reactivated: Portfolio = {
     ...portfolio,
     properties: portfolio.properties.map((p) => ({ ...p, active: true })),

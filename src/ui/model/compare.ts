@@ -307,7 +307,7 @@ export function ownRateNotes(
     const names = properties
       .filter(
         (p) =>
-          p.active !== false &&
+          p.active &&
           ((appreciationPa !== undefined &&
             p.appreciationOverridePa !== undefined) ||
             (rentIndexationPa !== undefined &&

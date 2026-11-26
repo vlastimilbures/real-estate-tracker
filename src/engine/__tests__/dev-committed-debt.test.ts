@@ -41,6 +41,7 @@ const TOTAL = 9_250_000;
 const COMPLETED = 12_000_000;
 
 const property: Property = {
+  active: true,
   id: "dev",
   name: "Dev unit",
   purchaseDate: isoDate("2025-01-01"), // owned at baseDate
@@ -410,6 +411,7 @@ describe("committed debt edge cases", () => {
       ...mixedDevOnly([futureDev]),
       properties: [
         {
+          active: true,
           id: "dev",
           name: "Dev unit",
           purchaseDate: isoDate("2027-03-01"),
@@ -462,6 +464,7 @@ describe("committed debt edge cases", () => {
       ...mixedDevOnly([lateDev]),
       properties: [
         {
+          active: true,
           id: "dev",
           name: "Dev unit",
           purchaseDate: isoDate("2027-03-01"),
@@ -556,6 +559,7 @@ describe("committedDraws explains the committed-debt move (ADR 0166)", () => {
 // Review of PR #300: the undrawn principal is exactly what the schedule still draws.
 describe("undrawn principal = the schedule's later draws", () => {
   const owner: Property = {
+    active: true,
     id: "dev",
     name: "Dev unit",
     purchaseDate: isoDate("2020-01-01"),

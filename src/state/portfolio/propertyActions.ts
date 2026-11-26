@@ -25,8 +25,10 @@ export function propertyActions({
   | "removeProperty"
 > {
   return {
-    addProperty: (p, cost, extra) =>
+    addProperty: (added, cost, extra) =>
       mutate("properties", async (sql) => {
+        // A PropertyEdit carries no flag: a new property is active.
+        const p = { ...added, active: true };
         checkEdit(
           get().portfolio,
           (pf) => ({
@@ -47,7 +49,7 @@ export function propertyActions({
         // funding record (`{}` clears); one an edit leaves out is kept (ADR 0119 §8).
         const p = {
           ...edited,
-          active: stored?.active,
+          active: stored?.active ?? true,
           funding: edited.funding ?? stored?.funding,
         };
         checkEdit(

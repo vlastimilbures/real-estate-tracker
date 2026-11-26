@@ -62,6 +62,7 @@ function withBuy(
   value = VALUE,
 ): Portfolio {
   const buy: Property = {
+    active: true,
     id: "buy",
     name: "Byt Slovanske",
     purchaseDate: PURCHASE,

@@ -13,8 +13,11 @@ import {
   assumptions,
   withPropertyId,
 } from "../../../engine/__tests__/support/seed";
-import type { HoldingCost, Property } from "../../../engine";
-import type { MutationResult } from "../../../state/portfolioStore";
+import type { HoldingCost } from "../../../engine";
+import type {
+  MutationResult,
+  PropertyEdit,
+} from "../../../state/portfolioStore";
 import { success } from "../../../__tests__/support/result";
 
 const f = getDict("en").propertyForm;
@@ -22,10 +25,10 @@ const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 let addProperty: ReturnType<
-  typeof vi.fn<(p: Property, c: HoldingCost) => Promise<MutationResult>>
+  typeof vi.fn<(p: PropertyEdit, c: HoldingCost) => Promise<MutationResult>>
 >;
 let editProperty: ReturnType<
-  typeof vi.fn<(p: Property) => Promise<MutationResult>>
+  typeof vi.fn<(p: PropertyEdit) => Promise<MutationResult>>
 >;
 
 beforeEach(() => {

@@ -160,7 +160,7 @@ export function propertySubtitle(
         ? d.purchased(fmtDate(property.purchaseDate))
         : d.pendingPurchase(fmtDate(property.purchaseDate)),
     view.isToday ? null : d.asOf(fmtDate(view.date)),
-    property.active !== false ? null : d.deactivated,
+    property.active ? null : d.deactivated,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -255,7 +255,7 @@ export function propertyDetailView(
 ): PropertyDetailView {
   const { out, property, portfolio, assumptions, mortgages, view, t } = input;
   const body = out ? propertyBodyView(out, input) : null;
-  const checked = out && property.active !== false ? out : null;
+  const checked = out && property.active ? out : null;
   // Every block from the one in force onward (UX-054).
   const warnings = checked
     ? loanWarnings(mortgages, assumptions.baseDate, checked.eventOutcomes)

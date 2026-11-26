@@ -28,12 +28,14 @@ export const mixed: Portfolio = {
   properties: [
     ...portfolio.properties,
     {
+      active: true,
       id: "future",
       name: "Future buy",
       purchaseDate: isoDate("2028-03-15"),
       purchasePrice: money("6000000"),
     },
     {
+      active: true,
       id: "dev",
       name: "Dev unit",
       purchaseDate: isoDate("2026-03-01"),

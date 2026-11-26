@@ -74,6 +74,7 @@ function single(...blocks: MortgageBlock[]): Portfolio {
   return {
     properties: [
       {
+        active: true,
         id: "p",
         name: "P",
         purchaseDate: isoDate("2015-01-01"),
@@ -629,12 +630,12 @@ describe("ADR 0103: upcoming events", () => {
   });
 
   it("lease ends of active properties only; same-day events in portfolio order (ADR 0176)", () => {
-    const owned = (id: string, active?: boolean) => ({
+    const owned = (id: string, active: boolean) => ({
       id,
       name: id,
       purchaseDate: isoDate("2015-01-01"),
       purchasePrice: money("5000000"),
-      ...(active === undefined ? {} : { active }),
+      active,
     });
     const lease = (propertyId: string) => ({
       id: `l-${propertyId}`,
@@ -645,7 +646,7 @@ describe("ADR 0103: upcoming events", () => {
     });
     const p: Portfolio = {
       ...single(),
-      properties: [owned("b", true), owned("a"), owned("x", false)],
+      properties: [owned("b", true), owned("a", true), owned("x", false)],
       leases: [lease("b"), lease("a"), lease("x")],
     };
     expect(upcomingEvents(p, exposure(p).fx, 12)).toEqual([
