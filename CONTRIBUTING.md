@@ -366,7 +366,7 @@ Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
    added from a preset or deleted). A restore leaves a notice, an import its report.
 6. **Store actions never throw.** Every store action that returns a promise resolves with a
    result (`Result<T, E>`, `MutationResult`); the caller branches on `ok` and needs no
-   `catch` (`src/state/__tests__/noActionRejects.test.ts`).
+   `catch` (`src/state/__tests__/portfolioStoreWrites.test.ts`, "no store action rejects").
 
 ## Commits and pull requests
 
