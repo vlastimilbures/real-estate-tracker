@@ -426,22 +426,32 @@
 .crumb-sep {
   color: var(--ink-soft);
 }
-/* Findings to review: an amber pill right after the title (ADR 0218 §1), the warn
-   badge's colours (AA on chip-bg). Its full sentence is the name and the tooltip. */
-.title-pill {
-  align-self: center;
+/* A chip: a small rounded label or button with an icon (ADR 0268). The title's review
+   pill, the Data check's counts and its fix links share this shape; each sets its own
+   size. The toggle pills (.pill, controls.css) are a control, not a chip. */
+.chip {
   display: inline-flex;
   align-items: center;
   gap: var(--s1);
-  min-height: 24px;
-  padding: 0 var(--s2);
-  border: 1px solid var(--warn);
+  border: 1px solid var(--hairline);
   border-radius: var(--r-pill);
+}
+/* Findings to review, in the title and in the Data check: the warn badge's colours
+   (4.63:1 on chip-bg, ADR 0157) with a warn border (ADR 0268). */
+.chip.warn {
   background: var(--chip-bg);
   color: var(--warn);
+  border-color: var(--warn);
+  font-weight: 600;
+}
+/* Findings to review: the amber chip right after the title (ADR 0218 §1). Its full
+   sentence is the name and the tooltip. */
+.title-pill {
+  align-self: center;
+  min-height: 24px;
+  padding: 0 var(--s2);
   font: inherit;
   font-size: var(--fs-13);
-  font-weight: 600;
   font-feature-settings: var(--num);
   cursor: pointer;
 }

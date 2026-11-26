@@ -123,6 +123,8 @@ describe("the review pill (ADR 0218 §1)", () => {
     act(() => useUiStore.setState({ asOf: fiveYears, dataCheckOpen: false }));
     showDashboard(portfolio, []);
     expect(pill()?.getAttribute("aria-label")).toBe(en.dataCheck.reviewPill(6));
+    // The one look for findings to review, as the Data check's count (ADR 0268).
+    expect(pill()?.className).toBe("chip warn title-pill");
     act(() => fireEvent.click(pill()!));
     expect(useUiStore.getState().dataCheckOpen).toBe(true);
   });

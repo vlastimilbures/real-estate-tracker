@@ -11,13 +11,9 @@
   gap: var(--s1);
   align-items: center;
 }
+/* A count: a chip (shell.css, ADR 0268). */
 .dc-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s1);
   padding: var(--s-2px) var(--s2);
-  border-radius: var(--r-pill);
-  border: 1px solid var(--hairline);
   background: transparent;
   color: var(--ink-soft);
   font-size: var(--fs-12);
@@ -26,12 +22,6 @@
 }
 .dc-pill > svg {
   flex: none;
-}
-/* The app's warning look: sand ground, warn ink (4.63:1, ADR 0157). */
-.dc-pill.warn {
-  background: var(--chip-bg);
-  color: var(--warn);
-  font-weight: 600;
 }
 .dc-pill.ok > svg,
 .dc-clear > svg {
@@ -137,18 +127,18 @@
 /* A chip is the link to the fix: 24 px tall (WCAG target size), the name never cut. */
 .dc-chip {
   appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s1);
   min-height: 24px;
   padding: var(--s-2px) var(--s-6px) var(--s-2px) var(--s-10px);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--ink);
   font: inherit;
   font-size: var(--fs-13);
   cursor: pointer;
+}
+/* Two classes, so the border beats .chip's (shell.css) whichever stylesheet loads first:
+   chunk order is not source order (#494, App.tsx:11-12). Before :hover, which wins. */
+.chip.dc-chip {
+  border-color: var(--hairline-strong);
 }
 .dc-chip:hover {
   border-color: var(--accent-soft);

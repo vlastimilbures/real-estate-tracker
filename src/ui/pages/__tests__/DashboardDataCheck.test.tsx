@@ -66,6 +66,10 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
     expect(screen.getByText(d.title)).toBeTruthy();
     expect(pills()).toEqual([d.attentionNone, d.useDefaults(6)]);
     expect(head().querySelector(".dc-pill.ok")).not.toBeNull();
+    // Chips (ADR 0268): the ok count and the neutral one share the shape.
+    expect(
+      [...head().querySelectorAll(".dc-pill")].map((x) => x.className),
+    ).toEqual(["chip dc-pill ok", "chip dc-pill"]);
     expect(infoText()).toBe("Checked as of 07.06.2026.");
     expect(document.querySelector(".dc-summary")).toBeNull();
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
@@ -77,6 +81,10 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
     expect(pills()).toEqual([d.needAttention(6), d.useDefaults(6)]);
     expect(head().querySelector(".dc-pill.warn")).not.toBeNull();
+    // The warn count is the title pill's warn chip (ADR 0268).
+    expect(
+      [...head().querySelectorAll(".dc-pill")].map((x) => x.className),
+    ).toEqual(["chip dc-pill warn", "chip dc-pill"]);
     // A block per list, each a heading over the list it names (ADR 0223 §2).
     expect(
       [...document.querySelectorAll(".dc-block")].map((b) => [
@@ -101,6 +109,8 @@ describe("Data check panel (ADR 0118, ADR 0206)", () => {
       d.fundingUnknown,
     ]);
     expect(document.querySelectorAll(".dc-chip")).toHaveLength(12);
+    for (const c of document.querySelectorAll(".dc-chip"))
+      expect(c.className).toBe("chip dc-chip");
     // The lists keep their names for assistive technology.
     expect(screen.getByRole("list", { name: d.attentionTitle })).toBeTruthy();
     expect(screen.getByRole("list", { name: d.defaultsTitle })).toBeTruthy();
