@@ -1,5 +1,5 @@
 // A failed backup, restore or sample action as translated text. Shared by Settings →
-// Backup and the startup error screen (#115).
+// Backup and the startup error screen.
 import { BACKUP_MAX_BYTES, type RestoreIssue } from "../../state/backup";
 import { logFailure, type FailureSite } from "../../state/diagnostics";
 import { toActionError, type ActionError } from "../../state/actionError";

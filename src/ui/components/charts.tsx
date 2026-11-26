@@ -1,5 +1,6 @@
 // Recharts wrappers themed to the design tokens. Engine Decimals become plain numbers
-// HERE (the chart boundary) and nowhere upstream. Axes label in millions (M Kč).
+// HERE (the chart boundary) and nowhere upstream. A CZK axis counts in the unit its
+// values call for (M Kč, tis. Kč or Kč).
 import {
   ResponsiveContainer,
   LineChart,
@@ -138,7 +139,7 @@ type ChartShape = "lines" | "stacked" | "signed";
 
 /** A chart card: title, subtitle, the chart and a legend built from `series` (by default
  *  only for two or more series). The Table toggle swaps the chart for a table of the same
- *  rows, the keyboard and screen-reader way to read the values (UX-075); not saved. For
+ *  rows, the keyboard and screen-reader way to read the values; not saved. For
  *  `kind: "czk"` the axis unit is taken once from the rows' values (e.g. "M Kč"): it
  *  leads the subtitle and scales the ticks. `totalLabel` adds a net-of-stack row to a
  *  stacked chart's tooltip. */
@@ -254,7 +255,7 @@ const CHART_HEIGHT = 196;
 /** Scenario compare's plot height (ADR 0216). */
 export const SMALL_CHART_HEIGHT = 180;
 
-/** The chart's rows as a table: one row per year, one column per series (UX-075).
+/** The chart's rows as a table: one row per year, one column per series.
  *  Amounts without "Kč", like the projection grid, so three columns fit the card. */
 function ChartTable({
   title,
@@ -333,7 +334,7 @@ export function Tip({
   active?: boolean | undefined;
   year?: number | string | undefined;
   /** The hovered row; when it carries the projection year the header reads
-   *  "Y5 · 2031" (UX-032). */
+   *  "Y5 · 2031". */
   point?: { year?: unknown; calendarYear?: unknown };
   items: TipItem[];
   /** Optional summary row rendered below a divider (e.g. net change of stacked series). */
@@ -429,7 +430,7 @@ function ChartBody({
   markers: readonly ResetMarker[];
   markerHeading: string;
 }) {
-  // Reduce motion: no entry animation (UX-058).
+  // Reduce motion: no entry animation.
   const animate = !usePrefersReducedMotion();
   const surface = useSurfaceProps();
   const data = rows as Record<string, unknown>[];

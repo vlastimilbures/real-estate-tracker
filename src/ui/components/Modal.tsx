@@ -10,16 +10,15 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   /** When set, the body and footer form one <form>: Return in a field submits it, and a
-   *  footer button with type="submit" is the save button (UX-028). */
+   *  footer button with type="submit" is the save button. */
   onSubmit?: () => void;
-  /** Unsaved input: Esc and backdrop clicks are ignored; ✕ and Cancel still close
-   *  (UX-029). */
+  /** Unsaved input: Esc and backdrop clicks are ignored; ✕ and Cancel still close. */
   dirty?: boolean;
   /** A write is running: ✕ is disabled, and Esc and backdrop clicks are ignored, so the
    *  write's outcome shows in the dialog (ADR 0142). */
   busy?: boolean;
   /** A long, read-only body that scrolls: it becomes a focusable region named by the
-   *  title, so the keyboard can scroll it (UX-071). */
+   *  title, so the keyboard can scroll it. */
   scrollRegion?: boolean;
 }
 

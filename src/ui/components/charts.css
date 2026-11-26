@@ -82,7 +82,7 @@
   margin-bottom: var(--s3);
 }
 
-/* Title + subtitle on the left, the Table toggle (UX-075) on the right. */
+/* Title + subtitle on the left, the Table toggle on the right. */
 .chart-card .chart-head {
   display: flex;
   justify-content: space-between;
@@ -174,7 +174,7 @@ table.chart-table tbody th.sticky-col {
 
 /* Matches only from the 900 px minimum window to 920 px: there it puts a chart grid in one
    column; the form grids' half of the rule is in forms.css. Removing it is a visible change
-   that needs an ADR (ADR 0001), parked by #494. */
+   that needs an ADR (ADR 0001), so it stays until one is accepted. */
 @media (max-width: 920px) {
   .chart-grid {
     grid-template-columns: 1fr;

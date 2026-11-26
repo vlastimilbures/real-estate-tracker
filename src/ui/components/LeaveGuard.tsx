@@ -4,9 +4,9 @@ import { Modal } from "./Modal";
 import { Button } from "./primitives";
 
 /**
- * Asks before a navigation drops unsaved form edits (UX-030). The store holds the
- * navigation back while `unsavedChanges` is set; Discard carries it out, Keep editing
- * (also ✕, Esc and the backdrop) stays.
+ * Asks before a navigation drops unsaved form edits. The store holds the navigation back
+ * while `unsavedChanges` is set; Discard carries it out, Keep editing (also ✕, Esc and
+ * the backdrop) stays.
  */
 export function LeaveGuard() {
   const t = useT();

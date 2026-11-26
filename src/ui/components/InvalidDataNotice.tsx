@@ -6,9 +6,9 @@ import { focusSection } from "../focus";
 import { Button } from "./primitives";
 
 /**
- * Stored data that breaks an engine rule (UX-049): which record, which rule, in the
- * user's language. `onOpenProperty`, when given, offers the property where it can be
- * corrected (the app-wide fallback); Property detail shows the records itself (UX-056).
+ * Stored data that breaks an engine rule: which record, which rule, in the user's
+ * language. `onOpenProperty`, when given, offers the property where it can be corrected
+ * (the app-wide fallback); Property detail shows the records itself.
  * A leftover mortgage block adds a hint naming both start dates, and the way to Financing:
  * "Open property" lands there, or, on Property detail, "Go to Financing" (ADR 0258).
  */

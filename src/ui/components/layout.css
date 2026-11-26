@@ -4,7 +4,7 @@
    feature sheets in styles/ load later), so at equal specificity a utility beats a
    component class; keyboard focus sits here for the same reason. */
 
-/* Breakpoints (#495): every width query in src/ui. var() cannot appear in a media or
+/* Breakpoints: every width query in src/ui. var() cannot appear in a media or
    container query, so this table is the one list of them; keep it in step.
    An unnamed @container query measures the nearest container-type ancestor (named here).
 

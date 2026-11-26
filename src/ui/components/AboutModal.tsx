@@ -5,7 +5,7 @@ import "../styles/about.css";
 
 // Static, dependency-free About dialog. Pure presentation — no engine imports and no store
 // reads beyond the active language. Introduces the app, credits the developer, and surfaces
-// the build-time version. Addresses are plain, selectable text (UX-064): the app opens
+// the build-time version. Addresses are plain, selectable text: the app opens
 // nothing outside itself. Opened from the native macOS menu (App → About…), bridged via the
 // `menu://about` event in App.tsx. The shared Modal chrome: dismiss with X, Escape, or a
 // backdrop click.

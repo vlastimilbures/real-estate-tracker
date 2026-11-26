@@ -330,7 +330,7 @@
 }
 
 /* ============ Metric term ============ */
-/* UX-044: a metric abbreviation that explains itself and links to the Guide. */
+/* A metric abbreviation that explains itself and links to the Guide. */
 .metric-term {
   font: inherit;
   color: inherit;

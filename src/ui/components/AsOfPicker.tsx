@@ -1,7 +1,7 @@
 // "As of" date picker for the Dashboard / Property detail snapshot. A dd.mm.yyyy
 // text input (app convention) plus quick presets. `value === null` means "today".
 // Presentational: it emits Date | null (null = Today) and keeps the date inside the
-// projection window (UX-059, D-19). It shows the date the page computes for, by the one
+// projection window (ADR 0019). It shows the date the page computes for, by the one
 // resolver (ADR 0150): a stale stored value or a future base date shows the clamped date.
 // Place it directly in a `.filter-bar`: its hint is that bar's last row (ADR 0198).
 import { useState, useId } from "react";

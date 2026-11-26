@@ -26,8 +26,8 @@ import { saveFailureDetail, type SaveOutcome } from "../../state/platform";
 type Num = Decimal | number;
 
 /** Money value with accounting conventions: red parentheses for negatives. Only a
- *  `signed` flow (net cash flow, NOI) is also green when positive (UX-026). The tone
- *  follows the value as printed, so "0 Kč" is never coloured (ADR 0178). */
+ *  `signed` flow (net cash flow, NOI) is also green when positive. The tone follows the
+ *  value as printed, so "0 Kč" is never coloured (ADR 0178). */
 export function Money({
   value,
   parens = true,
@@ -72,7 +72,7 @@ export function MoneyM({ value }: { value: Num }) {
 }
 
 /** A levered IRR, or "n/a" with the reason it has none as a tooltip and for screen
- *  readers (UX-079, DR-158). */
+ *  readers. */
 export function IrrValue({ irr, dp = 1 }: { irr: LeveredIrr; dp?: number }) {
   const t = useT();
   if (irr.rate) return <Pct value={irr.rate} dp={dp} />;
@@ -85,7 +85,7 @@ export function IrrValue({ irr, dp = 1 }: { irr: LeveredIrr; dp?: number }) {
   );
 }
 
-/** DSCR, capped for display at ">99,00x" (D-35). */
+/** DSCR, capped for display at ">99,00x" (ADR 0035). */
 export function Dscr({ value }: { value: Num }) {
   return <span className="num">{fmtDscr(value)}</span>;
 }
@@ -211,7 +211,7 @@ export function Button({
     .filter(Boolean)
     .join(" ");
   return (
-    // type defaults to "button" so only an explicit type="submit" submits a form (UX-028).
+    // type defaults to "button" so only an explicit type="submit" submits a form.
     <button className={cls} type={type} {...rest}>
       {Icon && <Icon size={14} strokeWidth={1.75} />}
       {children}
@@ -220,7 +220,7 @@ export function Button({
 }
 
 /** Horizontally/vertically scrolling table container: a named region keyboard users can
- *  Tab to and scroll with the arrow keys (UX-024). */
+ *  Tab to and scroll with the arrow keys. */
 export function TableWrap({
   label,
   className,
@@ -308,7 +308,7 @@ export function Panel({
  * Icon button for a Panel `action` slot that exports the panel's table to .xlsx.
  * Disables while writing, then shows a toast naming the saved file, nothing for a
  * cancelled dialog (the user's own choice), or a notice with the reason, which stays
- * until dismissed (DR-112, ADR 0154).
+ * until dismissed (ADR 0154).
  */
 export function ExportXlsxButton({
   onExport,

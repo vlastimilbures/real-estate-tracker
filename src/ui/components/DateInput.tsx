@@ -48,10 +48,10 @@ export function DateInput({
   const t = useT();
   const fieldProps = useFieldControlProps();
   const [open, setOpen] = useState(false);
-  // The calendar loads on the first open (DR-009): react-day-picker stays out of the
-  // startup bundle. The popover opens once the chunk is in, so it never shows a
-  // placeholder; the chunk is a local file, so the wait is a few milliseconds (ADR 0066).
-  // Held per field, so there is no module state (#491): each newly mounted field's first
+  // The calendar loads on the first open: react-day-picker stays out of the startup
+  // bundle. The popover opens once the chunk is in, so it never shows a placeholder; the
+  // chunk is a local file, so the wait is a few milliseconds (ADR 0066).
+  // Held per field, so there is no module state: each newly mounted field's first
   // open waits one resolved import (a promise tick, the chunk already being loaded) before
   // the popover shows. A load that fails leaves the popover shut.
   const [LoadedCalendar, setLoadedCalendar] = useState<
@@ -82,8 +82,7 @@ export function DateInput({
   // Lightweight popover dismissal: outside-click + Esc, Esc returning focus to the
   // trigger. Not a modal (no global focus trap) — it sits inline in a form. The popover is
   // portaled, so the "inside" check must cover both the field and the popover node. Esc
-  // is heard `first` and ends there: it closes only the popover, never a modal behind it
-  // (DR-148).
+  // is heard `first` and ends there: it closes only the popover, never a modal behind it.
   useDismiss(
     (cause) => {
       close();

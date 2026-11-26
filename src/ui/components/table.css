@@ -7,7 +7,7 @@
      with content and vanish at each edge, layered under two fixed cover
      gradients (attachment: scroll) that fade the shadow to nothing at the
      very start/end. Signals "more columns this way" without a JS scroll
-     listener. See docs/ux-review-2026-07-02.md P0 #1. */
+     listener. */
   background-image:
     linear-gradient(to right, var(--surface) 50%, transparent),
     linear-gradient(to left, var(--surface) 50%, transparent),
@@ -285,7 +285,7 @@ table.data thead th.sticky-col {
   }
 }
 /* Row actions pin to the right edge so Edit/Delete never scroll out of view in long
-   languages or at the minimum window width (UX-019). */
+   languages or at the minimum window width. */
 table.data tbody td.actions-col {
   position: sticky;
   right: 0;
@@ -323,7 +323,7 @@ table.data tbody tr.is-milestone td {
   background: var(--accent-wash);
 }
 /* Pinned cells must stay opaque under the translucent hover wash, or the columns
-   scrolling beneath them show through (UX-019). */
+   scrolling beneath them show through. */
 table.data tbody tr:hover td.actions-col,
 table.data tbody tr:hover td.sticky-col {
   background:

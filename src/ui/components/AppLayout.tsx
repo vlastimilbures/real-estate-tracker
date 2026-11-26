@@ -1,4 +1,4 @@
-// The app's chrome around the page (#483): the skip link, the sidebar and the column the
+// The app's chrome around the page: the skip link, the sidebar and the column the
 // page's own frame (PageFrame: top bar and main region) fills. PageBoundary renders it once
 // while the app is ready, so a page change, a page's code loading and a page error keep
 // the sidebar's nodes, its scroll position and the focus in it (ADR 0263).

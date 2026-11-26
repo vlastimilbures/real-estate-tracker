@@ -1,8 +1,8 @@
-// The startup error screen (UX-057, DR-086; #115, ADR 0153). Says what happened, honestly
-// (a stopped upgrade may have changed the database), and offers only what can help:
-// Try again for a failure that may not repeat, Restore a backup… where the database is
-// at head and only reading it failed, and the data folder for every one. A save whose
-// read-back failed stops here too, saying the change was saved (ADR 0228).
+// The startup error screen (ADR 0153). Says what happened, honestly (a stopped upgrade
+// may have changed the database), and offers only what can help: Try again for a failure
+// that may not repeat, Restore a backup… where the database is at head and only reading
+// it failed, and the data folder for every one. A save whose read-back failed stops here
+// too, saying the change was saved (ADR 0228).
 import { useState } from "react";
 import {
   usePortfolioStore,

@@ -14,7 +14,7 @@
   font-weight: 600;
   color: var(--ink-soft);
 }
-/* UX-040: required mark; the empty alt text keeps it out of the accessible name. */
+/* Required mark; the empty alt text keeps it out of the accessible name. */
 .field > label.required::after {
   content: " *";
   content: " *" / "";
@@ -132,7 +132,7 @@
   color: var(--ink);
 }
 .date-popover .rdp-weekday {
-  /* Full opacity + ink-soft: the library's 0.75 opacity dropped it below 4.5:1 (UX-025). */
+  /* Full opacity + ink-soft: the library's 0.75 opacity dropped it below 4.5:1. */
   color: var(--ink-soft);
   opacity: 1;
   font-weight: 600;
@@ -386,7 +386,7 @@
   color: var(--ink-soft);
 }
 
-/* A <form> that only groups fields for Return-to-submit; layout ignores it (UX-028). */
+/* A <form> that only groups fields for Return-to-submit; layout ignores it. */
 .form-contents {
   display: contents;
 }
@@ -400,7 +400,7 @@
 
 /* Matches only from the 900 px minimum window to 920 px: there it puts the form grids in
    one column; the chart grid's half of the rule is in charts.css. Removing it is a visible
-   change that needs an ADR (ADR 0001), parked by #494. */
+   change that needs an ADR (ADR 0001), so it stays until one is accepted. */
 @media (max-width: 920px) {
   .form-grid {
     grid-template-columns: 1fr;

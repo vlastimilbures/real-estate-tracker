@@ -1,4 +1,4 @@
-// The KPI tiles the Dashboard band and Property detail's snapshot share (#485). Each page
+// The KPI tiles the Dashboard band and Property detail's snapshot share. Each page
 // names the LTV and DSCR tiles its own way and keeps its own reveal delays.
 import type { ReactNode } from "react";
 import type { PortfolioSnapshot } from "../../engine";

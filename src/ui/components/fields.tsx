@@ -16,7 +16,7 @@ export function Field({
   label: string;
   error?: string | undefined;
   help?: string | undefined;
-  /** Marks the label "*" and the control aria-required (UX-040). */
+  /** Marks the label "*" and the control aria-required. */
   required?: boolean | undefined;
   /** Marks the control invalid without an error of its own, e.g. a whole row (ADR 0189). */
   invalid?: boolean | undefined;
@@ -29,7 +29,7 @@ export function Field({
   return (
     <div className={`field${error || invalid ? " invalid" : ""}`}>
       {/* The "*" is CSS generated content with empty alt text: seen, not read
-          (the control is aria-required instead) (UX-040). */}
+          (the control is aria-required instead). */}
       <label htmlFor={id} className={required ? "required" : undefined}>
         {label}
       </label>
