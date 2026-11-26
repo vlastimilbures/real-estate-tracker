@@ -88,6 +88,7 @@ describe("UX-034 i18n sweep", () => {
         allLabel={cs.common.all}
         selected={[]}
         onChange={() => undefined}
+        testId="dashboard-filter"
       />,
     );
     await userEvent.click(screen.getAllByRole("button")[0]!);
