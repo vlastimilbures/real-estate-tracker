@@ -72,8 +72,9 @@ Written first and failing on main:
 
 ## Capture
 
-One capture, en/light/1280x800, `UX_AXE=0`, against the cached main baseline. Expected:
-0 px over tolerance on every screen. The capture covers the info banner (the sample banner
+One capture, en/light/1280x800, `UX_AXE=0`, against the cached main baseline at b8ab5e99,
+which differs from this branch's main only by #607's change to `20e-property-invalid-data`
+(12,181 px, the same on both sides). Expected and found: every other screen 0 px. The capture covers the info banner (the sample banner
 on the Dashboard screens and `82-load-sample-banner`, the kept notices) and the warn banner
 (loan warnings on Property detail, the acquisition note). No capture screen shows the
 error banner, which appears only after a failed write; the CSS test above shows that its
