@@ -6,16 +6,84 @@
 //! file); `detail` is the `Display` text, which the webview shows or logs as it is.
 //! Renaming or removing a code needs an ADR. Editing a `Display` arm no longer breaks
 //! error handling, but where the detail is shown, it is still a user-visible change.
+//! A write SQLite refuses for a constraint also sends `constraint`, the fields of
+//! TypeScript's `ConstraintFailure`, read here from SQLite's extended result code and its
+//! own message, so the webview never parses a driver's text.
 
 use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
 use std::fmt;
 use std::path::PathBuf;
 
+/// The constraint a refused write broke (ADR 0270 point 3): the table and columns of a
+/// UNIQUE (or PRIMARY KEY) or NOT NULL failure, the CHECK constraint's name, or a
+/// FOREIGN KEY failure. Names only, never a value.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum Constraint {
+    Unique { table: String, columns: Vec<String> },
+    NotNull { table: String, columns: Vec<String> },
+    Check { check: String },
+    ForeignKey,
+}
+
+/// SQLite's extended result codes for the constraints the app names.
+const SQLITE_CONSTRAINT_CHECK: i64 = 275;
+const SQLITE_CONSTRAINT_FOREIGNKEY: i64 = 787;
+const SQLITE_CONSTRAINT_NOTNULL: i64 = 1299;
+const SQLITE_CONSTRAINT_PRIMARYKEY: i64 = 1555;
+const SQLITE_CONSTRAINT_UNIQUE: i64 = 2067;
+
+/// `t.a, t.b` → `("t", ["a", "b"])`: one table, every item `table.column` of plain names.
+fn table_columns(list: &str) -> Option<(String, Vec<String>)> {
+    let plain = |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+    let mut table = None;
+    let mut columns = Vec::new();
+    for item in list.split(", ") {
+        let (t, c) = item.split_once('.')?;
+        if !plain(t) || !plain(c) {
+            return None;
+        }
+        table.get_or_insert_with(|| t.to_string());
+        columns.push(c.to_string());
+    }
+    Some((table?, columns))
+}
+
+impl Constraint {
+    /// The constraint behind SQLite's extended result `code`, named from its `message`
+    /// (`UNIQUE constraint failed: t.a, t.b`, `CHECK constraint failed: name`). None for
+    /// any other code, or a message that does not name it as expected.
+    pub fn from_sqlite(code: i64, message: &str) -> Option<Self> {
+        let after = |prefix: &str| message.strip_prefix(prefix);
+        match code {
+            SQLITE_CONSTRAINT_UNIQUE | SQLITE_CONSTRAINT_PRIMARYKEY => {
+                let (table, columns) = table_columns(after("UNIQUE constraint failed: ")?)?;
+                Some(Self::Unique { table, columns })
+            }
+            SQLITE_CONSTRAINT_NOTNULL => {
+                let (table, columns) = table_columns(after("NOT NULL constraint failed: ")?)?;
+                Some(Self::NotNull { table, columns })
+            }
+            SQLITE_CONSTRAINT_CHECK => {
+                // A named CHECK; an unnamed one shows its expression, of which the first
+                // word is kept, as before.
+                let name: String = after("CHECK constraint failed: ")?
+                    .chars()
+                    .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                    .collect();
+                (!name.is_empty()).then_some(Self::Check { check: name })
+            }
+            SQLITE_CONSTRAINT_FOREIGNKEY => Some(Self::ForeignKey),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum AppError {
-    /// An sqlx / SQLite error, verbatim.
-    Sql(String),
+    /// An sqlx / SQLite error, verbatim, with the constraint it names, if any.
+    Sql(String, Option<Constraint>),
     /// A file-system error, verbatim.
     Io(String),
     /// Any other library error (paths, dialogs, headers, JSON), verbatim.
@@ -59,7 +127,7 @@ impl AppError {
     /// function. Renaming or removing a code needs an ADR.
     pub fn code(&self) -> &'static str {
         match self {
-            Self::Sql(_) => "SQL",
+            Self::Sql(..) => "SQL",
             Self::Io(_) => "IO",
             Self::Other(_) => "OTHER",
             Self::UnsupportedParam(_) => "UNSUPPORTED_PARAM",
@@ -88,7 +156,7 @@ impl AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Sql(m) | Self::Io(m) | Self::Other(m) => f.write_str(m),
+            Self::Sql(m, _) | Self::Io(m) | Self::Other(m) => f.write_str(m),
             Self::UnsupportedParam(v) => write!(f, "unsupported parameter type: {v}"),
             Self::UnsupportedDatatype(t) => write!(f, "unsupported datatype: {t}"),
             Self::DbNotLoaded(db) => write!(f, "database not loaded: {db}"),
@@ -114,20 +182,36 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
-/// On the wire an `AppError` is `{ code, detail }`: its code and its `Display` text
-/// (ADR 0270).
+/// On the wire an `AppError` is `{ code, detail }`: its code and its `Display` text, and
+/// for a constraint failure also `constraint` (ADR 0270).
 impl Serialize for AppError {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        let mut out = s.serialize_struct("AppError", 2)?;
+        let constraint = match self {
+            Self::Sql(_, c) => c.as_ref(),
+            _ => None,
+        };
+        let mut out = s.serialize_struct("AppError", 2 + usize::from(constraint.is_some()))?;
         out.serialize_field("code", self.code())?;
         out.serialize_field("detail", &self.to_string())?;
+        if let Some(c) = constraint {
+            out.serialize_field("constraint", c)?;
+        }
         out.end()
     }
 }
 
+/// sqlx's text as the detail; for a database error, the constraint its extended result
+/// code and SQLite's own message (without sqlx's wrapper) name.
 impl From<sqlx::Error> for AppError {
     fn from(e: sqlx::Error) -> Self {
-        Self::Sql(e.to_string())
+        let constraint = match &e {
+            sqlx::Error::Database(db) => db
+                .code()
+                .and_then(|c| c.parse::<i64>().ok())
+                .and_then(|code| Constraint::from_sqlite(code, db.message())),
+            _ => None,
+        };
+        Self::Sql(e.to_string(), constraint)
     }
 }
 
@@ -140,6 +224,7 @@ impl From<std::io::Error> for AppError {
 #[cfg(test)]
 mod tests {
     use super::AppError::{self, *};
+    use super::Constraint;
     use serde_json::json;
     use std::collections::HashSet;
     use std::path::PathBuf;
@@ -149,7 +234,7 @@ mod tests {
         let p = PathBuf::from("/tmp/b/x.sqlite");
         vec![
             (
-                Sql("UNIQUE constraint failed: t.a".into()),
+                Sql("UNIQUE constraint failed: t.a".into(), None),
                 "UNIQUE constraint failed: t.a",
                 "SQL",
             ),
@@ -290,6 +375,115 @@ mod tests {
         for (e, detail, code) in samples() {
             let json = serde_json::to_value(&e).unwrap();
             assert_eq!(json, json!({ "code": code, "detail": detail }));
+        }
+    }
+
+    fn unique(table: &str, columns: &[&str]) -> Constraint {
+        Constraint::Unique {
+            table: table.into(),
+            columns: columns.iter().map(|c| c.to_string()).collect(),
+        }
+    }
+
+    /// ADR 0270 point 3: SQLite's extended result code says which constraint failed, and
+    /// SQLite's own message names the table and columns, or the CHECK's name.
+    #[test]
+    fn a_constraint_comes_from_the_extended_code_and_the_message() {
+        let cases = [
+            (
+                2067,
+                "UNIQUE constraint failed: t.a",
+                Some(unique("t", &["a"])),
+            ),
+            (
+                2067,
+                "UNIQUE constraint failed: t.a, t.b",
+                Some(unique("t", &["a", "b"])),
+            ),
+            (
+                1555,
+                "UNIQUE constraint failed: t.id",
+                Some(unique("t", &["id"])),
+            ),
+            (
+                1299,
+                "NOT NULL constraint failed: t.a",
+                Some(Constraint::NotNull {
+                    table: "t".into(),
+                    columns: vec!["a".into()],
+                }),
+            ),
+            (
+                275,
+                "CHECK constraint failed: rule_x",
+                Some(Constraint::Check {
+                    check: "rule_x".into(),
+                }),
+            ),
+            (
+                787,
+                "FOREIGN KEY constraint failed",
+                Some(Constraint::ForeignKey),
+            ),
+        ];
+        for (code, message, want) in cases {
+            assert_eq!(Constraint::from_sqlite(code, message), want, "{message}");
+        }
+    }
+
+    /// Text that only looks like a constraint message is none: the code decides, and a
+    /// message the parser does not recognise gives no fields rather than wrong ones.
+    #[test]
+    fn a_look_alike_is_no_constraint() {
+        for (code, message) in [
+            (1, "UNIQUE constraint failed: t.a"),
+            (19, "UNIQUE constraint failed: t.a"),
+            (2067, "UNIQUE constraint failed: index 'x'"),
+            (2067, "UNIQUE constraint failed: "),
+            (1299, "NOT NULL constraint failed: a"),
+            (275, "CHECK constraint failed: "),
+            (275, "something else"),
+            (5, "database is locked"),
+        ] {
+            assert_eq!(
+                Constraint::from_sqlite(code, message),
+                None,
+                "{code} {message}"
+            );
+        }
+    }
+
+    /// On the wire a constraint has the shape of TypeScript's `ConstraintFailure`, next to
+    /// the code and the unchanged detail.
+    #[test]
+    fn a_constraint_failure_sends_its_fields() {
+        let detail = "error returned from database: (code: 2067) UNIQUE constraint failed: t.a";
+        let e = Sql(detail.into(), Some(unique("t", &["a"])));
+        assert_eq!(e.to_string(), detail);
+        assert_eq!(
+            serde_json::to_value(&e).unwrap(),
+            json!({
+                "code": "SQL",
+                "detail": detail,
+                "constraint": { "kind": "unique", "table": "t", "columns": ["a"] },
+            })
+        );
+        let shapes = [
+            (
+                Constraint::NotNull {
+                    table: "t".into(),
+                    columns: vec!["a".into()],
+                },
+                json!({ "kind": "notNull", "table": "t", "columns": ["a"] }),
+            ),
+            (
+                Constraint::Check { check: "c".into() },
+                json!({ "kind": "check", "check": "c" }),
+            ),
+            (Constraint::ForeignKey, json!({ "kind": "foreignKey" })),
+        ];
+        for (c, want) in shapes {
+            assert_eq!(serde_json::to_value(&c).unwrap(), want);
         }
     }
 

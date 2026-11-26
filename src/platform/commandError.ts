@@ -39,16 +39,32 @@ function isCode(code: string): code is CommandErrorCode {
   return CODES.has(code);
 }
 
-/** A failed app command: Rust's code, and its text as the message. */
+/** A write SQLite refused because of a schema constraint (Rust's `Constraint`,
+ *  src-tauri/src/error.rs). Names only the table, columns or constraint, never the
+ *  values. */
+export type ConstraintFailure =
+  | { kind: "unique"; table: string; columns: string[] }
+  | { kind: "notNull"; table: string; columns: string[] }
+  | { kind: "check"; check: string }
+  | { kind: "foreignKey" };
+
+/** A failed app command: Rust's code, its text as the message, and for a constraint
+ *  failure the constraint's fields. */
 export class CommandError extends Error {
   readonly code: CommandErrorCode;
   /** Rust's `Display` text, word for word; also the message. */
   readonly detail: string;
-  constructor(code: CommandErrorCode, detail: string) {
+  readonly constraint?: ConstraintFailure;
+  constructor(
+    code: CommandErrorCode,
+    detail: string,
+    constraint?: ConstraintFailure,
+  ) {
     super(detail);
     this.name = "CommandError";
     this.code = code;
     this.detail = detail;
+    if (constraint) this.constraint = constraint;
   }
 }
 
@@ -65,7 +81,34 @@ export function isCommandError(
  *  the text the user sees, and the code stays one of the list. */
 export function toCommandError(rejection: unknown): unknown {
   if (typeof rejection !== "object" || rejection === null) return rejection;
-  const { code, detail } = rejection as Record<string, unknown>;
+  const { code, detail, constraint } = rejection as Record<string, unknown>;
   if (typeof code !== "string" || typeof detail !== "string") return rejection;
-  return new CommandError(isCode(code) ? code : "OTHER", detail);
+  return new CommandError(
+    isCode(code) ? code : "OTHER",
+    detail,
+    constraintFrom(constraint),
+  );
+}
+
+const isNames = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((x) => typeof x === "string");
+
+/** The `constraint` Rust sent, checked field by field; undefined when absent or not in
+ *  the shape of a `ConstraintFailure`. */
+function constraintFrom(value: unknown): ConstraintFailure | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const { kind, table, columns, check } = value as Record<string, unknown>;
+  switch (kind) {
+    case "unique":
+    case "notNull":
+      return typeof table === "string" && isNames(columns)
+        ? { kind, table, columns }
+        : undefined;
+    case "check":
+      return typeof check === "string" ? { kind, check } : undefined;
+    case "foreignKey":
+      return { kind };
+    default:
+      return undefined;
+  }
 }
