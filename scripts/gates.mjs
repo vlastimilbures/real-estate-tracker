@@ -261,6 +261,22 @@ export const GATES = [
     readme: "The Rust shell builds",
   },
   {
+    id: "menu-macos",
+    run: "cargo test --manifest-path src-tauri/Cargo.toml --test menu_built",
+    what: "the AppKit menu as built matches src-tauri/tests/menu_built.txt, on a macOS runner (fails if it skips)",
+    where: "ci",
+    ci: [
+      {
+        run: 'cargo test --manifest-path src-tauri/Cargo.toml --test menu_built | tee "$log"',
+      },
+      {
+        run: "if ! grep -qE '^menu_built: [0-9]+ lines match$' \"$log\"; then",
+      },
+    ],
+    why: "`pnpm check` runs it on a Mac (cargo test); the Linux CI runner skips it",
+    readme: "The AppKit menu as built matches its pin, on macOS",
+  },
+  {
     id: "mutation",
     run: "pnpm mutation",
     what: "Stryker mutation score on the engine",
