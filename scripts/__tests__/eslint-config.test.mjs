@@ -126,6 +126,28 @@ describe("test bans in eslint.config.js", () => {
     expect(casts.map((m) => m.line)).toEqual([1, 2, 3]);
   });
 
+  // Array and generic casts make blocks just as well (#480 review).
+  const ARRAY_CASTS = [
+    "const a = [] as MortgageBlock[];",
+    "const b = [] as Array<DevelopmentLoan>;",
+    "const c = [] as ReadonlyArray<PlainLoan>;",
+    "const d = [] as readonly MortgageBlock[];",
+    "const e = [] as unknown as (MortgageBlock | undefined)[];",
+    "const f = [] as Money[];",
+    "const g = [] as string[];",
+    "",
+  ].join("\n");
+  it.each([
+    ["src/engine/__tests__/x.test.ts", "No loan-block casts", [1, 2, 3, 4, 5]],
+    ["src/state/__tests__/x.test.ts", "No loan-block casts", [1, 2, 3, 4, 5]],
+    ["src/engine/x.ts", "No brand casts", [1, 2, 3, 4, 5, 6]],
+    ["src/ui/x.tsx", "No brand casts", [1, 2, 3, 4, 5, 6]],
+  ])("reject array casts in %s", async (file, prefix, lines) => {
+    const [result] = await eslint.lintText(ARRAY_CASTS, { filePath: file });
+    const casts = result.messages.filter((m) => m.message.startsWith(prefix));
+    expect(casts.map((m) => m.line)).toEqual(lines);
+  });
+
   it("keep each block's own bans: a lib/day mock in a state test", async () => {
     const [result] = await eslint.lintText(
       'import { vi } from "vitest";\nvi.mock("../../lib/day");\n',
