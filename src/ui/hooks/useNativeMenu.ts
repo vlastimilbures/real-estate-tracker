@@ -4,7 +4,7 @@ import { useUiStore } from "../../state/uiStore";
 import { onMenuEvent, setMenuLabels } from "../../state/platform";
 import { isTauri } from "../../lib/tauri";
 import { modalOpen } from "../layers";
-import { menuLabels, menuRoute } from "../model/menu";
+import { MENU_EVENTS, menuLabels, menuRoute } from "../model/menu";
 import { useT } from "./useT";
 
 /**
@@ -25,17 +25,17 @@ export function useNativeMenu(): void {
     const held = () =>
       modalOpen() || usePortfolioStore.getState().status.kind !== "ready";
     const offs = [
-      onMenuEvent("menu://about", () => {
+      onMenuEvent(MENU_EVENTS.about, () => {
         if (!held()) useUiStore.getState().openAbout();
       }),
-      onMenuEvent("menu://navigate", (e) => {
+      onMenuEvent(MENU_EVENTS.navigate, (e) => {
         const route = menuRoute(e.payload);
         if (route && !held()) useUiStore.getState().navigate(route);
       }),
-      onMenuEvent("menu://new-property", () => {
+      onMenuEvent(MENU_EVENTS.newProperty, () => {
         if (!held()) useUiStore.getState().requestNewProperty();
       }),
-      onMenuEvent("menu://settings", () => {
+      onMenuEvent(MENU_EVENTS.settings, () => {
         if (!held()) useUiStore.getState().openSettings();
       }),
     ];

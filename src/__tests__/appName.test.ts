@@ -50,7 +50,7 @@ describe("app name (ADR 0076)", () => {
   });
 
   it("names the About menu item and the About page", () => {
-    expect(read("src-tauri/src/lib.rs")).toContain(`"About ${name}"`);
+    expect(read("src-tauri/src/menu.rs")).toContain(`"About ${name}"`);
     for (const d of [en, cs, ru]) {
       expect(d.about.subtitle).toBe(name);
       expect(d.menu.about).toContain(name);
