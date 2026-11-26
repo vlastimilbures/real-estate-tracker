@@ -20,8 +20,8 @@ import type {
   MortgageBlock,
   Portfolio,
   Property,
+  InstalmentCode,
   Rate,
-  ValidationCode,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Decimal } from "../../lib/money";
@@ -98,10 +98,7 @@ export type DataFinding =
    *  breaks: ZERO_RATE_ZERO_INSTALMENT for a 0 % loan with a 0 Kč instalment. */
   | {
       kind: "instalmentBelowInterest";
-      code: Extract<
-        ValidationCode,
-        "INSTALMENT_BELOW_INTEREST" | "ZERO_RATE_ZERO_INSTALMENT"
-      >;
+      code: InstalmentCode;
       loanStart: IsoDate;
       instalment: Money;
       interest: Decimal;
@@ -487,6 +484,22 @@ function outOfRangeText(t: TextDict, f: OutOfRange): string {
   }
 }
 
+/** A stored loan below its interest, worded by the rule it breaks (ADR 0264): every
+ *  instalment code needs its sentence. */
+const INSTALMENT_TEXT: Record<
+  InstalmentCode,
+  (t: TextDict, f: FindingOf<"instalmentBelowInterest">) => string
+> = {
+  INSTALMENT_BELOW_INTEREST: (t, f) =>
+    t.dataCheck.instalmentBelowInterest(
+      fmtDate(f.loanStart),
+      fmtCzk(f.instalment),
+      fmtCzk(f.interest),
+    ),
+  ZERO_RATE_ZERO_INSTALMENT: (t, f) =>
+    t.dataCheck.zeroRateZeroInstalment(fmtDate(f.loanStart)),
+};
+
 /** Each kind of finding's sentence. */
 const FINDING_TEXT: {
   [K in FindingKind]: (t: TextDict, f: FindingOf<K>, resetRate: Rate) => string;
@@ -504,14 +517,7 @@ const FINDING_TEXT: {
   leaseOverlap: (t, f) =>
     t.dataCheck.leaseOverlap(fmtDate(f.first), fmtDate(f.second)),
   fixationEnded: (t, f, resetRate) => loanWarningText(t, f, resetRate),
-  instalmentBelowInterest: (t, f) =>
-    f.code === "ZERO_RATE_ZERO_INSTALMENT"
-      ? t.dataCheck.zeroRateZeroInstalment(fmtDate(f.loanStart))
-      : t.dataCheck.instalmentBelowInterest(
-          fmtDate(f.loanStart),
-          fmtCzk(f.instalment),
-          fmtCzk(f.interest),
-        ),
+  instalmentBelowInterest: (t, f) => INSTALMENT_TEXT[f.code](t, f),
   growthDefault: ({ dataCheck: d }, f) =>
     f.appreciation && f.rentIndexation
       ? d.growthBoth
