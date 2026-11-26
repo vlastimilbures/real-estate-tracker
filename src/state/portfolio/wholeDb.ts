@@ -104,34 +104,51 @@ function csvActions({
   };
 }
 
-/** Restore from the startup error screen (ADR 0153, ADR 0231). */
-function restoreAtStartupAction({
-  get,
-  exclusive,
-}: StoreCtx): WholeDbActions["restoreAtStartup"] {
+/** `result`, after dropping what described the old data when it replaced the data
+ *  (ADR 0154). */
+function replacing<T>(
+  ctx: StoreCtx,
+  result: Promise<Result<T, ActionError>>,
+): Promise<Result<T, ActionError>> {
+  return result.then((r) => {
+    if (r.ok) ctx.dataReplaced();
+    return r;
+  });
+}
+
+/** Restore from the startup error screen (ADR 0153, ADR 0231). Its data replaced, the
+ *  old data's notice, failure and import report go at once: until Continue the app shows
+ *  only the restored screen, which shows none of them. */
+function restoreAtStartupAction(
+  ctx: StoreCtx,
+): WholeDbActions["restoreAtStartup"] {
+  const { get, exclusive } = ctx;
   return (backup) =>
-    attempt("RESTORE", async () => {
-      // Only where the database migrated to head and only reading it failed
-      // (READ_FAILURES, ADR 0231); any other startup failure leaves a database a
-      // restore must not write to.
-      const status = get().status;
-      if (
-        status.kind !== "startupFailed" ||
-        !status.startup ||
-        !READ_FAILURES.has(status.startup.code)
-      )
-        throw new Error(
-          "A restore at startup needs a ROW_INVALID or SCENARIO_INVALID failure",
+    replacing(
+      ctx,
+      attempt("RESTORE", async () => {
+        // Only where the database migrated to head and only reading it failed
+        // (READ_FAILURES, ADR 0231); any other startup failure leaves a database a
+        // restore must not write to.
+        const status = get().status;
+        if (
+          status.kind !== "startupFailed" ||
+          !status.startup ||
+          !READ_FAILURES.has(status.startup.code)
+        )
+          throw new Error(
+            "A restore at startup needs a ROW_INVALID or SCENARIO_INVALID failure",
+          );
+        const { safetyBackup } = await exclusive("restore", (sql) =>
+          confirmRestore(sql, backup, checkInputRules),
         );
-      const { safetyBackup } = await exclusive("restore", (sql) =>
-        confirmRestore(sql, backup, checkInputRules),
-      );
-      return {
-        safetyBackup,
-        ready:
-          get().status.kind === "startupFailed" && get().portfolio !== null,
-      };
-    });
+        return {
+          safetyBackup,
+          ready:
+            get().status.kind === "startupFailed" && get().portfolio !== null,
+        };
+      }),
+    );
 }
 
 /** The actions that replace the data (restore, the sample) and leave the startup screen. */
@@ -141,9 +158,12 @@ function replaceActions(
   const { set, get, replaceData } = ctx;
   return {
     restoreBackup: (backup) =>
-      attempt("RESTORE", () =>
-        replaceData("restore", (sql) =>
-          confirmRestore(sql, backup, checkInputRules),
+      replacing(
+        ctx,
+        attempt("RESTORE", () =>
+          replaceData("restore", (sql) =>
+            confirmRestore(sql, backup, checkInputRules),
+          ),
         ),
       ),
     restoreAtStartup: restoreAtStartupAction(ctx),
@@ -153,11 +173,17 @@ function replaceActions(
       set({ status: { kind: "ready" }, error: null });
     },
     clearSample: () =>
-      attempt("SAMPLE", () =>
-        replaceData("clearSample", (sql) => clearSample(sql)),
+      replacing(
+        ctx,
+        attempt("SAMPLE", () =>
+          replaceData("clearSample", (sql) => clearSample(sql)),
+        ),
       ),
     loadSample: () =>
-      attempt("SAMPLE", () => replaceData("loadSample", loadSample)),
+      replacing(
+        ctx,
+        attempt("SAMPLE", () => replaceData("loadSample", loadSample)),
+      ),
   };
 }
 

@@ -203,7 +203,9 @@ export interface StoreAccess {
 }
 
 /** What an action module gets from its store: the store's own `set` and `get`, its one
- *  write runner, and the clock. */
+ *  write runner, the clock, and what to drop once the data is replaced. */
 export interface StoreCtx extends StoreAccess, WriteRunner {
   now: () => Date;
+  /** The data was replaced: drop what described the old data (ADR 0154). */
+  dataReplaced: () => void;
 }

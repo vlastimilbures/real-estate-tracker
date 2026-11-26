@@ -45,7 +45,8 @@ export interface FeedbackSlice {
   setFailure: (action: OutcomeAction, error: ActionError) => void;
   dismissFailure: () => void;
   /** The data was replaced (restore, Clear sample, Load sample): drop the notice, the
-   *  failure and the import report, which describe the old data (ADR 0154). */
+   *  failure and the import report, which describe the old data (ADR 0154). The
+   *  portfolio store calls it when a replacing action succeeds. */
   dataReplaced: () => void;
   /** The sample was cleared: name the safety backup in the notice (ADR 0094) and open
    *  the Dashboard. */

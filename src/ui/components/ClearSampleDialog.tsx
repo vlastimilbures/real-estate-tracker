@@ -15,7 +15,6 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
   const cancelId = useId();
   const clearSample = usePortfolioStore((s) => s.clearSample);
   const showSampleCleared = useUiStore((s) => s.showSampleCleared);
-  const dataReplaced = useUiStore((s) => s.dataReplaced);
   // A failed clear puts focus on Cancel (ADR 0248 §1); a success closes the dialog.
   const [clearing, setClearing] = useBusyFocus(() =>
     document.getElementById(cancelId),
@@ -28,7 +27,6 @@ function ClearSampleDialog({ onClose }: { onClose: () => void }) {
     const cleared = await clearSample();
     if (cleared.ok) {
       onClose();
-      dataReplaced();
       showSampleCleared(cleared.value.safetyBackup);
       return;
     }

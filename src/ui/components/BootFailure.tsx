@@ -251,7 +251,6 @@ export function BootFailure() {
   const init = usePortfolioStore((s) => s.init);
   const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
   const continueAfterRestore = usePortfolioStore((s) => s.continueAfterRestore);
-  const dataReplaced = useUiStore((s) => s.dataReplaced);
   const setNotice = useUiStore((s) => s.setNotice);
   const [revealFailed, setRevealFailed] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
@@ -270,7 +269,6 @@ export function BootFailure() {
       else {
         // The data could not be read back: the read-back screen names the copy, also
         // after a Try again that fails again (ADR 0154 §5, ADR 0228).
-        dataReplaced();
         setNotice({ kind: "restored", file: safetyBackup });
       }
     },
@@ -298,7 +296,6 @@ export function BootFailure() {
         onContinue={() => {
           // Leave the screen: the app keeps naming the safety copy until dismissed
           // (ADR 0154).
-          dataReplaced();
           setNotice({ kind: "restored", file: restored });
           continueAfterRestore();
         }}

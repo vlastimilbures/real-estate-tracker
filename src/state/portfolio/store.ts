@@ -19,11 +19,13 @@ import { scenarioActions } from "./scenarioActions";
 import { wholeDbActions } from "./wholeDb";
 import type { DbHandle, PortfolioState, StoreCtx } from "./types";
 
-/** What a store needs from outside: the database opener `init` uses by default, and the
- *  clock that stamps scenarios and backups. */
+/** What a store needs from outside: the database opener `init` uses by default, the
+ *  clock that stamps scenarios and backups, and what to drop once the data is replaced
+ *  (the UI's notice, failure and import report, ADR 0154). */
 export interface StoreDeps {
   open: () => Promise<Sql>;
   now: () => Date;
+  dataReplaced: () => void;
 }
 
 /** Startup and reading the data back, and the banner error. */
@@ -111,6 +113,7 @@ export function createPortfolioStore(deps: StoreDeps) {
       db,
       ...createWriteRunner(set, get, db),
       now: deps.now,
+      dataReplaced: deps.dataReplaced,
     };
 
     return {
