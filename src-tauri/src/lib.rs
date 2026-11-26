@@ -1,5 +1,3 @@
-use tauri::image::Image;
-use tauri::menu::{IconMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem};
 use tauri::{Emitter, Manager};
 #[cfg(target_os = "macos")]
 use tauri::{RunEvent, WindowEvent};
@@ -101,83 +99,7 @@ pub fn run() {
                 }
                 Err(e) => log::warn!("no log folder to make private: {e}"),
             }
-            // Native macOS menu: start from the OS default (keeps Edit/Window/Quit), drop the
-            // predefined "About {app}" item (which opens an empty native popup) and replace it
-            // with a custom "About…" that emits to the webview to open the in-app About page
-            // (App.tsx listens for it).
-            let menu = Menu::default(app.handle())?;
-            // Our items, relabelled in the UI language by `set_menu_labels` (UX-076).
-            let mut ours: Vec<MenuItemKind<tauri::Wry>> = Vec::new();
-            let about = MenuItem::with_id(
-                app,
-                menu::ABOUT,
-                "About Real Estate Tracker",
-                true,
-                None::<&str>,
-            )?;
-            // "Settings…" with the macOS-standard ⌘, accelerator. Emits to the webview to open
-            // the in-app Settings page (App.tsx listens for menu://settings).
-            let gear = Image::new_owned(
-                include_bytes!("../icons/menu-settings@2x.rgba").to_vec(),
-                32,
-                32,
-            );
-            let settings = IconMenuItem::with_id(
-                app,
-                menu::SETTINGS,
-                "Settings…",
-                true,
-                Some(gear),
-                Some("CmdOrCtrl+,"),
-            )?;
-            if let Some(MenuItemKind::Submenu(app_menu)) = menu.items()?.into_iter().next() {
-                // The app submenu's first item is the predefined About; remove it, then prepend
-                // ours so the leading separator (now at index 0) keeps the native spacing.
-                app_menu.remove_at(0)?;
-                app_menu.prepend(&about)?;
-                // Insert Settings just below the leading About + separator (index 2).
-                app_menu.insert(&settings, 2)?;
-            }
-            ours.push(MenuItemKind::MenuItem(about));
-            ours.push(MenuItemKind::Icon(settings));
-            // UX-066 (DR-143): File ▸ New Property… (⌘N) and View ▸ pages (⌘1–⌘5), each
-            // emitting to the webview like Settings (App.tsx listens).
-            for item in menu.items()? {
-                let MenuItemKind::Submenu(sub) = item else {
-                    continue;
-                };
-                match sub.text()?.as_str() {
-                    "File" => {
-                        let new_property = MenuItem::with_id(
-                            app,
-                            menu::NEW_PROPERTY,
-                            "New Property…",
-                            true,
-                            Some("CmdOrCtrl+N"),
-                        )?;
-                        sub.prepend(&PredefinedMenuItem::separator(app)?)?;
-                        sub.prepend(&new_property)?;
-                        ours.push(MenuItemKind::MenuItem(new_property));
-                    }
-                    "View" => {
-                        sub.prepend(&PredefinedMenuItem::separator(app)?)?;
-                        for (i, (route, label)) in menu::VIEW_PAGES.iter().enumerate().rev() {
-                            let page = MenuItem::with_id(
-                                app,
-                                format!("{}{route}", menu::NAV_PREFIX),
-                                *label,
-                                true,
-                                Some(format!("CmdOrCtrl+{}", i + 1).as_str()),
-                            )?;
-                            sub.prepend(&page)?;
-                            ours.push(MenuItemKind::MenuItem(page));
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            app.set_menu(menu)?;
-            app.manage(menu::MenuItems(std::sync::Mutex::new(ours)));
+            menu::install(app)?;
 
             Ok(())
         })

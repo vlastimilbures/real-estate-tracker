@@ -41,6 +41,20 @@ sqlx-sqlite = { path = "vendor/sqlx-sqlite" }
 # Dev-only: async test runtime for tests/*.rs (H-14 proof, db.rs behaviour).
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+# tests/menu_built.rs builds the real menu on tauri's mock runtime (no app, no window) and
+# reads it back from AppKit. The same tauri and objc2 versions the app already compiles.
+tauri = { version = "2.11.2", features = ["test"] }
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSApplication", "NSResponder", "NSMenu", "NSMenuItem", "NSEvent", "NSImage"] }
+
+# AppKit makes menus on the process's main thread only, which a libtest worker is not:
+# this binary runs its own main().
+[[test]]
+name = "menu_built"
+harness = false
 
 # Build scripts and proc-macros only (the app binary is unaffected): release builds strip
 # their debug info by default, and macOS 27's loader rejects the stripped proc-macro

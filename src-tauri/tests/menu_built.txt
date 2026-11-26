@@ -1,0 +1,36 @@
+test
+  About Real Estate Tracker
+  ---
+  Settings… (icon) [⌘,]
+  Services (icon)
+  ---
+  Hide {process} (icon) [⌘h]
+  Hide Others (icon) [⌘⌥h]
+  ---
+  Quit {process} (icon) [⌘q]
+File
+  New Property… [⌘n]
+  ---
+  Close Window (icon) [⌘w]
+Edit
+  Undo (icon) [⌘z]
+  Redo (icon) [⌘⇧z]
+  ---
+  Cut (icon) [⌘x]
+  Copy (icon) [⌘c]
+  Paste (icon) [⌘v]
+  Select All (icon) [⌘a]
+View
+  Dashboard [⌘1]
+  Properties [⌘2]
+  Projections [⌘3]
+  Scenarios [⌘4]
+  Import [⌘5]
+  ---
+  Toggle Full Screen [⌘⌃f]
+Window
+  Minimize (icon) [⌘m]
+  Zoom (icon)
+  ---
+  Close Window (icon) [⌘w]
+Help
