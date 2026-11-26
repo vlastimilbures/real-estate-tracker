@@ -1,7 +1,7 @@
 // Where a form shows its errors, read from the DOM (#490 PR 3 pins): each error text
 // keyed by the field it sits in (its label, inside its row group and list, if any), and
 // every form-level line (alert, error summary, banner) under "form".
-const FORM_LEVEL = '[role="alert"], .error-summary, .error-banner';
+const FORM_LEVEL = '[role="alert"], .error-summary, .banner.error';
 
 function placeOf(err: Element): string {
   const field = err.closest(".field")?.querySelector("label")?.textContent;
