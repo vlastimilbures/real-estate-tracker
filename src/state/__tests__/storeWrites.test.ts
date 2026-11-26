@@ -105,11 +105,13 @@ describe("portfolioStore mutations", () => {
     };
     portfolioDb.set(slow);
     const pid = usePortfolioStore.getState().portfolio!.properties[0].id;
+    // Dated, so each add is one insert and changes no other row (ADR 0144).
     const add = (id: string, y: number) =>
       usePortfolioStore.getState().addValuation({
         id,
         propertyId: pid,
         validFrom: new Date(Date.UTC(y, 0, 1)) as IsoDate,
+        validTo: new Date(Date.UTC(y, 11, 31)) as IsoDate,
         marketValue: money("1"),
       });
     const a = add("first", 2031);

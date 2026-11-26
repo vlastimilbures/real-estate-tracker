@@ -17,3 +17,8 @@ export {
   /** Tests; the app runs `portfolioOutputs`. */
   portfolioKpis,
 } from "../../kpis";
+export {
+  /** Store tests (the seed's open records); the app runs `valuationClosedBy` and
+   *  `leaseClosedBy`. */
+  openPredecessor,
+} from "../../effectiveDating";

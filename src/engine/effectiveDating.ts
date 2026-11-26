@@ -1,7 +1,7 @@
 // Effective-dated records (valuations, leases): which open-ended record a newly added
-// one succeeds (ADR 0099) and which leases overlap (ADR 0163).
-import { byStart, isAfter, isOnOrBefore } from "./dates";
-import type { Lease } from "./types";
+// one succeeds and ends (ADR 0099) and which leases overlap (ADR 0163).
+import { byStart, dayBefore, isAfter, isOnOrBefore } from "./dates";
+import type { Lease, Valuation } from "./types";
 
 /**
  * The open-ended record (blank end) of `propertyId` with the latest start strictly
@@ -23,6 +23,46 @@ export function openPredecessor<T extends { propertyId: string }>(
     if (!best || !isAfter(getStart(best), getStart(r))) best = r;
   }
   return best;
+}
+
+/**
+ * The valuation an added one `v` ends (ADR 0227): the open-ended one before it, now
+ * ending the day before `v` starts. Undefined for a dated `v`, which changes no other
+ * row (ADR 0144), and when there is none to end.
+ */
+export function valuationClosedBy(
+  rows: readonly Valuation[],
+  v: Valuation,
+): Valuation | undefined {
+  const prev = v.validTo
+    ? undefined
+    : openPredecessor(
+        rows,
+        v.propertyId,
+        v.validFrom,
+        (r) => r.validFrom,
+        (r) => r.validTo,
+      );
+  return prev ? { ...prev, validTo: dayBefore(v.validFrom) } : undefined;
+}
+
+/**
+ * The lease an added one `l` ends (ADR 0163: leases never overlap): the open-ended one
+ * before it, dated `l` or not, now ending the day before `l` starts. Undefined when
+ * there is none to end.
+ */
+export function leaseClosedBy(
+  rows: readonly Lease[],
+  l: Lease,
+): Lease | undefined {
+  const prev = openPredecessor(
+    rows,
+    l.propertyId,
+    l.startDate,
+    (r) => r.startDate,
+    (r) => r.endDate,
+  );
+  return prev ? { ...prev, endDate: dayBefore(l.startDate) } : undefined;
 }
 
 /**

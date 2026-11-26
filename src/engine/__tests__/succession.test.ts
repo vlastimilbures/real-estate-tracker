@@ -1,7 +1,14 @@
 // ADR 0099: the open-ended record a new valuation/lease succeeds, and the end date it gets.
+// ADR 0227 and 0163: the one a new valuation and a new lease end.
 import { describe, it, expect } from "vitest";
+import { money } from "../brands";
 import { dayBefore, isoDate } from "../dates";
-import { openPredecessor } from "../effectiveDating";
+import {
+  leaseClosedBy,
+  openPredecessor,
+  valuationClosedBy,
+} from "../effectiveDating";
+import type { Lease, Valuation } from "../types";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -65,4 +72,81 @@ describe("openPredecessor", () => {
 
   it("returns nothing for no rows", () =>
     expect(find([], "2026-07-01")).toBeUndefined());
+});
+
+describe("valuationClosedBy (ADR 0227, 0144)", () => {
+  const open: Valuation = {
+    id: "v1",
+    propertyId: "p",
+    validFrom: isoDate("2024-01-01"),
+    marketValue: money(100),
+  };
+  const added: Valuation = {
+    id: "v2",
+    propertyId: "p",
+    validFrom: isoDate("2026-03-01"),
+    marketValue: money(200),
+  };
+
+  it("an open-ended new valuation ends the open one before it the day before", () => {
+    expect(valuationClosedBy([open], added)).toEqual({
+      ...open,
+      validTo: isoDate("2026-02-28"),
+    });
+  });
+
+  it("a dated one closes nothing (ADR 0144)", () => {
+    expect(
+      valuationClosedBy([open], { ...added, validTo: isoDate("2026-12-31") }),
+    ).toBeUndefined();
+  });
+
+  it("nothing to close: the same start, one already ended, another property's, none", () => {
+    expect(
+      valuationClosedBy([open], { ...added, validFrom: open.validFrom }),
+    ).toBeUndefined();
+    expect(
+      valuationClosedBy([{ ...open, validTo: isoDate("2027-12-31") }], added),
+    ).toBeUndefined();
+    expect(
+      valuationClosedBy([{ ...open, propertyId: "q" }], added),
+    ).toBeUndefined();
+    expect(valuationClosedBy([], added)).toBeUndefined();
+  });
+});
+
+describe("leaseClosedBy (ADR 0163)", () => {
+  const open: Lease = {
+    id: "l1",
+    propertyId: "p",
+    startDate: isoDate("2024-01-01"),
+    monthlyRent: money(100),
+  };
+  const added: Lease = {
+    id: "l2",
+    propertyId: "p",
+    startDate: isoDate("2026-03-01"),
+    monthlyRent: money(200),
+  };
+  const closed = { ...open, endDate: isoDate("2026-02-28") };
+
+  it("a new lease ends the open lease before it the day before", () =>
+    expect(leaseClosedBy([open], added)).toEqual(closed));
+
+  it("a dated one ends it too", () =>
+    expect(
+      leaseClosedBy([open], { ...added, endDate: isoDate("2026-12-31") }),
+    ).toEqual(closed));
+
+  it("nothing to close: the same start, one already ended, another property's", () => {
+    expect(
+      leaseClosedBy([open], { ...added, startDate: open.startDate }),
+    ).toBeUndefined();
+    expect(
+      leaseClosedBy([{ ...open, endDate: isoDate("2027-12-31") }], added),
+    ).toBeUndefined();
+    expect(
+      leaseClosedBy([{ ...open, propertyId: "q" }], added),
+    ).toBeUndefined();
+  });
 });

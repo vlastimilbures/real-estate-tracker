@@ -29,11 +29,13 @@ beforeEach(async () => {
 
 const store = () => usePortfolioStore.getState();
 const running = () => store().writesRunning;
-/** A valuation `id` on the first property. */
+/** A dated valuation `id` on the first property: one insert, no other row changed
+ *  (ADR 0144). */
 const valuation = (id: string) => ({
   id,
   propertyId: store().portfolio!.properties[0]!.id,
   validFrom: new Date(Date.UTC(2033, 0, 1)) as IsoDate,
+  validTo: new Date(Date.UTC(2033, 11, 31)) as IsoDate,
   marketValue: money("1"),
 });
 

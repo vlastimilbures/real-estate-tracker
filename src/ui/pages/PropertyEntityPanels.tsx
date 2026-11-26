@@ -8,10 +8,7 @@ import { moneyDraft, dateDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";
 import { CZK } from "../../lib/currency";
 import { mortgageFromForm, mortgageSpecs } from "../model/mortgageForm";
-import {
-  developmentSummary,
-  valuationClosedBy,
-} from "../model/propertyRecords";
+import { developmentSummary } from "../model/propertyRecords";
 import { MortgageForm } from "./mortgage/MortgageForm";
 import type { Valuation, Lease, MortgageBlock } from "../../engine";
 import { type Dictionary } from "../../i18n";
@@ -28,7 +25,6 @@ export function ValuationsPanel({
   const add = usePortfolioStore((s) => s.addValuation);
   const save = usePortfolioStore((s) => s.saveValuation);
   const remove = usePortfolioStore((s) => s.removeValuation);
-  const addClosing = usePortfolioStore((s) => s.addValuationClosingPrevious);
   return (
     <EntityPanel
       chrome={{
@@ -90,12 +86,9 @@ export function ValuationsPanel({
           validTo: v.validTo ?? undefined,
           marketValue: v.marketValue,
         }),
-        // ADR 0227: an open-ended new valuation ends the open-ended one before it,
-        // without asking (ADR 0144: a dated one changes no other row).
-        onAdd: (v) => {
-          const closed = valuationClosedBy(rows, v);
-          return closed ? addClosing(v, closed) : add(v);
-        },
+        // ADR 0227: the store ends the open-ended valuation before an open-ended new
+        // one, without asking.
+        onAdd: (v) => add(v),
         onSave: save,
       }}
     />
@@ -176,7 +169,7 @@ export function LeasesPanel({
         }),
         // Leases never overlap (ADR 0163): the store ends the open lease before a new
         // one, so there is nothing to ask.
-        onAdd: add,
+        onAdd: (v) => add(v),
         onSave: save,
       }}
     />
@@ -253,7 +246,7 @@ export function MortgagesPanel({
             propertyId,
             rows.find((r) => r.id === id),
           ),
-        onAdd: add,
+        onAdd: (v) => add(v),
         onSave: save,
         render: (p) => (
           <MortgageForm {...p} successorNote={p.adding && rows.length > 0} />

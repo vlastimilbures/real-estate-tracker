@@ -74,11 +74,6 @@ describe("each write method's target (ADR 0255)", () => {
         run: refused(() => store().addValuation(any)),
       },
       {
-        method: "addValuationClosingPrevious",
-        kept: ["valuations"],
-        run: refused(() => store().addValuationClosingPrevious(any, any)),
-      },
-      {
         method: "saveValuation",
         kept: ["valuations"],
         run: refused(() => store().saveValuation(any)),

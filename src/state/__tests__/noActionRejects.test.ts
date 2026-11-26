@@ -30,10 +30,6 @@ const actions: [
   run: (s: PortfolioState) => Promise<unknown>,
 ][] = [
   ["addValuation", (s) => s.addValuation(any)],
-  [
-    "addValuationClosingPrevious",
-    (s) => s.addValuationClosingPrevious(any, any),
-  ],
   ["saveValuation", (s) => s.saveValuation(any)],
   ["removeValuation", (s) => s.removeValuation("v")],
   ["addLease", (s) => s.addLease(any)],
