@@ -113,7 +113,7 @@ export type DataCheckFix =
 /** The page title's review pill: the attention count, named by the full sentence, or
  *  none (ADR 0218 §1, 0223 §5). Each page says where its pill goes. */
 export function reviewPill(
-  t: Dictionary,
+  t: Pick<Dictionary, "dataCheck">,
   count: number,
   onSelect: () => void,
 ): { count: number; label: string; onSelect: () => void } | undefined {

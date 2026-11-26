@@ -44,7 +44,10 @@ export interface ScenarioDraftFields {
   valueShockYear: string;
 }
 
-export function overrideLabel(t: Dictionary, key: LevelKey): string {
+export function overrideLabel(
+  t: Pick<Dictionary, "scenarios">,
+  key: LevelKey,
+): string {
   switch (key) {
     case "appreciationPa":
       return t.scenarios.fieldAppreciation;

@@ -23,7 +23,7 @@ export interface FileGroup {
 
 const FILES: CsvFile[] = ["properties", "valuations", "rents", "mortgages"];
 
-function fileTitle(t: Dictionary, file: CsvFile): string {
+function fileTitle(t: Pick<Dictionary, "importPage">, file: CsvFile): string {
   const p = t.importPage;
   switch (file) {
     case "properties":
@@ -72,7 +72,10 @@ const showDate = (iso: string) => fmtDate(isoDate(iso));
 
 /** An added loan block's notes (ADR 0160): the previous block's events it stops, in
  *  the property page's wording, or that it has no effect. */
-export function itemNotes(t: Dictionary, item: ImportItem): string[] {
+export function itemNotes(
+  t: Pick<Dictionary, "importPage" | "propertyDetail">,
+  item: ImportItem,
+): string[] {
   const p = t.importPage;
   const issue = t.propertyDetail.eventIssue;
   const notes = (item.replaces ?? []).map((e) =>
@@ -128,7 +131,11 @@ const DATES = new Set([
 ]);
 
 /** A stored cell as the app shows it; empty ⇒ "—"; a flag as yes / no (ADR 0250). */
-function showValue(t: Dictionary, field: string, v: string | null): string {
+function showValue(
+  t: Pick<Dictionary, "common">,
+  field: string,
+  v: string | null,
+): string {
   if (v === null) return EMPTY;
   if (MONEY.has(field)) return fmtCzk(v);
   if (RATES.has(field)) return fmtPct(v, 2);

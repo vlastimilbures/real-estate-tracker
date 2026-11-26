@@ -37,7 +37,10 @@ export function propertyRecords(
 
 /** The mortgage table's compact development-loan summary: tranches and total loan, the
  *  interest-only end; "—" for a standard loan. */
-export function developmentSummary(t: Dictionary, r: MortgageBlock): string {
+export function developmentSummary(
+  t: Pick<Dictionary, "propertyDetail">,
+  r: MortgageBlock,
+): string {
   const d = t.propertyDetail;
   const parts: string[] = [];
   if (r.draws?.length) {

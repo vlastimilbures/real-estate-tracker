@@ -55,13 +55,16 @@ export function valueSeries(names: ValueSeriesNames, rows: ChartRow[]) {
 
 /** The fixation-end markers' tooltip heading: the debt at reset stays nominal in the real
  *  lens (ADR 0210). */
-export function resetMarkerHeading(t: Dictionary, mode: Mode): string {
+export function resetMarkerHeading(
+  t: Pick<Dictionary, "charts">,
+  mode: Mode,
+): string {
   return mode === "real" ? t.charts.rateResetNominal : t.charts.rateReset;
 }
 
 /** The Dashboard's six projection charts' series. */
 export function dashboardSeries(
-  t: Dictionary,
+  t: Pick<Dictionary, "dashboard">,
   rows: ChartRow[],
   eqChange: EquityChangeRow[],
 ) {

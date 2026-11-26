@@ -15,7 +15,7 @@ import { CZK } from "../../lib/currency";
 import { type Dictionary } from "../../i18n";
 
 /** The form's fields: the projection drivers, then the holding-cost defaults. */
-export function assumptionSpecs(t: Dictionary) {
+export function assumptionSpecs(t: Pick<Dictionary, "assumptions" | "common">) {
   const a = t.assumptions;
   return {
     drivers: [

@@ -290,7 +290,7 @@ function kpiRowSpecs(
 /** Footnote for the marked returns: names each scenario whose starting equity differs
  *  from Base's; null without Base or when none differs (ADR 0089). */
 export function compareFootnote(
-  t: Dictionary,
+  t: Pick<Dictionary, "scenarios">,
   results: CompareResult[],
 ): string | null {
   const base = compareBase(results);
@@ -306,7 +306,7 @@ export function compareFootnote(
 /** One line per scenario naming the active properties whose own rate its appreciation or
  *  rent-indexation level does not replace (ADR 0102 §3, ADR 0190). */
 export function ownRateNotes(
-  t: Dictionary,
+  t: Pick<Dictionary, "scenarios">,
   scenarios: Scenario[],
   properties: Property[],
 ): string[] {
@@ -329,7 +329,10 @@ export function ownRateNotes(
 }
 
 /** Key-figures panel hint for the lens. */
-export function compareHint(t: Dictionary, mode: Mode): string {
+export function compareHint(
+  t: Pick<Dictionary, "scenarios">,
+  mode: Mode,
+): string {
   return mode === "real"
     ? t.scenarios.keyFiguresHintReal
     : t.scenarios.keyFiguresHint;
