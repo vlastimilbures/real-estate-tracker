@@ -3,23 +3,22 @@
 // that may not repeat, Restore a backup… where the database is at head and only reading
 // it failed, and the data folder for every one. A save whose read-back failed stops here
 // too, saying the change was saved (ADR 0228).
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   usePortfolioStore,
   type Status,
   type StartupError,
 } from "../../state/portfolioStore";
 import type { RefusedWrite } from "../../state/writeTargets";
-import { revealDataDir } from "../../state/platform";
 import { useUiStore, type Notice } from "../../state/uiStore";
-import { logFailure, READ_FAILURES } from "../../state/diagnostics";
+import { READ_FAILURES } from "../../state/diagnostics";
 import { APP_NAME, type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { Button } from "./primitives";
 import { describeWriteError } from "../model/writeError";
-import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
 import { IssueTable, RestoreConfirm } from "./RestoreConfirm";
 import { backupFailure, backupFailureText } from "./restoreFailure";
+import { useRestoreFlow, useRevealDataFolder } from "../hooks/useRestoreFlow";
 import {
   bootView,
   fileName,
@@ -141,113 +140,62 @@ function StopText({
   );
 }
 
-export function BootFailure() {
+type RestoreFlow = ReturnType<typeof useRestoreFlow>;
+type Failure = ReturnType<typeof backupFailure>;
+
+/** After a restore whose data loaded the failure no longer applies: name the safety
+ *  copy, then go on into the app. The page's main landmark with an h1 (ADR 0157); the
+ *  screen has no title line, so its h1 is for screen readers only. */
+function RestoredAtStartupScreen({
+  file,
+  revealFailed,
+  onContinue,
+  folderButton,
+}: {
+  file: string;
+  revealFailed: boolean;
+  onContinue: () => void;
+  folderButton: ReactNode;
+}) {
   const t = useT();
-  const status = usePortfolioStore((s) => s.status);
-  const startupError = status.kind === "startupFailed" ? status.startup : null;
-  const notice = useUiStore((s) => s.notice);
-  const init = usePortfolioStore((s) => s.init);
-  const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
-  const continueAfterRestore = usePortfolioStore((s) => s.continueAfterRestore);
-  const dataReplaced = useUiStore((s) => s.dataReplaced);
-  const setNotice = useUiStore((s) => s.setNotice);
-  const [revealFailed, setRevealFailed] = useState(false);
-  const [pending, setPending] = useState<PickedBackup | null>(null);
-  const [restoring, setRestoring] = useState(false);
-  const [failure, setFailure] = useState<ReturnType<
-    typeof backupFailure
-  > | null>(null);
-  // The safety copy of a restore done here whose data loaded, named until Continue.
-  const [restored, setRestored] = useState<string | null>(null);
-  const view = bootView(startupError?.code ?? null, READ_FAILURES);
-
-  async function showFolder() {
-    setRevealFailed(false);
-    try {
-      await revealDataDir();
-    } catch (e) {
-      logFailure("REVEAL", e);
-      setRevealFailed(true);
-    }
-  }
-
-  async function chooseBackup() {
-    setFailure(null);
-    try {
-      const picked = await chooseRestoreFile();
-      if (picked) setPending(picked);
-    } catch (e) {
-      setFailure(
-        backupFailure(t, e, "RESTORE", { other: t.backup.errInvalid }),
-      );
-    }
-  }
-
-  async function confirmRestore() {
-    if (!pending) return;
-    setRestoring(true);
-    setFailure(null);
-    try {
-      const restored = await restoreAtStartup(pending.backup);
-      if (!restored.ok) {
-        // One transaction: a failure before the commit leaves the data as it was; the
-        // store logged it.
-        setFailure(
-          backupFailureText(t, restored.error, {
-            other: t.backup.restoreFailed,
-          }),
-        );
-        return;
-      }
-      const { safetyBackup, ready } = restored.value;
-      setPending(null);
-      if (ready) setRestored(safetyBackup);
-      else {
-        // The data could not be read back: the read-back screen names the copy, also
-        // after a Try again that fails again (ADR 0154 §5, ADR 0228).
-        dataReplaced();
-        setNotice({ kind: "restored", file: safetyBackup });
-      }
-    } finally {
-      setRestoring(false);
-    }
-  }
-
-  /** Leave the screen: the app keeps naming the safety copy until dismissed (ADR 0154). */
-  function leave(file: string, go: () => void) {
-    dataReplaced();
-    setNotice({ kind: "restored", file });
-    go();
-  }
-
-  const folderButton = (
-    <Button onClick={() => void showFolder()}>{t.boot.showDataFolder}</Button>
-  );
-
-  // After a restore whose data loaded the failure above no longer applies: name the
-  // safety copy, then go on into the app. Both screens are the page's main landmark
-  // with an h1 (ADR 0157); the restored screen has no title line, so its h1 is for
-  // screen readers only.
-  if (restored)
-    return (
-      <main>
-        <h1 className="sr-only">{APP_NAME}</h1>
-        <div className="error-screen" role="alert">
-          <p>{t.backup.restored(restored)}</p>
-          {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
-          <div className="row row-s3">
-            <Button
-              variant="primary"
-              onClick={() => leave(restored, continueAfterRestore)}
-            >
-              {t.boot.continue}
-            </Button>
-            {folderButton}
-          </div>
+  return (
+    <main>
+      <h1 className="sr-only">{APP_NAME}</h1>
+      <div className="error-screen" role="alert">
+        <p>{t.backup.restored(file)}</p>
+        {revealFailed && <p className="error-text">{t.boot.revealFailed}</p>}
+        <div className="row row-s3">
+          <Button variant="primary" onClick={onContinue}>
+            {t.boot.continue}
+          </Button>
+          {folderButton}
         </div>
-      </main>
-    );
+      </div>
+    </main>
+  );
+}
 
+/** What stopped the app and what can help (ADR 0153); the page's main landmark, its h1
+ *  the eyebrow (ADR 0157). */
+function StartupErrorScreen({
+  status,
+  revealFailed,
+  failure,
+  restore,
+  onRetry,
+  folderButton,
+}: {
+  status: Status;
+  revealFailed: boolean;
+  failure: Failure | null;
+  restore: RestoreFlow;
+  onRetry: () => void;
+  folderButton: ReactNode;
+}) {
+  const t = useT();
+  const notice = useUiStore((s) => s.notice);
+  const startupError = status.kind === "startupFailed" ? status.startup : null;
+  const view = bootView(startupError?.code ?? null, READ_FAILURES);
   return (
     <main>
       <div className="error-screen" role="alert">
@@ -269,22 +217,22 @@ export function BootFailure() {
             )}
           </div>
         )}
-        {pending ? (
+        {restore.pending ? (
           <RestoreConfirm
-            pending={pending}
-            restoring={restoring}
-            onCancel={() => setPending(null)}
-            onConfirm={() => void confirmRestore()}
+            pending={restore.pending}
+            restoring={restore.restoring}
+            onCancel={restore.cancel}
+            onConfirm={() => void restore.confirm()}
           />
         ) : (
           <div className="row row-s3">
             {view.retry && (
-              <Button variant="primary" onClick={() => void init()}>
+              <Button variant="primary" onClick={onRetry}>
                 {t.app.tryAgain}
               </Button>
             )}
             {view.restore && (
-              <Button variant="primary" onClick={() => void chooseBackup()}>
+              <Button variant="primary" onClick={() => void restore.choose()}>
                 {t.boot.restoreBackup}
               </Button>
             )}
@@ -293,5 +241,77 @@ export function BootFailure() {
         )}
       </div>
     </main>
+  );
+}
+
+/** The startup error screen, or the screen after a restore done here whose data loaded. */
+export function BootFailure() {
+  const t = useT();
+  const status = usePortfolioStore((s) => s.status);
+  const init = usePortfolioStore((s) => s.init);
+  const restoreAtStartup = usePortfolioStore((s) => s.restoreAtStartup);
+  const continueAfterRestore = usePortfolioStore((s) => s.continueAfterRestore);
+  const dataReplaced = useUiStore((s) => s.dataReplaced);
+  const setNotice = useUiStore((s) => s.setNotice);
+  const [revealFailed, setRevealFailed] = useState(false);
+  const [failure, setFailure] = useState<Failure | null>(null);
+  // The safety copy of a restore done here whose data loaded, named until Continue.
+  const [restored, setRestored] = useState<string | null>(null);
+  const restore = useRestoreFlow({
+    busy: useState(false),
+    clearFailure: () => setFailure(null),
+    pickFailed: (e) =>
+      setFailure(
+        backupFailure(t, e, "RESTORE", { other: t.backup.errInvalid }),
+      ),
+    restore: restoreAtStartup,
+    restored: ({ safetyBackup, ready }) => {
+      if (ready) setRestored(safetyBackup);
+      else {
+        // The data could not be read back: the read-back screen names the copy, also
+        // after a Try again that fails again (ADR 0154 §5, ADR 0228).
+        dataReplaced();
+        setNotice({ kind: "restored", file: safetyBackup });
+      }
+    },
+    // One transaction: a failure before the commit leaves the data as it was; the store
+    // logged it.
+    restoreFailed: (error) =>
+      setFailure(
+        backupFailureText(t, error, { other: t.backup.restoreFailed }),
+      ),
+  });
+  const showFolder = useRevealDataFolder(
+    () => setRevealFailed(false),
+    () => setRevealFailed(true),
+  );
+  const folderButton = (
+    <Button onClick={() => void showFolder()}>{t.boot.showDataFolder}</Button>
+  );
+
+  if (restored)
+    return (
+      <RestoredAtStartupScreen
+        file={restored}
+        revealFailed={revealFailed}
+        folderButton={folderButton}
+        onContinue={() => {
+          // Leave the screen: the app keeps naming the safety copy until dismissed
+          // (ADR 0154).
+          dataReplaced();
+          setNotice({ kind: "restored", file: restored });
+          continueAfterRestore();
+        }}
+      />
+    );
+  return (
+    <StartupErrorScreen
+      status={status}
+      revealFailed={revealFailed}
+      failure={failure}
+      restore={restore}
+      onRetry={() => void init()}
+      folderButton={folderButton}
+    />
   );
 }
