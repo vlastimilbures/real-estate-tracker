@@ -16,6 +16,7 @@ import {
   fmtCzk,
   fmtMultiple,
   fmtPct,
+  toNumber,
 } from "../../lib/format";
 
 /** What `exportTableXlsx` takes: one sheet. */
@@ -140,7 +141,7 @@ function numberFor(kind: CellKind, v: Decimal | number): number {
     case "multiple":
       return cellMultiple(v, 2);
     default:
-      return typeof v === "number" ? v : v.toNumber();
+      return typeof v === "number" ? v : toNumber(v);
   }
 }
 
