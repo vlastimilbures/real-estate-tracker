@@ -3,7 +3,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { backupFailureText } from "./restoreFailure";
 import { useT } from "../hooks/useT";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 import { Modal } from "./Modal";
 import { useBusyFocus } from "../hooks/useBusyFocus";
 

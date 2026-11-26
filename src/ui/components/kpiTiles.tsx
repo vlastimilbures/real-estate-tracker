@@ -6,7 +6,9 @@ import type { Decimal } from "../../lib/money";
 import { monthlyFlow } from "../model/dashboard";
 import { dscrBadge, ltvBadge } from "../model/health";
 import { useT } from "../hooks/useT";
-import { Dscr, KpiTile, Money, Pct } from "./primitives";
+import { KpiTile } from "./Kpi";
+import { Dscr, Money } from "./figures";
+import { Pct } from "./rates";
 
 type FlowSnapshot = Pick<
   PortfolioSnapshot,

@@ -4,7 +4,7 @@
 // recover from on its own. Must be a class component — error boundaries have no hook
 // equivalent.
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 import { useUiStore } from "../../state/uiStore";
 import { useT } from "../hooks/useT";
 import { logFailure } from "../../state/diagnostics";

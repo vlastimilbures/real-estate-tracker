@@ -4,7 +4,8 @@
 // assumptions (+ a transient value-crash portfolio) via useScenarioComparison. The page's
 // state and actions are useScenariosPage's; this renders them.
 import { PageFrame } from "../components/PageFrame";
-import { Button, EmptyState } from "../components/primitives";
+import { Button } from "../components/Button";
+import { EmptyState } from "../components/layout";
 import { FolderOpen, Plus } from "lucide-react";
 import { useT } from "../hooks/useT";
 import { useScenariosPage } from "../hooks/useScenariosPage";

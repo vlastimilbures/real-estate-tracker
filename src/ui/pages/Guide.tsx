@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { PageFrame } from "../components/PageFrame";
 import { useUiStore } from "../../state/uiStore";
-import { Panel } from "../components/primitives";
+import { Panel } from "../components/layout";
 import { useT } from "../hooks/useT";
 import { useSectionSpy } from "../hooks/useSectionSpy";
 import { SectionNav } from "../components/SectionNav";

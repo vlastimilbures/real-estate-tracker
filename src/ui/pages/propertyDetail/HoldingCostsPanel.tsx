@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
-import { Panel } from "../../components/primitives";
+import { Panel } from "../../components/layout";
 import { RecordForm } from "../../components/forms";
 import { RowActions, WriteRowAction } from "../../components/RowActions";
 import { focusLost } from "../../focus";

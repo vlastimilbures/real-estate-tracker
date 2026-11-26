@@ -1,4 +1,4 @@
-import { Panel, StatList } from "../../components/primitives";
+import { Panel, StatList } from "../../components/layout";
 import { focusSection } from "../../focus";
 import { sectionId } from "../../model/sectionNav";
 import { fmtDate } from "../../../lib/format";

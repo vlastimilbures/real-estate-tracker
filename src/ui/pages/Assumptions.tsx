@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from "react";
-import { Panel, Button, EmptyState } from "../components/primitives";
+import { Button } from "../components/Button";
+import { Panel, EmptyState } from "../components/layout";
 import { FolderOpen } from "lucide-react";
 import { Field, TextInput } from "../components/fields";
 import { DateInput } from "../components/DateInput";

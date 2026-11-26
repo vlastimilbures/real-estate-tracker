@@ -1,4 +1,6 @@
-import { Money, Pct, TableWrap } from "../../components/primitives";
+import { Money } from "../../components/figures";
+import { TableWrap } from "../../components/layout";
+import { Pct } from "../../components/rates";
 import { fmtDate } from "../../../lib/format";
 import { amortizationExtras } from "../../model/propertyDetail";
 import type { AmortizationRow } from "../../../engine";

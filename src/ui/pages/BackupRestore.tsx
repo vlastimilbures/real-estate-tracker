@@ -1,7 +1,8 @@
 import { useId } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore, type OutcomeAction } from "../../state/uiStore";
-import { Panel, Button } from "../components/primitives";
+import { Button } from "../components/Button";
+import { Panel } from "../components/layout";
 import { type FailureSite } from "../../state/diagnostics";
 import { toActionError } from "../../state/actionError";
 import { type Dictionary } from "../../i18n";

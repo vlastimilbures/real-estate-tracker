@@ -3,13 +3,10 @@ import type { ReactNode } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Decimal } from "../../lib/money";
 import { MetricLabel } from "../components/MetricLabel";
-import {
-  Money,
-  Badge,
-  HealthMarker,
-  TableWrap,
-  Pct,
-} from "../components/primitives";
+import { Money } from "../components/figures";
+import { TableWrap } from "../components/layout";
+import { Pct } from "../components/rates";
+import { Badge, HealthMarker } from "../components/status";
 import { PropertyLink } from "../components/PropertyLink";
 import { RowActions, WriteRowAction } from "../components/RowActions";
 import { fmtCzkM, fmtDate, noBreak, fmtPct, fmtDscr } from "../../lib/format";

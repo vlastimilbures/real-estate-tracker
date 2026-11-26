@@ -7,7 +7,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SaveFileError } from "../../platform/saveFileTypes";
 import { OutcomeRegions } from "../components/OutcomeRegions";
-import { ExportXlsxButton } from "../components/primitives";
+import { ExportXlsxButton } from "../components/ExportXlsxButton";
 import { exportTableXlsx } from "../exportXlsx";
 import { Import } from "../pages/Import";
 import { useUiStore } from "../../state/uiStore";

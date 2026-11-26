@@ -2,7 +2,7 @@
 // aria-expanded and aria-controls naming a region that is always in the DOM.
 import type { ReactNode } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 import { useDisclosure, type OpenState } from "../hooks/useDisclosure";
 
 /** The toggle: ghost, small, chevron down when shut and up when open. `controls` is the

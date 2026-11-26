@@ -1,5 +1,7 @@
 import { useId } from "react";
-import { Button, Money, Panel, StatList } from "../../components/primitives";
+import { Button } from "../../components/Button";
+import { Money } from "../../components/figures";
+import { Panel, StatList } from "../../components/layout";
 import type { AcquisitionView } from "../../model/acquisition";
 import { useT } from "../../hooks/useT";
 

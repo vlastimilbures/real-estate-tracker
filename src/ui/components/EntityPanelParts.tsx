@@ -2,7 +2,7 @@
 // only; the delete confirm is ConfirmRow.tsx.
 import type { ReactNode } from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import { TableWrap } from "./primitives";
+import { TableWrap } from "./layout";
 import { RowActions, WriteRowAction } from "./RowActions";
 import { useT } from "../hooks/useT";
 

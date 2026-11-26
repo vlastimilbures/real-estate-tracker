@@ -4,14 +4,9 @@
 import { FigureRow } from "../components/FigureRow";
 import { useState, type ReactNode } from "react";
 import { Table2 } from "lucide-react";
-import {
-  Button,
-  Money,
-  Panel,
-  SegmentedToggle,
-  StatList,
-  TableWrap,
-} from "../components/primitives";
+import { Button, SegmentedToggle } from "../components/Button";
+import { Money } from "../components/figures";
+import { Panel, StatList, TableWrap } from "../components/layout";
 import { Disclosure } from "../components/Disclosure";
 import {
   DEFAULT_RESET_WINDOW,

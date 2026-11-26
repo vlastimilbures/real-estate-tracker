@@ -1,4 +1,5 @@
-import { ExportXlsxButton, Panel } from "../../components/primitives";
+import { ExportXlsxButton } from "../../components/ExportXlsxButton";
+import { Panel } from "../../components/layout";
 import { ProjectionGrid } from "../../components/ProjectionGrid";
 import { exportTableXlsx } from "../../exportXlsx";
 import type { PropertyDetailBodyView } from "../../model/propertyDetailView";

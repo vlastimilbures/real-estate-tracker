@@ -1,7 +1,8 @@
 import { useId, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
 import type { MutationResult } from "../../state/portfolioStore";
-import { Panel, Button } from "./primitives";
+import { Button } from "./Button";
+import { Panel } from "./layout";
 import { RecordForm } from "./forms";
 import { EntityTable } from "./EntityPanelParts";
 import { ConfirmRow } from "./ConfirmRow";

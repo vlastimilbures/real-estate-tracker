@@ -1,7 +1,8 @@
 import { useId } from "react";
 import { Ban, Check, Clock } from "lucide-react";
 import { InfoTip } from "../../components/InfoTip";
-import { Money, TableWrap } from "../../components/primitives";
+import { Money } from "../../components/figures";
+import { TableWrap } from "../../components/layout";
 import type { DrawdownRow, DrawdownView } from "../../model/propertyDetail";
 import { useT } from "../../hooks/useT";
 

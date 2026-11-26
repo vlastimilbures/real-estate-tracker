@@ -1,7 +1,9 @@
 // Import page building blocks: the file types' panel, one row per type (choose / drop /
 // template, row errors, ADR 0212) and the tables for parse errors and refused rows.
 import { useState, useRef, useCallback } from "react";
-import { Panel, Button, Badge, TableWrap } from "../components/primitives";
+import { Button } from "../components/Button";
+import { Panel, TableWrap } from "../components/layout";
+import { Badge } from "../components/status";
 import { HelpText } from "../components/HelpText";
 import type { CsvImportProblem } from "../../state/csv";
 import { logFailure } from "../../state/diagnostics";

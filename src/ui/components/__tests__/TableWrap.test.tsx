@@ -3,7 +3,7 @@
 // UX-024: a scrolling table is a named, keyboard-focusable region.
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { TableWrap } from "../primitives";
+import { TableWrap } from "../layout";
 import { ProjectionGrid } from "../ProjectionGrid";
 import { getDict } from "../../../i18n";
 

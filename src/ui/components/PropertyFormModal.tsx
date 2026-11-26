@@ -17,7 +17,8 @@ import {
 } from "../model/propertyForm";
 import { Checkbox, Field, TextArea, TextInput } from "./fields";
 import { DateInput } from "./DateInput";
-import { Button, ErrorBanner } from "./primitives";
+import { Button } from "./Button";
+import { ErrorBanner } from "./layout";
 import { Modal } from "./Modal";
 import type { Portfolio } from "../../engine";
 import { type Dictionary } from "../../i18n";

@@ -1,5 +1,5 @@
 import { PageFrame } from "../components/PageFrame";
-import { Panel } from "../components/primitives";
+import { Panel } from "../components/layout";
 import {
   propertiesTemplate,
   valuationsTemplate,

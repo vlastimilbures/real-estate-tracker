@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Panel } from "../primitives";
+import { Panel } from "../layout";
 import { InfoTip } from "../InfoTip";
 import { placeTip } from "../../model/infoTip";
 import { en } from "../../../i18n/en";

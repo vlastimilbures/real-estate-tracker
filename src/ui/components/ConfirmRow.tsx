@@ -2,7 +2,7 @@
 // the scenario list, the Properties table and the deactivate banner. It keeps its own
 // busy and error state.
 import { useContext, useEffect, useId, useRef, useState } from "react";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 import { PanelSection } from "./panelFocus";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";

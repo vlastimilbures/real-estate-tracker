@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OutcomeRegions } from "../OutcomeRegions";
-import { ExportXlsxButton } from "../primitives";
+import { ExportXlsxButton } from "../ExportXlsxButton";
 import { SaveFileError } from "../../../platform/saveFileTypes";
 import { en } from "../../../i18n/en";
 

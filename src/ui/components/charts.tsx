@@ -35,7 +35,10 @@ import {
 import { yearLabel } from "../model/projection";
 import type { ResetMarker } from "../model/financing";
 import { CZK } from "../../lib/currency";
-import { Button, Money, Pct, TableWrap } from "./primitives";
+import { Button } from "./Button";
+import { Money } from "./figures";
+import { TableWrap } from "./layout";
+import { Pct } from "./rates";
 import { useT } from "../hooks/useT";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 

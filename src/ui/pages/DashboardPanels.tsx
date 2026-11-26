@@ -2,17 +2,10 @@
 // Each renders its slice of `dashboardView` (src/ui/model/dashboardView.ts); the series
 // come from `dashboardSeries`. What stays here is markup: the tiles, the charts, the
 // key-figure rows and `keepTail`, which keeps a label's closing parenthetical together.
-import {
-  KpiBand,
-  KpiBandGroup,
-  KpiTile,
-  Panel,
-  Money,
-  MoneyM,
-  IrrValue,
-  Pct,
-  StatList,
-} from "../components/primitives";
+import { KpiBand, KpiBandGroup, KpiTile } from "../components/Kpi";
+import { Money, MoneyM } from "../components/figures";
+import { Panel, StatList } from "../components/layout";
+import { IrrValue, Pct } from "../components/rates";
 import { ChartCard } from "../components/charts";
 import { DscrTile, LtvTile, NetCashFlowTile } from "../components/kpiTiles";
 import { fmtCzkM, fmtMultiple, fmtPct, noBreak } from "../../lib/format";

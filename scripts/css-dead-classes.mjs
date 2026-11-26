@@ -19,8 +19,8 @@ export const LIBRARY_PROPERTIES = [
 
 /** Class prefixes completed at run time, and the third-party class names styled. */
 export const RUNTIME_PREFIXES = [
-  "tone-", // primitives.tsx: `num tone-${tone}`
-  "cells-", // primitives.tsx: `kpi-band-group cells-${cells}`
+  "tone-", // components/figures.tsx: `num tone-${tone}`
+  "cells-", // components/Kpi.tsx: `kpi-band-group cells-${cells}`
   "rdp-", // react-day-picker's own class names (DateCalendar.tsx)
   "recharts-", // Recharts' own class names
 ];

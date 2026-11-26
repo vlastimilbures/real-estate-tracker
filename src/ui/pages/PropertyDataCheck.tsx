@@ -11,7 +11,7 @@ import {
   DataCheckShell,
   type DataCheckKind,
 } from "../components/DataCheckBlocks";
-import { Button } from "../components/primitives";
+import { Button } from "../components/Button";
 import { useT } from "../hooks/useT";
 import {
   findingFix,

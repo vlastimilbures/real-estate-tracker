@@ -5,13 +5,9 @@ import { useId, useState } from "react";
 import { useScenarioComparison } from "../../state/useEngine";
 import { useUiStore } from "../../state/uiStore";
 import { usePortfolioStore } from "../../state/portfolioStore";
-import {
-  Panel,
-  EmptyState,
-  ExportXlsxButton,
-  SegmentedToggle,
-  TableWrap,
-} from "../components/primitives";
+import { SegmentedToggle } from "../components/Button";
+import { ExportXlsxButton } from "../components/ExportXlsxButton";
+import { Panel, EmptyState, TableWrap } from "../components/layout";
 import { exportWorkbookXlsx } from "../exportXlsx";
 import { compareWorkbook } from "../model/compareXlsx";
 import { lensLabel } from "../model/tableContext";

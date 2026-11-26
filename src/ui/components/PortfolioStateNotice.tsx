@@ -2,7 +2,8 @@ import { FolderOpen, PowerOff } from "lucide-react";
 import { useUiStore } from "../../state/uiStore";
 import type { PortfolioState } from "../model/portfolioState";
 import { useT } from "../hooks/useT";
-import { Button, EmptyState } from "./primitives";
+import { Button } from "./Button";
+import { EmptyState } from "./layout";
 
 /** What a portfolio page shows in place of its figures when there is nothing to show
  *  (ADR 0155): no property yet, or every property deactivated. */

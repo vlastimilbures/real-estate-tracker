@@ -3,7 +3,7 @@ import { invalidDataLines, leftoverBlockHints } from "../model/invalidData";
 import { sectionId, type PropertySection } from "../model/sectionNav";
 import { useT } from "../hooks/useT";
 import { focusSection } from "../focus";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 
 /**
  * Stored data that breaks an engine rule: which record, which rule, in the user's

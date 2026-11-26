@@ -3,7 +3,7 @@
 // Scenarios.tsx; produces a Scenario via onSubmit and never touches portfolio data.
 // A refused save stays open with the broken rule on its field (ADR 0123).
 import { useId, useState } from "react";
-import { Button } from "../components/primitives";
+import { Button } from "../components/Button";
 import { Modal } from "../components/Modal";
 import { Field, TextInput } from "../components/fields";
 import { percentDraft } from "../model/formParse";

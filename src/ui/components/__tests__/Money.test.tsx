@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { D } from "../../../lib/money";
-import { Money } from "../primitives";
+import { Money } from "../figures";
 
 const toneOf = (el: HTMLElement) =>
   [...el.querySelector(".num")!.classList].find((c) => c.startsWith("tone-"));
