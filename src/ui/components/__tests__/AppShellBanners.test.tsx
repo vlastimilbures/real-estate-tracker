@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // #350 (ADR 0194): the edit-error banner is read aloud only on the page where it first
-// shows. Each page mounts its own shell; a later page shows the banner without a live
+// shows. Each page mounts its own frame; a later page shows the banner without a live
 // role. A new edit error is announced. (The stale-data banner is gone: ADR 0228.)
 import { describe, expect, it } from "vitest";
 import { act, render, screen } from "@testing-library/react";
