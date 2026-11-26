@@ -27,7 +27,7 @@ function page(title: string) {
 
 /** The live role of the banner showing `text`, or null. */
 const role = (text: string) =>
-  screen.getByText(text).closest(".error-banner")!.getAttribute("role");
+  screen.getByText(text).closest(".banner.error")!.getAttribute("role");
 const writeError = (message: string): WriteError => ({
   kind: "other",
   message,
