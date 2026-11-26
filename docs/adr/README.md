@@ -319,6 +319,7 @@ it.
 | [0265](0265-property-detail-invalid-hides-lens.md)             | Property detail with invalid data hides the Nominal/Real switch                               | Accepted                                                             | #607, #435                                         |
 | [0266](0266-one-text-button-class.md)                          | One text-button class: `.link-btn` becomes `.link-button.underlined`                          | Accepted                                                             | #495, #435                                         |
 | [0267](0267-one-banner-box.md)                                 | One banner box with three tones: `.error-banner` becomes `.banner.error`                      | Accepted                                                             | #495, #435                                         |
+| [0268](0268-one-chip-shape.md)                                 | One chip shape; the findings count looks the same in the title and in the Data check          | Accepted                                                             | #495, #435                                         |
 
 <!-- adr-index:end -->
 
