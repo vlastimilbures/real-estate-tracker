@@ -129,12 +129,16 @@
   appearance: none;
   min-height: 24px;
   padding: var(--s-2px) var(--s-6px) var(--s-2px) var(--s-10px);
-  border-color: var(--hairline-strong);
   background: var(--surface);
   color: var(--ink);
   font: inherit;
   font-size: var(--fs-13);
   cursor: pointer;
+}
+/* Two classes, so the border beats .chip's (shell.css) whichever stylesheet loads first:
+   chunk order is not source order (#494, App.tsx:11-12). Before :hover, which wins. */
+.chip.dc-chip {
+  border-color: var(--hairline-strong);
 }
 .dc-chip:hover {
   border-color: var(--accent-soft);

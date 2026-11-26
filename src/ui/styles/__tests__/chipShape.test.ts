@@ -70,6 +70,15 @@ describe("one chip shape (ADR 0268)", () => {
     ]);
   });
 
+  it("gives the fix links their stronger border with two classes, before :hover", () => {
+    // Order-independent against .chip (#494: chunk order is not source order).
+    expect(only(".chip.dc-chip").decls).toEqual([
+      "border-color: var(--hairline-strong)",
+    ]);
+    const at = (s: string) => rules.findIndex((r) => r.selector === s);
+    expect(at(".chip.dc-chip")).toBeLessThan(at(".dc-chip:hover"));
+  });
+
   it("has no .dc-pill.warn rule left", () => {
     expect(
       rules
