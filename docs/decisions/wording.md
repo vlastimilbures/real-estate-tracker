@@ -284,5 +284,6 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   refused by D-17 on the same test. A term-specific variant of
   `inputRules.INSTALMENT_BELOW_INTEREST` for the refusal; the owner kept the existing text.
   Leaving the 0 % case out of the Data check, which ADR 0264 lists as failing the rule.
-- Approved by: owner 2026-11-26, en, cs and ru of both keys (#597 decision 6, corrected on
-  PR #613)
+- Approved by: en, owner 2026-11-26 (#597 decision 6, corrected on PR #613); cs/ru:
+  owner-approved choices (opening noun, 'aby bylo možné', 'расчёты'); final text reviewed
+  under the owner's delegation, 2026-11-26

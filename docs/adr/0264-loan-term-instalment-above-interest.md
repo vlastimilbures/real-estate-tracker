@@ -365,7 +365,7 @@ term is refused by D-17 on the same test. "Is below" becomes "does not cover", a
 also refuses an equal instalment and the amounts are rounded, and the sentence opens with
 "Mortgage from", as the neighbouring `dataCheck` keys do. A stored 0 % loan with a term and
 a 0 Kč instalment gets its own sentence, `dataCheck.zeroRateZeroInstalment`, chosen by the
-finding's code (`ZERO_RATE_ZERO_INSTALMENT`). The approved en texts:
+finding's code (`ZERO_RATE_ZERO_INSTALMENT`). The owner-approved en texts:
 
 - `dataCheck.instalmentBelowInterest`: "Mortgage from {date}: the instalment {instalment}
   does not cover the first month's interest {interest}. The figures leave the unpaid
@@ -373,4 +373,5 @@ finding's code (`ZERO_RATE_ZERO_INSTALMENT`). The approved en texts:
 - `dataCheck.zeroRateZeroInstalment`: "Mortgage from {date}: an interest-free loan with a
   term needs an instalment above 0 Kč. Raise the instalment to save this loan again."
 
-The cs and ru texts of both keys are approved as in the dictionaries.
+cs/ru: owner-approved choices (opening noun, 'aby bylo možné', 'расчёты'); final text
+reviewed under the owner's delegation, 2026-11-26.
