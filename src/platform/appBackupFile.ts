@@ -3,7 +3,7 @@
 import { call } from "./commands";
 
 /** The picked file's name and text, or null when the dialog was cancelled. Rejects
- *  with `BACKUP_TOO_LARGE` for a file over `maxBytes`, before reading it. */
+ *  with a `BACKUP_TOO_LARGE` CommandError for a file over `maxBytes`, before reading it. */
 export function openBackupFile(
   maxBytes: number,
 ): Promise<{ name: string; text: string } | null> {

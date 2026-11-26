@@ -12,7 +12,9 @@ import { unwrap } from "../../__tests__/support/result";
 
 const disk = { fail: false };
 vi.mocked(invoke).mockImplementation(() =>
-  disk.fail ? Promise.reject("No space left on device") : Promise.resolve(),
+  disk.fail
+    ? Promise.reject({ code: "IO", detail: "No space left on device" })
+    : Promise.resolve(),
 );
 
 function reset(): void {
