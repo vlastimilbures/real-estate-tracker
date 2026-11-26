@@ -53,9 +53,6 @@ beforeEach(async () => {
       status: { kind: "ready" },
       portfolio,
       assumptions,
-      scenarios: [],
-      sample: { active: false, dismissed: false },
-      backup: { lastAt: null, lastFile: null, changedSince: false },
       restoreBackup,
     } as never);
   });

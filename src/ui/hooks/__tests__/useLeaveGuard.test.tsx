@@ -3,16 +3,12 @@
 // #489: one registration with the leave guard (UX-030, UX-073). A form registers under its
 // key while dirty, unregisters when clean, when its key changes and when it unmounts, and
 // never clears another form's key.
-import { beforeEach, describe, expect, it } from "vitest";
-import { act, renderHook } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { renderHook } from "@testing-library/react";
 import { useLeaveGuard } from "../useLeaveGuard";
 import { useUiStore } from "../../../state/uiStore";
 
 const sources = () => useUiStore.getState().unsavedSources;
-
-beforeEach(() =>
-  act(() => useUiStore.setState({ unsavedSources: [], unsavedChanges: false })),
-);
 
 describe("useLeaveGuard (#489)", () => {
   it("registers while dirty and unregisters when clean", () => {

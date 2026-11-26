@@ -50,7 +50,6 @@ beforeEach(() => {
       status: { kind: "ready" },
       portfolio,
       assumptions,
-      error: null,
       init: async () => {},
     } as never);
   });

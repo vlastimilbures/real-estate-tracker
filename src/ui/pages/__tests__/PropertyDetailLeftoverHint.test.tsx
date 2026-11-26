@@ -45,7 +45,6 @@ beforeEach(() =>
     useUiStore.setState({
       route: "property",
       selectedPropertyId: "dubova",
-      propertyTarget: null,
     });
   }),
 );

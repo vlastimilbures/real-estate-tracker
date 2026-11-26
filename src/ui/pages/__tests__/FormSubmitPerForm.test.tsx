@@ -194,10 +194,6 @@ describe("a dirty dialog is known to the leave guard (ADR 0262 §2)", () => {
     act(() => {
       useUiStore.setState({
         route: "properties",
-        unsavedSources: [],
-        unsavedChanges: false,
-        pendingLeave: null,
-        pendingSource: null,
       });
       usePortfolioStore.setState({
         portfolio,

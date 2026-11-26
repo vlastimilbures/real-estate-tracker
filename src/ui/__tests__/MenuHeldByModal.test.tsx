@@ -84,16 +84,8 @@ beforeEach(() => {
       status: { kind: "ready" },
       portfolio,
       assumptions,
-      error: null,
       init: async () => {},
     } as never);
-    useUiStore.setState({
-      route: "dashboard",
-      aboutOpen: false,
-      newPropertyRequested: false,
-      pendingLeave: null,
-      unsavedChanges: false,
-    });
   });
 });
 

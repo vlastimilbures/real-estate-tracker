@@ -53,7 +53,6 @@ beforeEach(() => {
       portfolio: broken,
       assumptions,
       status: { kind: "ready" },
-      error: null,
       init: async () => {},
     } as never);
   });

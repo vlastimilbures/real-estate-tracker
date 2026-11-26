@@ -237,7 +237,6 @@ describe("size in the subtitle (ADR 0236 §2)", () => {
         },
       }),
     );
-  afterEach(() => act(() => useUiStore.setState({ language: "en" })));
 
   it("reads 54,5 m² in Czech", () => {
     act(() => useUiStore.setState({ language: "cs" }));
