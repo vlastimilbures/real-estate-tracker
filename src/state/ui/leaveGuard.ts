@@ -40,7 +40,15 @@ export function guarded(
   );
   if (hasUnsavedChanges(s) && moves)
     set({ pendingLeave: () => set(target), pendingSource: null });
-  else set(target);
+  else set(moves ? target : stay(target));
+}
+
+/** A move to where the user already is keeps the visit's request: it never asks, so it
+ *  must not close the form the request opened either (ADR 0269 §4). */
+function stay(target: Partial<UiState>): Partial<UiState> {
+  const rest = { ...target };
+  delete rest.request;
+  return rest;
 }
 
 export function leaveGuardSlice({ set, get }: SliceCtx): LeaveGuardSlice {

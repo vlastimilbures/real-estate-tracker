@@ -4,6 +4,7 @@
 // heading, the section in view is aria-current) and a collapsed amortization schedule
 // whose export stays available. ADR 0118 (#35) adds the Data check section, whose fix
 // links move to the section that fixes a finding, also when opened from the Dashboard.
+import { StrictMode } from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -313,13 +314,22 @@ describe("Property detail data check (ADR 0118)", () => {
         request: { page: "property", target: "financing", id: 1 },
       }),
     );
-    const { rerender } = render(<PropertyDetail />);
+    render(
+      <StrictMode>
+        <PropertyDetail />
+      </StrictMode>,
+    );
     const heading = screen.getByRole("heading", { name: pd.mortgagesTitle });
     expect(document.activeElement).toBe(heading);
-    // Once: focus moved on and a re-render leaves it there (ADR 0269).
-    act(() => document.body.focus());
+    // Once per id (ADR 0269): the user moves on, and the landing effect runs again (the
+    // request is a new object with the same id), but focus stays where the user put it.
     act(() => heading.blur());
-    rerender(<PropertyDetail />);
+    expect(document.activeElement).not.toBe(heading);
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "financing", id: 1 },
+      }),
+    );
     expect(document.activeElement).not.toBe(heading);
   });
 
