@@ -187,10 +187,7 @@ export function invalidHint(
 }
 
 /** "Must be a whole number from 1 to 10 000" (ADR 0259). */
-export function intRangeHint(
-  t: Pick<Dictionary, "forms">,
-  r: IntRange,
-): string {
+function intRangeHint(t: Pick<Dictionary, "forms">, r: IntRange): string {
   return t.forms.intRange(fmtInt(r.min), fmtInt(r.max));
 }
 
@@ -220,7 +217,7 @@ export interface KindValue {
 }
 
 /** Any one parsed field value; null = an optional field left blank. */
-export type ParsedValue = KindValue[FieldKind] | null;
+type ParsedValue = KindValue[FieldKind] | null;
 
 /** One spec's parsed value: its kind's type, plus null when the spec has an `optional`
  *  flag that is not literally false (a plain FieldSpec may be optional, so it gets null).

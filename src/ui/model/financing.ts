@@ -146,7 +146,7 @@ export function financingPanel(
 export const TIMELINE_ROWS = 8;
 
 /** One date on the timeline: a fixation end or another date of the window (ADR 0204). */
-export interface TimelineMark {
+interface TimelineMark {
   kind: FinancingEventKind;
   label: string;
   date: string;

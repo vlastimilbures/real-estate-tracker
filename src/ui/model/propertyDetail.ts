@@ -183,11 +183,10 @@ export function loanWarningText(
 }
 
 /** A block's row status in the Loan outlook (ADR 0117). */
-export type LoanOutlookStatus =
-  FixationReset["status"] | "nextReset" | "floating";
+type LoanOutlookStatus = FixationReset["status"] | "nextReset" | "floating";
 
 /** One loan block in the Loan outlook's reset table (ADR 0117). */
-export interface LoanOutlookRow {
+interface LoanOutlookRow {
   blockId: string;
   start: string;
   /** "—" for a floating (0-year) block. */
