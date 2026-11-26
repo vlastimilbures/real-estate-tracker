@@ -46,13 +46,7 @@ pub fn restrict_file(path: &Path) -> Result<(), AppError> {
     set_mode(path, PRIVATE_FILE)
 }
 
-#[cfg(unix)]
 fn set_mode(path: &Path, mode: u32) -> Result<(), AppError> {
     use std::os::unix::fs::PermissionsExt;
     fs::set_permissions(path, fs::Permissions::from_mode(mode)).map_err(AppError::from)
-}
-
-#[cfg(not(unix))]
-fn set_mode(_path: &Path, _mode: u32) -> Result<(), AppError> {
-    Ok(())
 }

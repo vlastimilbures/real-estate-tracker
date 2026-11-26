@@ -11,7 +11,9 @@ rust-version = "1.77.2"
 
 [lib]
 name = "app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# The app ships on macOS only (#473). `rlib` is what `src/main.rs` and tests/*.rs link
+# against; the template's `staticlib` and `cdylib` exist for the iOS and Android builds.
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.6.2", features = [] }

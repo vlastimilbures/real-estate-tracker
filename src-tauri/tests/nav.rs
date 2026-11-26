@@ -10,7 +10,6 @@ fn url(s: &str) -> Url {
 #[test]
 fn app_pages_are_allowed() {
     assert!(is_app_url(&url("tauri://localhost/index.html"), false));
-    assert!(is_app_url(&url("http://tauri.localhost/"), false));
 }
 
 #[test]
@@ -21,6 +20,8 @@ fn remote_and_other_schemes_are_refused() {
         "mailto:someone@example.com",
         "file:///etc/passwd",
         "tauri://evil.example/",
+        "http://tauri.localhost/",
+        "https://tauri.localhost/",
         "http://tauri.localhost.example.com/",
     ] {
         assert!(!is_app_url(&url(u), false), "{u}");
