@@ -21,20 +21,20 @@ sources (C-15: the direct fetch of Act No. 257/2016 Coll. returned HTTP 403).
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Month-step kernel     | `src/engine/loan/kernel.ts` `amortizeMonth` (split, re-amortize, payoff at maturity), `reamortizes` (trigger), `recomputeInstalment`                                                                                                                                                                                                                       |
 | Grid loops            | `loan/pay.ts` `stepMonth` (one month of every loan and of the catch-up); `loan/grid.ts` `buildBlockSchedule`; `loan/opening.ts`: catch-up to baseDate `simulateToBaseDate`, plain opening `plainOpening` (the replay, ADR 0235)                                                                                                                            |
-| Calendar              | `loan/calendar.ts` `paymentOffset`, `lastPaymentDue`, `rateOfPayment` (rate on due date `EDATE(start, p)`, ADR 0021); `src/engine/dates.ts` `edate`, `lastGridMonthOnOrBefore`                                                                                                                                                                                 |
-| Grid-bucketed events  | `loan/calendar.ts` `bucketDraws` (tranches → grid month), which fills `newDebtByMonth` in `loan/pay.ts` (DR-092)                                                                                                                                                                                                                                                                        |
+| Calendar              | `loan/calendar.ts` `paymentOffset`, `lastPaymentDue`, `rateOfPayment` (rate on due date `EDATE(start, p)`, ADR 0021); `src/engine/dates.ts` `edate`, `lastGridMonthOnOrBefore`                                                                                                                                                                             |
+| Grid-bucketed events  | `loan/calendar.ts` `bucketDraws` (tranches → grid month), feeding `newDebtByMonth`, declared in `loan/pay.ts` and filled in `loan/grid.ts` (DR-092)                                                                                                                                                                                                        |
 | Refinance chain       | `loan/blockChain.ts` `selectBlock`, `blockChain` / `chainLinks` (each block with its successor), the successor rules `afterSuccessor` (dated after the successor's start: never drawn or applied), `replacedOnOrBefore` and `replacedByMonth`; `loan/chain.ts` `spliceSuccessor` (handover row, `Refinance { month, paidOff, drawn }`), `propertySchedule` |
-| Row fields            | `AmortizationRow` in `src/engine/types.ts` (`month`, `date`, `dueDate`, `ratePa`, `instalment`, `interest`, `principal`, `drawn`, `refinanced`, `prepaid`, `endBalance`); identity `end = prev − principal − prepaid + drawn + refinanced` (DR-092, ADR 0109, ADR 0130)                                                                                                                                                                                               |
+| Row fields            | `AmortizationRow` in `src/engine/types.ts` (`month`, `date`, `dueDate`, `ratePa`, `instalment`, `interest`, `principal`, `drawn`, `refinanced`, `prepaid`, `prepaymentFee`, `endBalance`); identity `end = prev − principal − prepaid + drawn + refinanced` (DR-092, ADR 0109, ADR 0130)                                                                   |
 | Projection            | `src/engine/yearGrid.ts` `yearSlice` (sums a year's rows); `src/engine/projections.ts` `buildYearRow`; `ProjectionYear.draws`                                                                                                                                                                                                                              |
 | KPIs / IRR cash flows | `src/engine/kpis.ts` `leveredCashFlows`, `principalRepaidInHorizon`; `src/engine/ownerCash.ts` `acquisitionOutflows`, `refinanceCash` (cash outside the projection rows)                                                                                                                                                                                   |
-| Term and maturity     | `src/engine/loanTerm.ts` `termMonths` (ADR 0008), `scheduleMonths`; `src/engine/loanChecks.ts` `impliedMaturity` / `maturityMismatch` (ADR 0029); `currentBalance` (closed-form FV; deleted from the engine by ADR 0235, now test-only in `src/engine/__tests__/support/closedForm.ts`)                                                                            |
+| Term and maturity     | `src/engine/loanTerm.ts` `termMonths` (ADR 0008), `scheduleMonths`; `src/engine/loanChecks.ts` `impliedMaturity` / `maturityMismatch` (ADR 0029); `currentBalance` (closed-form FV; deleted from the engine by ADR 0235, now test-only in `src/engine/__tests__/support/closedForm.ts`)                                                                    |
 | Validation            | `src/engine/validate/` `ValidationCode`, `checkMortgage`, `LOAN_ERROR_CODES` (raise), `validateInputs` (report)                                                                                                                                                                                                                                            |
 | Scenarios             | `src/engine/scenarios.ts` `applyScenario`: overrides Assumptions only, never portfolio data (CLAUDE.md)                                                                                                                                                                                                                                                    |
-| Persistence           | `mortgage_blocks` table (`src/data/migrations/`), `src/data/mappers.ts` (the `draws` JSON column is the precedent), `src/data/backup/format.ts` `BACKUP_COLUMNS`                                                                                                                                                                                                  |
-| UI                    | Mortgage form `src/ui/model/mortgageForm.ts`, `loanEventRows.ts` (`drawsDraft`); `src/ui/pages/PropertyDetail.tsx`; `propertyDetail/AmortizationTable.tsx`                                                                                                                                                                                                     |
+| Persistence           | `mortgage_blocks` table (`src/data/migrations/`), `src/data/mappers.ts` (the `draws` JSON column is the precedent), `src/data/backup/format.ts` `BACKUP_COLUMNS`                                                                                                                                                                                           |
+| UI                    | Mortgage form `src/ui/model/mortgageForm.ts`, `loanEventRows.ts` (`drawsDraft`); `src/ui/pages/PropertyDetail.tsx`; `propertyDetail/AmortizationTable.tsx`                                                                                                                                                                                                 |
 
 The seed has no prepayments, payment day or first partial month, so every feature below must be
-**inert by default**: with the new fields absent, all 105 parity targets and the golden master
+**inert by default**: with the new fields absent, all parity targets and the golden master
 stay byte-identical. That is the first test of each feature.
 
 ---
@@ -86,7 +86,7 @@ returning `{ inWindow, overLimit, fee }`. `validate/`: report-only codes
 the fee). If fees are modelled, they are a cash outflow in `kpis.ts` next to the prepayment.
 
 **UI touchpoints.** Mortgage detail: "next fee-free window" date and the allowance amount; a warning
-badge on a prepayment outside the window or over the limit (UX-nnn, en/cs/ru messages).
+badge on a prepayment outside the window or over the limit (its own ADR, en/cs/ru messages).
 
 **Test strategy.** Window dates for month-end starts (31 Jan ⇒ 28/29 Feb clamping, DR-070 rules);
 25 % boundary exactly at the limit and 1 Kč over, for both bases; fee cap cases (1 year left ⇒
@@ -112,12 +112,12 @@ column (P5b). Validation: `INVALID_PAYMENT_DAY` (raise) outside 1–31.
 **Engine hooks.** Today every due date is `EDATE(startDate, p)` (ADR 0021). A payment day
 changes only that cadence anchor:
 
-- New helper `dueDate(block, p)` in `dates.ts`/`loanTerm.ts`: day `paymentDay` (clamped to month
-  end) in the month of `EDATE(startDate, p)`, or the first due date after the start when the
-  payment day falls before the start day.
-- Replace the cadence anchor in `rateOfPayment`, `paymentOffset` / `lastPaymentDue`
-  (`lastGridMonthOnOrBefore(startDate, …)` becomes "payments due by baseDate" on the new cadence),
-  `currentBalance`, `simulateToBaseDate` (`edate(startDate, k)`), `impliedMaturity` (ADR 0029).
+- The cadence goes through `dueDate`, `paymentsDueBy` and `paymentOnOrAfter` in
+  `loanTerm.ts`; `rateOfPayment`, `paymentOffset` / `lastPaymentDue`, `simulateToBaseDate` and
+  `impliedMaturity` (ADR 0029) all read it there. A payment day changes only those three (and
+  the test-only closed form `currentBalance`): day `paymentDay` (clamped to month end) in the
+  month of `EDATE(startDate, p)`, or the first due date after the start when the payment day
+  falls before the start day.
 - The grid stays on `EDATE(baseDate, m)`; row m keeps carrying payment `offset + m`, so the
   projection year buckets (ADR 0022) do not change.
 - The partial first period this creates is feature 4.
