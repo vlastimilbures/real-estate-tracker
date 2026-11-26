@@ -1,6 +1,7 @@
 use tauri::Manager;
 #[cfg(target_os = "macos")]
-use tauri::{RunEvent, WindowEvent};
+use tauri::RunEvent;
+use tauri::WindowEvent;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
 pub mod commands;
@@ -31,7 +32,6 @@ pub fn command_names() -> &'static [&'static str] {
     app_commands!(command_names)
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     crash::install_panic_hook();
     // ADR 0233: timing is on in a debug build, or when started with RTRACKER_PERF=1.
@@ -107,13 +107,10 @@ pub fn run() {
         // macOS convention (UX-045): ⌘W and the red close button hide the window instead of
         // quitting; clicking the Dock icon shows it again; ⌘Q (Quit) still exits.
         .on_window_event(|window, event| {
-            #[cfg(target_os = "macos")]
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.hide();
             }
-            #[cfg(not(target_os = "macos"))]
-            let _ = (window, event);
         })
         .build(tauri::generate_context!())
         // `build()` fails only while creating the runtime or starting a plugin, before
@@ -134,6 +131,8 @@ pub fn run() {
                     let _ = window.set_focus();
                 }
             }
+            // `RunEvent::Reopen` is macOS-only in tauri; this arm keeps the Linux CI build
+            // (clippy -D warnings) free of unused variables.
             #[cfg(not(target_os = "macos"))]
             let _ = (app, event);
         });

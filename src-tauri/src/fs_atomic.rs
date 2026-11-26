@@ -87,24 +87,18 @@ fn fill_and_check(mut file: fs::File, data: &[u8]) -> Result<(), AppError> {
 }
 
 /// Create `path` exclusively (it must not exist) for reading and writing, with `mode`
-/// when given (unix).
+/// when given.
 fn create_new(path: &Path, mode: Option<u32>) -> std::io::Result<fs::File> {
     let mut options = fs::OpenOptions::new();
     options.read(true).write(true).create_new(true);
-    #[cfg(unix)]
     if let Some(m) = mode {
         use std::os::unix::fs::OpenOptionsExt;
         options.mode(m);
     }
-    #[cfg(not(unix))]
-    let _ = mode;
     options.open(path)
 }
 
-/// Fsync a folder, so a rename in it is on disk; best effort (unix; a no-op elsewhere).
+/// Fsync a folder, so a rename in it is on disk; best effort.
 fn sync_dir(dir: &Path) {
-    #[cfg(unix)]
     let _ = fs::File::open(dir).and_then(|d| d.sync_all());
-    #[cfg(not(unix))]
-    let _ = dir;
 }
