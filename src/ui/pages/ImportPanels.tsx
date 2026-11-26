@@ -1,6 +1,5 @@
 // Import page building blocks: the file types' panel, one row per type (choose / drop /
 // template, row errors, ADR 0212) and the tables for parse errors and refused rows.
-// Split from Import.tsx (DR-057).
 import { useState, useRef, useCallback } from "react";
 import { Panel, Button, Badge, TableWrap } from "../components/primitives";
 import { HelpText } from "../components/HelpText";

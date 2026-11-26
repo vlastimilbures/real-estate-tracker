@@ -1,4 +1,4 @@
-// The mortgage block's add/edit form (#490): the record form's state with the loan's
+// The mortgage block's add/edit form: the record form's state with the loan's
 // row lists, the Standard | Development switch (ADR 0098), the event and tranche rows
 // (ADR 0116 §11, ADR 0167), the instalment hint and its Calc button.
 import type { EntityFormProps } from "../../components/EntityPanel";

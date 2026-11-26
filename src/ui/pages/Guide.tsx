@@ -9,9 +9,10 @@ import { guideSectionId, guideSections } from "../model/guideSections";
 import "../styles/guide.css";
 
 // Static, dependency-free reference page. Pure presentation — no engine imports; the only
-// store read is the glossary term a metric label asked to show (UX-044). Explains how the financial engine computes each number and what it means,
-// using generic round-number examples (not the sample portfolio). Left-aligned definition
-// grids replace the right-aligned StatList primitive, which is for label→number rows.
+// store read is the glossary term a metric label asked to show. Explains how the
+// financial engine computes each number and what it means, using generic round-number
+// examples (not the sample portfolio). Left-aligned definition grids replace the
+// right-aligned StatList primitive, which is for label→number rows.
 
 /** Inline formula chip (text font, petrol wash) — not monospace. */
 function F({ children, wrap }: { children: ReactNode; wrap?: boolean }) {
@@ -61,7 +62,7 @@ export function Guide() {
   const g = t.guide;
   const guideTerm = useUiStore((s) => s.guideTerm);
   const clearGuideTerm = useUiStore((s) => s.clearGuideTerm);
-  // A metric label asked for this term (UX-044): bring it into view and focus it once.
+  // A metric label asked for this term: bring it into view and focus it once.
   useEffect(() => {
     if (!guideTerm) return;
     const el = document.getElementById(`glossary-${guideTerm}`);

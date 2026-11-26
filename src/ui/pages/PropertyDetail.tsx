@@ -49,8 +49,7 @@ function usePageUi() {
 }
 
 /** What the page needs to show a property, narrowed; null shows the fallback. The engine
- *  result is null for an unknown id, so a stale or deleted selection lands there too
- *  (DR-065). */
+ *  result is null for an unknown id, so a stale or deleted selection lands there too. */
 function shownPage<V>(
   propertyId: string | null,
   property: Property | undefined,
@@ -69,7 +68,7 @@ function shownPage<V>(
 export function PropertyDetail() {
   const t = useT();
   // Only the fields this page reads, so an unrelated store change (error banner,
-  // scenarios, status) does not re-render it (DR-056).
+  // scenarios, status) does not re-render it.
   const ui = usePageUi();
   const { propertyId, propertyTarget, clearPropertyTarget } = ui;
   const store = usePortfolioStore(
@@ -82,7 +81,7 @@ export function PropertyDetail() {
   // The date the tiles, picker and subtitle are for, clamped to the window (ADR 0150).
   const resolved = useAsOf();
   const result = usePropertyEngineResult(propertyId, resolved?.date ?? null);
-  // Stored data that breaks an engine rule: show the records to fix, no figures (DR-146).
+  // Stored data that breaks an engine rule: show the records to fix, no figures.
   const { out, invalid } = splitResult(result);
   // The open property form: plain, or at its Acquisition section (a Data check link).
   const [editing, setEditing] = useState<false | PropertyFormTarget>(false);

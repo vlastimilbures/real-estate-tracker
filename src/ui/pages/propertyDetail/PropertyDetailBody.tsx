@@ -31,7 +31,7 @@ import { PropertyProjectionPanel } from "./PropertyProjectionPanel";
 export interface PropertyDetailBodyProps {
   v: PropertyDetailView;
   property: Property;
-  /** Stored data that breaks an engine rule: the records to fix, no figures (DR-146). */
+  /** Stored data that breaks an engine rule: the records to fix, no figures. */
   invalid: EngineInputError | null;
   portfolio: Portfolio;
   assumptions: Assumptions;

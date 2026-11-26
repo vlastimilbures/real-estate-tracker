@@ -242,7 +242,7 @@ export function LoanEventRows<K extends EventListKind>({
       {lead && <LeadRowView lead={lead} />}
       {rows.map((row, i) => (
         <EventRowGroup
-          // By position, as before #490 (stable ids are an ADR candidate).
+          // Keyed by position: stable row ids would be a change that needs an ADR.
           key={i}
           kind={kind}
           row={row}

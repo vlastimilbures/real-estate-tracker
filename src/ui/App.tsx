@@ -9,7 +9,7 @@ import "./components/feedback.css";
 import "./components/charts.css";
 import "./components/layout.css";
 // Here, not in InfoTip.tsx: the build puts InfoTip in the chunk the pages share, whose
-// stylesheet loads before this one, so equal-specificity rules above would win (#494).
+// stylesheet loads before this one, so equal-specificity rules above would win.
 import "./styles/info-tip.css";
 import { usePortfolioStore } from "../state/portfolioStore";
 import { useUiStore } from "../state/uiStore";

@@ -1,4 +1,4 @@
-// Property detail's "Data check" section (ADR 0118, #35; ADR 0223): this property's
+// Property detail's "Data check" section (ADR 0118, ADR 0223): this property's
 // stale, missing and defaulted inputs at the page's as-of date, in the Dashboard's look —
 // the counts in the head, a block per list — each row with a link to its fix on the page.
 // The last section of the page.
@@ -36,7 +36,7 @@ export function PropertyDataCheckPanel({
   const t = useT();
   const d = t.dataCheck;
   // The row's text describes its fix button: several buttons can share a name ("Go to
-  // Records"), and the description tells them apart (#133).
+  // Records"), and the description tells them apart.
   const baseId = useId();
   const { attention, defaults } = check;
   const empty = attention.length + defaults.length === 0;

@@ -90,7 +90,7 @@ export function Properties() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // File ▸ New Property… (⌘N, UX-066) lands here with a one-shot request: open the form
+  // File ▸ New Property… (⌘N) lands here with a one-shot request: open the form
   // during render, then clear the request in the store.
   if (newPropertyRequested && !adding) setAdding(true);
   useEffect(() => {
@@ -139,8 +139,8 @@ export function Properties() {
 
   async function handleDelete(id: string) {
     const result = await removeProperty(id);
-    // On failure the confirm row stays open and says why (UX-050). Row actions are
-    // disabled while the delete runs, so this is still its confirm (ADR 0253).
+    // On failure the confirm row stays open and says why. Row actions are disabled while
+    // the delete runs, so this is still its confirm (ADR 0253).
     if (result.ok) setDeletingId(null);
     return result;
   }
@@ -242,7 +242,7 @@ export function Properties() {
                   >
                     <td className="left sticky-col cell-strong">
                       {/* A real button so the keyboard can drill in too; the row
-                          click stays as the mouse shortcut (UX-022). */}
+                          click stays as the mouse shortcut. */}
                       <PropertyLink
                         id={p.propertyId}
                         name={p.name}
@@ -385,7 +385,7 @@ export function Properties() {
             </p>
           )}
           {deleteTarget && (
-            // Outside .table-wrap so the message is never clipped by the scroll (UX-019).
+            // Outside .table-wrap so the message is never clipped by the scroll.
             <ConfirmRow
               key={deleteTarget.propertyId}
               message={t.properties.confirmDelete(deleteTarget.name)}

@@ -155,7 +155,7 @@ export function ScenarioListPanel({
 }) {
   const t = useT();
   const presetsId = useId();
-  // UX-020: Delete asks inline first, like every other delete in the app.
+  // Delete asks inline first, like every other delete in the app.
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const deleteButton = (item: Scenario) => (
     <WriteRowAction
@@ -174,7 +174,7 @@ export function ScenarioListPanel({
           confirmLabel={t.common.yesDelete}
           busyLabel={t.common.deleting}
           onConfirm={async () => {
-            // Close only once the delete landed; a failure stays shown here (UX-050).
+            // Close only once the delete landed; a failure stays shown here.
             const result = await onDelete(item);
             if (result.ok) setConfirmingId(null);
             return result;
