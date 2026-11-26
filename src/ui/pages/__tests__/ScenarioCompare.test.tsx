@@ -88,7 +88,12 @@ async function savedWorkbook() {
   };
 }
 
+// Every test starts from scratch, so no describe depends on the order they run in: the
+// setup file (src/__tests__/setup/stores.ts) puts both stores back to their initial
+// state (`getInitialState()`, the lens and the portfolio included) before each test, and
+// here the mocked comparison and the save spy start empty.
 beforeEach(() => {
+  results = [];
   save.mockReset();
   save.mockResolvedValue({ kind: "saved", filename: "x.xlsx" });
 });
