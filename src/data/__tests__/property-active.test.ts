@@ -81,3 +81,17 @@ describe("rowToProperty reads the active flag", () => {
     },
   );
 });
+
+// #629 review: the type makes `active` required, but a value that skipped it (a cast, an
+// untyped caller) must still write active, never quietly deactivate the property.
+describe("propertyToRow writes the active flag", () => {
+  const extras = { address: null, garage: null };
+  it.each([
+    [true, 1],
+    [false, 0],
+    [undefined, 1],
+  ] as const)("writes %s as %s", (active, stored) => {
+    const p = { ...property, active } as unknown as Property;
+    expect(propertyToRow(p, extras).active).toBe(stored);
+  });
+});
