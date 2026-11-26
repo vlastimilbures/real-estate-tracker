@@ -1,5 +1,5 @@
 // The confirm step of a restore: what the chosen backup holds, its out-of-range values,
-// and Cancel / Restore. Shared by Settings → Backup and the startup error screen (#115).
+// and Cancel / Restore. Shared by Settings → Backup and the startup error screen.
 import { Fragment, useId } from "react";
 import { Button, TableWrap } from "./primitives";
 import {

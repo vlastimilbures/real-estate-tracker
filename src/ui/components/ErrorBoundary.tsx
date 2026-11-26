@@ -78,7 +78,7 @@ export function BoundaryFallback({
   const t = useT();
   const portfolio = usePortfolioStore((s) => s.portfolio);
   if (error instanceof EngineInputError) {
-    // Stored data breaks an engine rule (UX-049): say which record and which rule, and
+    // Stored data breaks an engine rule: say which record and which rule, and
     // offer the property where it can be corrected (at Financing for a leftover
     // mortgage block, ADR 0258).
     return (

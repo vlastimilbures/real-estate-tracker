@@ -6,7 +6,7 @@ import { useT } from "../hooks/useT";
 export type GlossaryTerm = keyof Dictionary["guide"]["glossary"];
 
 /**
- * A metric abbreviation (LTV, DSCR, NOI, …) that explains itself (UX-044): hovering or
+ * A metric abbreviation (LTV, DSCR, NOI, …) that explains itself: hovering or
  * focusing shows the glossary definition, and activating it opens the Guide at the term.
  */
 export function MetricLabel({

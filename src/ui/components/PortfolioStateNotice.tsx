@@ -5,7 +5,7 @@ import { useT } from "../hooks/useT";
 import { Button, EmptyState } from "./primitives";
 
 /** What a portfolio page shows in place of its figures when there is nothing to show
- *  (ADR 0155, #127): no property yet, or every property deactivated. */
+ *  (ADR 0155): no property yet, or every property deactivated. */
 export function PortfolioStateNotice({
   state,
 }: {

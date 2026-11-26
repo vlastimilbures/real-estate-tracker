@@ -1,4 +1,4 @@
-// What every page renders inside the app's chrome (#483): its sticky top bar (PageHeader)
+// What every page renders inside the app's chrome: its sticky top bar (PageHeader)
 // and its main region, with the kept banners above the page's content. A page returns it as
 // its root in every variant (loading, empty, full), so a variant switch keeps it, and a page
 // change mounts a new one with the page. The chrome around it, and the focus move to its
@@ -130,7 +130,7 @@ export function PageFrame({
   // The app has no inner scroll container — the window itself scrolls. Without
   // this, navigating away from a page scrolled deep into a long table (e.g.
   // Projections) lands the next page at that same scroll offset instead of
-  // its natural top. See docs/ux-review-2026-07-02.md P0 #2.
+  // its natural top.
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [route, selectedPropertyId]);

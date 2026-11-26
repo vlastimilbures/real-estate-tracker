@@ -1,5 +1,5 @@
 // Where focus goes once a control inside a panel has closed, found through React rather
-// than by climbing the DOM to a class (#491).
+// than by climbing the DOM to a class.
 import { createContext } from "react";
 
 /** The section of the `<Panel>` around a component, or null outside one: where focus goes

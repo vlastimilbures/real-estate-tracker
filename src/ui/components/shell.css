@@ -239,7 +239,7 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  /* At narrow widths the actions drop under the title instead of clipping (UX-021). */
+  /* At narrow widths the actions drop under the title instead of clipping. */
   flex-wrap: wrap;
   row-gap: var(--s3);
 }

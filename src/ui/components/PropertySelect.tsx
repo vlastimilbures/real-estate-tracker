@@ -124,7 +124,7 @@ function SinglePills({
 type Row = { key: string; label: string; checked: boolean; pick: () => void };
 
 /**
- * The open list (#128, ADR 0157). It mounts on open, so useModalA11y moves focus in;
+ * The open list (ADR 0157). It mounts on open, so useModalA11y moves focus in;
  * Escape calls `onClose`. The options use a roving tabindex (one Tab stop):
  * ArrowUp/ArrowDown move, Home/End jump, Space and Enter pick.
  */
@@ -241,7 +241,7 @@ function Dropdown({
   const valueId = useId();
   const close = useCallback(() => setOpen(false), []);
   // Escape and a pick that closes the list hand focus back to the trigger. A click or Tab
-  // elsewhere does not: focus is already where the user put it (review of #279).
+  // elsewhere does not: focus is already where the user put it.
   const closeToTrigger = useCallback(() => {
     setOpen(false);
     triggerRef.current?.focus();

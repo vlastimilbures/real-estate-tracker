@@ -11,7 +11,7 @@ import "../styles/data-check.css";
 
 export type DataCheckKind = "attention" | "defaults";
 
-/** The panel both pages share (#485): the title, the counts, the as-of date behind the
+/** The panel both pages share: the title, the counts, the as-of date behind the
  *  info icon and the all-clear line when there is nothing to report. The body and the
  *  head's action are the page's. */
 export function DataCheckShell({

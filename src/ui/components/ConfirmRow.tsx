@@ -38,10 +38,10 @@ const cancelButton = (row: HTMLElement | null) =>
   [...(row?.querySelectorAll("button") ?? [])].at(-1) ?? null;
 
 /** The one inline confirm for a destructive action (ADR 0143). It runs `onConfirm` and
- *  stays open with the reason when the write fails (UX-050); the caller closes it on
- *  success. Focus moves to Cancel on open and back to the trigger on Cancel or Escape,
- *  and to the enclosing panel once a successful confirm has closed the row (ADR 0173);
- *  both buttons are described by the question, so a screen reader reads it. */
+ *  stays open with the reason when the write fails; the caller closes it on success.
+ *  Focus moves to Cancel on open and back to the trigger on Cancel or Escape, and to the
+ *  enclosing panel once a successful confirm has closed the row (ADR 0173); both buttons
+ *  are described by the question, so a screen reader reads it. */
 export function ConfirmRow({
   message,
   confirmLabel,

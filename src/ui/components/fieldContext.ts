@@ -1,4 +1,4 @@
-// Ties a Field's <label> and error/hint text to the control rendered inside it (UX-018).
+// Ties a Field's <label> and error/hint text to the control rendered inside it.
 // Kept apart from forms.tsx so DateInput can read it without an import cycle.
 import { createContext, useContext } from "react";
 

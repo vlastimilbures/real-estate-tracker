@@ -304,7 +304,7 @@ export function PropertyFormModal({
           undefined),
   );
   // What the form opened with (blank, or the loaded property) is its baseline: input
-  // differing from it is unsaved, so Esc / backdrop clicks are ignored (UX-029) and the
+  // differing from it is unsaved, so Esc / backdrop clicks are ignored and the
   // leave guard asks (ADR 0262 §2). Taken once, so a failed save leaves the form unsaved
   // (ADR 0241 §2). The message above the buttons goes with the next edit, Save or its ✕
   // (ADR 0262 §1).
