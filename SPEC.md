@@ -658,12 +658,17 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 
 - **SQLite** on disk (one file in the app's data dir, see `docs/release.md`). Tables mirror
   §4.1 — one per entity, effective-dated where noted — plus a single-row `assumptions`
-  table, a `scenarios` table (§7, overrides as versioned JSON + a name) and `app_meta`.
+  table, a `scenarios` table (§7, overrides as versioned JSON + a name), `app_meta` and
+  `schema_migrations` (the applied migration steps).
 - CHECK constraints and unique natural keys back the §4.1 validation rules.
 - Repositories (`src/data`) expose typed CRUD; the engine never imports the DB — the app
   loads rows, maps them to engine inputs through hand-rolled runtime guards (ADR 0048),
   calls the engine, renders outputs.
-- Every multi-step write runs inside one transaction owned by a Rust command (ADR 0014).
+- Every write runs in one of the app's own Rust commands: one statement through
+  `db_execute`, several in one transaction through `db_transaction` (ADR 0014, ADR 0270).
+  Snapshot reads (`db_select_snapshot`) and SQLite backup copies (`db_backup`) are Rust
+  commands too. The app calls the SQL plugin only to open the database and for single
+  reads.
 - Migrations are versioned; before upgrading an existing database the app writes a verified
   `pre-migration-v<from>-to-v<to>-<stamp>.sqlite` copy to the `backups/` folder next to it.
   Each step commits on its own; a failed step is rolled back. The schema starts at version
@@ -676,7 +681,10 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - The assumptions row is written on that first run only. A database that later lacks it is
   not repaired from the sample values: startup stops with `ROW_INVALID` on the error screen,
   which offers Restore a backup… (ADR 0252).
-- Errors are typed (`DataError` codes) and logged to a rotating local `app.log`.
+- Errors are typed (`DataError` codes) and logged to a rotating local `app.log`. An app
+  command that fails in Rust rejects with a stable code (`CommandError`, ADR 0270). The log
+  line for such a failure records that code before the masked text (ADR 0270 point 7, which
+  amends ADR 0147); a failure logged as a `DataError` keeps only the `DataError` code.
 - A write that commits but whose read-back fails stops on the startup error screen ("Your
   last change was saved, but the data could not be read back."); nothing is undone, later
   queued writes are refused, and Try again only reads (ADR 0228).
@@ -788,9 +796,7 @@ price crash**, each with a legend and one line of help (ADR 0102).
   The app never reads `created_at`; it only orders the list (DR-181).
 - **Compare view**: pick 2–3 scenarios; show their KPIs and key charts side by side
   (net worth, net cash flow, LTV) on one screen, honouring the Nominal/Real lens. The
-  Scenarios page currently hides the lens toggle (`showLens={false}` in
-  `src/ui/pages/Scenarios.tsx`), so the comparison follows the lens last chosen on another
-  page; showing the toggle there is tracked in #15.
+  Scenarios page shows the lens toggle once there is a portfolio to compare (ADR 0155).
   The key figures start with **starting equity** (projection year 0) and **Δ net worth vs
   Base** (horizon net worth minus Base's, in the lens; only when Base is compared). A
   scenario whose starting equity differs from Base's (a price crash at Today) has its
@@ -809,7 +815,7 @@ price crash**, each with a legend and one line of help (ADR 0102).
   key figures (ADR 0108).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
-  years (`src/ui/model/scenarioForm.ts`), then revert to trend:
+  years (`src/ui/model/scenarios.ts`), then revert to trend:
   - **Rate shock at fixation end**: +2 / +4 / +6 pp for 3 years (`rateShock`).
   - **Inflation shock**: +3 / +6 / +9 pp for 3 years (`inflationShock`).
   - **Price crash**: −10 % / −20 % / −35 % of property value at Today / +5 years / +10 years
@@ -848,7 +854,10 @@ price crash**, each with a legend and one line of help (ADR 0102).
   testing (ADR 0026, ADR 0249).
 - **Privacy & security:** offline; no network calls, enforced by a strict Content Security
   Policy, least-privilege Tauri capabilities and a navigation guard. File dialogs and writes
-  run in Rust; the webview never handles file paths (ADR 0064). Data, backup and log
+  run in Rust; the webview never passes a file path (ADR 0064). Of the SQL plugin, the
+  webview is granted `load` and `select` only, not `execute` (ADR 0270). That is not a
+  read-only guarantee: `select` and the app's database commands run any SQL the webview
+  sends, an accepted risk because no remote content can run in it (ADR 0064). Data, backup and log
   locations are listed in `docs/release.md`.
 - **Platform:** Apple Silicon, macOS 13 or later; ad-hoc signed with the hardened runtime, no
   App Sandbox (ADR 0009, ADR 0063).
@@ -860,8 +869,8 @@ price crash**, each with a legend and one line of help (ADR 0102).
   sidebar.
 - **Accessibility & UX:** keyboard-navigable forms, translated validation messages, WCAG 2.2
   AA basics checked by an axe scan per screen (`pnpm ux:capture`, ADR 0057), the accounting
-  colour conventions (negatives red, etc.), macOS menu shortcuts (⌘N, ⌘1–⌘5, ⌘W
-  hides the window).
+  colour conventions (negatives red, etc.), macOS menu shortcuts (⌘N, ⌘1–⌘5, ⌘, for
+  Settings, ⌘W hides the window).
 
 ## 9. Screens (UI)
 
