@@ -1,7 +1,7 @@
 // What the app remembers across page frames and chromes for its lifetime. A page change
 // mounts the page's frame again (PageFrame), and the chrome mounts again when the app
 // comes back to the ready state (AppLayout; ADR 0263), so neither can hold it; it lives
-// here, in the state layer, rather than as module state in src/ui (#491).
+// here, in the state layer, rather than as module state in src/ui.
 import type { Route } from "./uiStore";
 
 let shownRoute: Route | null = null;

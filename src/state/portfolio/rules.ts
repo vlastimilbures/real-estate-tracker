@@ -1,5 +1,5 @@
-// The store's pre-write rule checks (#465): pure, they throw before anything is written
-// so a form shows the rule. The store reads their inputs inside the queued op.
+// The store's pre-write rule checks: pure, they throw before anything is written so a
+// form shows the rule. The store reads their inputs inside the queued op.
 import {
   EngineInputError,
   instalmentBelowInterestErrors,

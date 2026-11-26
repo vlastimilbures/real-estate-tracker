@@ -1,5 +1,5 @@
-// The portfolio store, built from its parts (#465): the state, the lifecycle actions and
-// the action modules, sharing one write runner. Its opener and clock are injected.
+// The portfolio store, built from its parts: the state, the lifecycle actions and the
+// action modules, sharing one write runner. Its opener and clock are injected.
 import { create } from "zustand";
 import type { Sql } from "../../data/sql";
 import { DataError } from "../../data/errors";
@@ -95,7 +95,7 @@ function lifecycleActions(
 }
 
 /** A portfolio store: one write runner, shared by every action module. `db` is the
- *  store's open database, outside its state (#465). */
+ *  store's open database, outside its state. */
 export function createPortfolioStore(deps: StoreDeps) {
   let sql: Sql | null = null;
   const db: DbHandle = {

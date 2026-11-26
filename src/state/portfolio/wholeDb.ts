@@ -1,6 +1,6 @@
-// The portfolio store's whole-database actions (#465): CSV preview and import, restore,
-// the sample, and the backup export. They never throw: each resolves with a Result whose
-// failure is a typed ActionError for the caller to show (see PortfolioState, #467).
+// The portfolio store's whole-database actions: CSV preview and import, restore, the
+// sample, and the backup export. They never throw: each resolves with a Result whose
+// failure is a typed ActionError for the caller to show (see PortfolioState).
 import { READ_FAILURES } from "../../data/errors";
 import { logFailure, type FailureSite } from "../diagnostics";
 import { clearSample, loadSample } from "../../data/seed";

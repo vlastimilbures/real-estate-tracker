@@ -1,10 +1,9 @@
-// The input rules every entry point shares, each named once (#464): the bounded field
-// ranges (ADR 0075) the forms (src/ui/model), CSV import (src/import, ADR 0076) and
-// restore apply, so all refuse the same values, and the date floor. Every bounded field
-// is a whole number except the size, which takes one decimal place (ADR 0236). A layer
-// whose limit differs gets its own named rule here, never a silent shared one. The engine
-// reads this module (ADR 0244), so it imports nothing but ./money: no clock, no display
-// code.
+// The input rules every entry point shares, each named once: the bounded field ranges
+// (ADR 0075) the forms (src/ui/model), CSV import (src/import, ADR 0076) and restore
+// apply, so all refuse the same values, and the date floor. Every bounded field is a
+// whole number except the size, which takes one decimal place (ADR 0236). A layer whose
+// limit differs gets its own named rule here, never a silent shared one. The engine reads
+// this module (ADR 0244), so it imports nothing but ./money: no clock, no display code.
 import { ONE, type Decimal } from "./money";
 
 /** Inclusive bounds of a bounded field. */
@@ -80,7 +79,7 @@ export type BoundedField = keyof typeof INT_RANGES;
 
 /** One stored value outside INT_RANGES, or finer than its field accepts: not a whole
  *  number (ADR 0180 §2), or for the size more than one decimal place (ADR 0236). The one
- *  shape restore, the store and the Data check read (#464).
+ *  shape restore, the store and the Data check read.
  *  Not an engine rule: the engine itself is open-ended. A restore warns and asks instead
  *  of refusing (ADR 0148); the store refuses only a value a write adds (ADR 0245). */
 export interface RangeProblem {

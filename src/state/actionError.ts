@@ -1,5 +1,5 @@
-// What a failed whole-database action tells the UI (#467): a typed value the UI
-// translates (ui/components/restoreFailure.ts), like a failed write's WriteError.
+// What a failed whole-database action tells the UI: a typed value the UI translates
+// (ui/components/restoreFailure.ts), like a failed write's WriteError.
 import {
   BackupExportError,
   BackupReadError,

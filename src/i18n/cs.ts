@@ -169,7 +169,7 @@ export const cs: Dictionary = {
       "Podrobnosti jsou v protokolu aplikace: ~/Library/Logs/com.bures.realestate-tracker/app.log",
   },
 
-  // The startup error screen (#115, ADR 0153).
+  // The startup error screen (ADR 0153).
   boot: {
     partialFailed: (reached: number, stoppedAt: number) =>
       `Aktualizace databáze selhala u verze ${stoppedAt} a tento krok byl vrácen zpět. Předchozí kroky proběhly, takže databáze je teď ve verzi ${reached} a předchozí verze aplikace ji už neotevře.`,

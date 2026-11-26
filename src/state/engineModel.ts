@@ -1,9 +1,9 @@
-// One engine model per data version (#469). The store replaces `portfolio` and
-// `assumptions` on every write, so a model keyed on the two objects is never stale: each
-// hook reads from it, a page that needs several views builds the loan schedules once, and
-// a revisit with unchanged data costs nothing. A pure memo layer over engine calls: no
-// clock, no IO (the hooks resolve "today"). A throw is not kept, so the next read throws
-// again, as a throwing useMemo did.
+// One engine model per data version. The store replaces `portfolio` and `assumptions` on
+// every write, so a model keyed on the two objects is never stale: each hook reads from
+// it, a page that needs several views builds the loan schedules once, and a revisit with
+// unchanged data costs nothing. A pure memo layer over engine calls: no clock, no IO (the
+// hooks resolve "today"). A throw is not kept, so the next read throws again, as a
+// throwing useMemo did.
 import { timed } from "../lib/perf";
 import {
   acquisitionSummary,
@@ -177,7 +177,7 @@ function scheduleStore(portfolio: Portfolio, assumptions: Assumptions) {
 
 /** Each override field's content: an equal new overrides object is the same run. Keyed by
  *  every field of the type, so a new override field does not compile until it is listed;
- *  a per-field test pins that each field re-runs the compare (#147). */
+ *  a per-field test pins that each field re-runs the compare. */
 const OVERRIDE_FIELDS: Record<
   keyof ScenarioOverrides,
   (o: ScenarioOverrides) => unknown
@@ -240,7 +240,7 @@ function compareOf(
   );
 }
 
-/** What a property's output reads that does not depend on the as-of date (#174). */
+/** What a property's output reads that does not depend on the as-of date. */
 interface PropertyFixed {
   property: Property;
   blocks: MortgageBlock[];

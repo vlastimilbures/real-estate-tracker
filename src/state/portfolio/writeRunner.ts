@@ -1,5 +1,5 @@
 // The store's write runner (ADR 0228, ADR 0253): the queue, the reload after each write
-// and the refusals after a failed read-back (#465).
+// and the refusals after a failed read-back.
 import type { Sql } from "../../data/sql";
 import { EngineInputError } from "../../engine";
 import { toWriteError } from "../writeError";

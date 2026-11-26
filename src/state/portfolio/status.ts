@@ -1,4 +1,4 @@
-// Reading the store's start-up state (#467): whether writes are refused, and which.
+// Reading the store's start-up state: whether writes are refused, and which.
 import type { RefusedWrite } from "../writeTargets";
 import type { Status } from "./types";
 

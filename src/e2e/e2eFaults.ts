@@ -1,5 +1,5 @@
-// Forced startup failures for the browser E2E / ux:capture run (#115, ADR 0153), so the
-// startup error screen can be captured. NOT a shipped code path: it is imported only in
+// Forced startup failures for the browser E2E / ux:capture run (ADR 0153), so the startup
+// error screen can be captured. NOT a shipped code path: it is imported only in
 // src/data/open.ts's DEV + VITE_E2E branch, which is removed from the production bundle.
 // Each fault is a real one: the data layer itself then refuses the database.
 import type { Sql } from "../data/sql";

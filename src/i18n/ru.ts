@@ -175,7 +175,7 @@ export const ru: Dictionary = {
       "Подробности в журнале приложения: ~/Library/Logs/com.bures.realestate-tracker/app.log",
   },
 
-  // The startup error screen (#115, ADR 0153).
+  // The startup error screen (ADR 0153).
   boot: {
     partialFailed: (reached: number, stoppedAt: number) =>
       `Обновление базы данных не удалось на версии ${stoppedAt}, этот шаг отменён. Предыдущие шаги выполнены, поэтому база теперь в версии ${reached}, и предыдущая версия приложения её больше не откроет.`,

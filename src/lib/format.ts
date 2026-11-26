@@ -26,7 +26,8 @@ function fmtFixed(value: Numeric, dp: number): { neg: boolean; body: string } {
 }
 
 // Display-only number helpers. They live here, not in lib/money, so the engine (which may
-// import only lib/money and lib/rules, ADR 0244) cannot reach a float conversion (CLAUDE.md §5, #154).
+// import only lib/money and lib/rules, ADR 0244) cannot reach a float conversion
+// (CLAUDE.md §5).
 
 /** Round a Decimal to whole CZK (display helper). */
 export function roundCzk(value: Numeric): Decimal {

@@ -1,8 +1,8 @@
 // The single recompute path. Every hook reads the engine model of the store's current
-// (portfolio, assumptions) (#469): any edit produces new references in the store, so a
-// new model runs the pure engine and pushes fresh output to every screen, while views of
-// unchanged data are built once and shared across hooks and page visits. Components
-// consume this — they never call the engine inline.
+// (portfolio, assumptions): any edit produces new references in the store, so a new model
+// runs the pure engine and pushes fresh output to every screen, while views of unchanged
+// data are built once and shared across hooks and page visits. Components consume this —
+// they never call the engine inline.
 import { usePortfolioStore } from "./portfolioStore";
 import { todayUtc } from "../lib/day";
 import {
@@ -69,7 +69,7 @@ export function useEngine(
  * during render (ADR 0123); the caller names it from the ids missing in the result.
  * Returns one result per remaining scenario, in order, or null until the store has
  * loaded. Each run is kept by its overrides' content, so an equal new selection, a
- * rename or a revisit runs nothing again (#147, #469).
+ * rename or a revisit runs nothing again.
  */
 export function useScenarioComparison(
   scenarios: Scenario[],
@@ -92,7 +92,7 @@ export function usePropertyProjections(): Map<string, ProjectionYear[]> | null {
 /**
  * Per-property engine output for the detail screen, or the engine's input error when the
  * stored data breaks a rule, so the page can still show the records to fix.
- * What does not depend on the as-of date is built once per data change (#174).
+ * What does not depend on the as-of date is built once per data change.
  */
 export function usePropertyEngineResult(
   propertyId: string | null,

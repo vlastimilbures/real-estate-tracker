@@ -1,4 +1,4 @@
-// The portfolio store's state and the types its modules share (#465).
+// The portfolio store's state and the types its modules share.
 import type { StoreApi } from "zustand";
 import type { Sql } from "../../data/sql";
 import type {
@@ -26,8 +26,8 @@ import type { PropertyExtras } from "../../data/mappers";
 import type { RefusedWrite } from "../writeTargets";
 import type { WriteRunner } from "./writeRunner";
 
-/** Where start-up stands, as one value (#467). `loading` with `refused` is Try again
- *  after a failed read-back: writes stay refused until it has read the data (ADR 0228).
+/** Where start-up stands, as one value. `loading` with `refused` is Try again after a
+ *  failed read-back: writes stay refused until it has read the data (ADR 0228).
  *  `startupFailed`: `error` for the screen, and `startup` when it was a typed data-layer
  *  failure. `readBackFailed`: a write committed but reading the data back failed;
  *  `refused` names the writes refused since, once each in the order refused and without
@@ -59,7 +59,7 @@ export interface StartupError {
 
 /** What the property form sends: a property without its `active` flag. The form never
  *  sets the flag (Deactivate / Reactivate does, `setPropertyActive`): `addProperty` sets
- *  `active: true`, and `editProperty` keeps the stored flag (#480). */
+ *  `active: true`, and `editProperty` keeps the stored flag. */
 export type PropertyEdit = Omit<Property, "active">;
 
 export interface PortfolioState {
@@ -192,7 +192,7 @@ export interface PortfolioState {
 }
 
 export type SetState = StoreApi<PortfolioState>["setState"];
-/** A store's open database: kept out of its state (#465), so no component reads it. */
+/** A store's open database: kept out of its state, so no component reads it. */
 export interface DbHandle {
   get: () => Sql | null;
   set: (sql: Sql | null) => void;
