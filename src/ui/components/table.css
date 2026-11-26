@@ -194,7 +194,9 @@ table.data thead th.sticky-col {
   left: 0;
   z-index: var(--z-pin-head);
 }
-/* A table cell's drill-in target: reads as the cell text, focusable like a button. */
+/* A text button: reads as the text around it, focusable like a button. In a table it is
+   a cell's drill-in target; `.underlined` (forms.css) is the always-underlined variant
+   (ADR 0266). */
 .link-button {
   appearance: none;
   background: none;

@@ -16,7 +16,7 @@ export function NotOwnedPanel({ purchaseDate }: { purchaseDate: Date }) {
       />
       <button
         type="button"
-        className="link-btn"
+        className="link-button underlined"
         onClick={() => focusSection(sectionId("acquisition"))}
       >
         {d.notOwnedFundingLink}
