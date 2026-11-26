@@ -12,11 +12,6 @@
       "Function 'ChartBody'": 161
     }
   },
-  "src/ui/hooks/useAssumptionsForm.ts": {
-    "lines": {
-      "Function 'useAssumptionsForm'": 129
-    }
-  },
   "src/ui/model/compare.ts": {
     "lines": {
       "Function 'kpiRowSpecs'": 132
