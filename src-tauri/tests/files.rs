@@ -130,6 +130,35 @@ fn backup_names_stay_inside_the_backups_folder() {
 
 // ADR 0175 (#151 item 5): a safety backup never replaces an existing one, as `db_backup`
 // refuses an existing target.
+/// #473: the exact edges of the backup-name rule, kept when the rule is shared.
+#[test]
+fn backup_name_edges() {
+    let stem115 = "a".repeat(115);
+    let stem116 = "a".repeat(116);
+    for ok in [
+        "x.json",
+        "a..json",
+        "A-1.b-2.json",
+        "-.json",
+        format!("{stem115}.json").as_str(),
+    ] {
+        assert!(valid_backup_name(ok), "{ok:?}");
+    }
+    for bad in [
+        ".json",
+        "json",
+        "x.JSON",
+        "x.json.bak",
+        "a_b.json",
+        "a b.json",
+        "é.json",
+        "x.json/",
+        format!("{stem116}.json").as_str(),
+    ] {
+        assert!(!valid_backup_name(bad), "{bad:?}");
+    }
+}
+
 #[test]
 fn write_new_private_refuses_an_existing_file() {
     let dir = temp_dir("new-private");

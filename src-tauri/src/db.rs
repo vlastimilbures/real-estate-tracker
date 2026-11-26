@@ -289,6 +289,19 @@ mod tests {
         assert!(!valid_label(""));
     }
 
+    /// #473: the exact edges of the label rule, kept when the rule is shared.
+    #[test]
+    fn label_edges() {
+        assert!(valid_label(&"a".repeat(100)));
+        assert!(!valid_label(&"a".repeat(101)));
+        for ok in ["-", "--", "0", "Z-9"] {
+            assert!(valid_label(ok), "{ok:?}");
+        }
+        for bad in ["a.b", ".a", "a.sqlite", "a/b", "a\\b", "a\n"] {
+            assert!(!valid_label(bad), "{bad:?}");
+        }
+    }
+
     /// #471: the label rule of the Sql contract (src/data/__tests__/fixtures/
     /// sql-contract.json), which the better-sqlite3 test adapter is checked against too.
     #[test]
