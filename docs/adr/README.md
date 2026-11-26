@@ -316,6 +316,7 @@ it.
 | [0262](0262-form-message-clears-on-edit-dialogs-guarded.md)    | The form-level message clears on the next edit; a dirty dialog is known to the leave guard    | Accepted                                                             | #489, #435                                         |
 | [0263](0263-chrome-stays-mounted.md)                           | The app's chrome stays mounted across pages                                                   | Accepted                                                             | #601, #483, #131                                   |
 | [0264](0264-loan-term-instalment-above-interest.md)            | A loan with a term must pay more than its first month's interest                              | Accepted                                                             | #597, #477, #435                                   |
+| [0265](0265-property-detail-invalid-hides-lens.md)             | Property detail with invalid data hides the Nominal/Real switch                               | Accepted                                                             | #607, #435                                         |
 
 <!-- adr-index:end -->
 
