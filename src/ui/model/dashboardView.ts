@@ -103,12 +103,11 @@ export function dashboardView(
   // the charts plot), so the cards and the per-year charts agree.
   const s = tilesForAsOf(snapshot, series, basis, mode, assumptions);
   const lens = lensKpis(kpis, mode);
-  const check = dashboardDataCheck(
-    engine.portfolio,
-    snapshot.asOf,
+  const check = dashboardDataCheck(engine.portfolio, {
+    asOf: snapshot.asOf,
     baseDate,
     horizonYears,
-  );
+  });
   const subtitle = dashboardSubtitle(t, {
     filterActive: filter.filterActive,
     effectiveCount: filter.effectiveIds.length,

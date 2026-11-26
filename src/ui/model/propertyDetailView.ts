@@ -261,7 +261,10 @@ export function propertyDetailView(
     ? loanWarnings(mortgages, assumptions.baseDate, checked.eventOutcomes)
     : [];
   const check = checked
-    ? dataCheckItems([property], portfolio, checked.asOf, assumptions.baseDate)
+    ? dataCheckItems([property], portfolio, {
+        asOf: checked.asOf,
+        baseDate: assumptions.baseDate,
+      })
     : null;
   return {
     body,

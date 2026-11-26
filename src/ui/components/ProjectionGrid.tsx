@@ -5,7 +5,7 @@ import { MetricLabel } from "./MetricLabel";
 import { Money } from "./figures";
 import { TableWrap } from "./layout";
 import { Pct } from "./rates";
-import { fmtDscr } from "../../lib/format";
+import { fmtDscr, orDash } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import { purchasedValue } from "../../engine";
 import {
@@ -104,7 +104,7 @@ function gridColumns(
     {
       key: "dscr",
       header: <MetricLabel term="dscr">{g.dscr}</MetricLabel>,
-      cell: (r) => (r.dscr ? fmtDscr(r.dscr) : "—"),
+      cell: (r) => orDash(r.dscr, fmtDscr),
     },
     ...projectionExtras(rows, g).map(({ key, header }) => ({
       key,

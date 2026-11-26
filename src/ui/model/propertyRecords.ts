@@ -9,7 +9,7 @@ import {
   type Valuation,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { fmtCzk, fmtDate } from "../../lib/format";
+import { fmtCzk, fmtDate, EMPTY } from "../../lib/format";
 
 /** One property's stored records. */
 export interface PropertyRecords {
@@ -37,7 +37,10 @@ export function propertyRecords(
 
 /** The mortgage table's compact development-loan summary: tranches and total loan, the
  *  interest-only end; "—" for a standard loan. */
-export function developmentSummary(t: Dictionary, r: MortgageBlock): string {
+export function developmentSummary(
+  t: Pick<Dictionary, "propertyDetail">,
+  r: MortgageBlock,
+): string {
   const d = t.propertyDetail;
   const parts: string[] = [];
   if (r.draws?.length) {
@@ -47,5 +50,5 @@ export function developmentSummary(t: Dictionary, r: MortgageBlock): string {
     parts.push(`${d.tranches(r.draws.length)} · ${d.totalLoan(fmtCzk(total))}`);
   }
   if (r.completionDate) parts.push(d.ioUntil(fmtDate(r.completionDate)));
-  return parts.length ? parts.join(" · ") : "—";
+  return parts.length ? parts.join(" · ") : EMPTY;
 }

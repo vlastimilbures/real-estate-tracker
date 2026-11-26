@@ -9,6 +9,17 @@ import { CZK } from "./currency";
 const MINUS = "−"; // real minus sign, not a hyphen
 const NBSP = "\u00A0";
 
+/** What a cell or figure shows when it has no value. */
+export const EMPTY = "—";
+
+/** `fmt(value)`, or `EMPTY` when there is no value. */
+export function orDash<T>(
+  value: T | null | undefined,
+  fmt: (value: T) => string,
+): string {
+  return value === null || value === undefined ? EMPTY : fmt(value);
+}
+
 /** Group a non-negative integer string into space-separated thousands: 28730000 → "28 730 000". */
 function groupThousands(intDigits: string): string {
   return intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");

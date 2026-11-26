@@ -16,7 +16,7 @@ export interface LeveredIrr {
 
 /** Why the IRR has no value, or undefined when it has one. */
 export function irrReasonText(
-  t: Dictionary,
+  t: Pick<Dictionary, "common">,
   reason: IrrNoRateReason | null,
 ): string | undefined {
   if (reason === "NOT_UNIQUE") return t.common.irrNotUnique;

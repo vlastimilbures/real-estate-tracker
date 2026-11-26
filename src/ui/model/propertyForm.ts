@@ -104,7 +104,7 @@ export function propertyFields(t: Dictionary) {
 
 /** A growth override (ADR 0102): a signed percentage, blank is the assumptions' level. */
 function overrideField<const N extends string>(
-  t: Dictionary,
+  t: Pick<Dictionary, "forms" | "propertyForm">,
   name: N,
   label: string,
 ) {
@@ -123,7 +123,7 @@ function overrideField<const N extends string>(
 
 /** The funding record's amounts (ADR 0119 §9): blank is unknown, not 0. */
 function fundingField<const N extends string>(
-  t: Dictionary,
+  t: Pick<Dictionary, "propertyForm">,
   name: N,
   label: string,
   help: string,

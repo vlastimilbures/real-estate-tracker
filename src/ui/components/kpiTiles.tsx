@@ -9,6 +9,7 @@ import { useT } from "../hooks/useT";
 import { KpiTile } from "./Kpi";
 import { Dscr, Money } from "./figures";
 import { Pct } from "./rates";
+import { EMPTY } from "../../lib/format";
 
 type FlowSnapshot = Pick<
   PortfolioSnapshot,
@@ -84,7 +85,7 @@ export function DscrTile({
       compact
       delay={delay}
       label={label}
-      value={dscr ? <Dscr value={dscr} /> : "—"}
+      value={dscr ? <Dscr value={dscr} /> : EMPTY}
       health={dscrBadge(t, dscr)}
     />
   );

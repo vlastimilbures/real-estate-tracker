@@ -87,7 +87,7 @@ function flaggedByProperty(
  * (ADR 0258). Valid data gives none, since the engine flags only refused pairs.
  */
 export function leftoverBlockHints(
-  t: Dictionary,
+  t: Pick<Dictionary, "errorBoundary">,
   errors: readonly EngineValidationError[],
   portfolio: Portfolio | null,
 ): InvalidDataLine[] {

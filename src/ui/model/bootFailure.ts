@@ -57,7 +57,7 @@ export function fileName(path: string): string {
  *  dictionary entries: a table as the restore confirm lists it, an action by its button
  *  or title (ADR 0255). */
 export function refusedWriteLabels(
-  t: Dictionary,
+  t: Pick<Dictionary, "backup" | "common" | "sample">,
   refused: readonly RefusedWrite[],
 ): string[] {
   const names: Record<RefusedWrite, string> = {

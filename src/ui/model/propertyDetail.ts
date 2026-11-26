@@ -28,7 +28,7 @@ import type { XlsxColumn } from "./xlsxExport";
 import { nonZeroColumns } from "./columns";
 import { interestSavedShown, type InterestSavedShown } from "./financing";
 import { ZERO, type Decimal } from "../../lib/money";
-import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
+import { fmtCzk, fmtDate, fmtPct, EMPTY } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
 
 /** One loan warning on Property detail. */
@@ -268,7 +268,7 @@ export function loanOutlook(
       return {
         blockId: b.id,
         start: fmtDate(b.startDate),
-        fixationEnd: b.fixationYears === 0 ? "—" : fmtDate(blockEndDate(b)),
+        fixationEnd: b.fixationYears === 0 ? EMPTY : fmtDate(blockEndDate(b)),
         balance: reset?.status === "upcoming" ? reset.balance : null,
         status,
         label: d.outlookStatus[status],

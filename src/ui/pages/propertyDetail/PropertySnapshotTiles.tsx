@@ -1,6 +1,7 @@
 import { ChartCard } from "../../components/charts";
 import type { ResetMarker } from "../../model/financing";
-import { SERIES, type ChartRow } from "../../model/chartData";
+import type { ChartRow } from "../../model/chartData";
+import { SERIES } from "../../model/chartSeries";
 import { valueSeries } from "../../model/chartSeries";
 import type { AsOfBasis } from "../../model/dashboard";
 import type { PropertySnapshot } from "../../../engine";

@@ -23,6 +23,7 @@ import { csvErrorText, importProblemText } from "../model/importMessages";
 import type { FileState } from "../model/importSession";
 import "../styles/import.css";
 import { cx } from "../../lib/cx";
+import { EMPTY } from "../../lib/format";
 
 function saveCsv(filename: string, content: string) {
   return saveFile({
@@ -59,7 +60,9 @@ function ErrorTable({
           {errors.map((e, i) => (
             <tr key={i}>
               <td>{e.row === 0 ? t.importPage.wholeFile : e.row}</td>
-              <td className="left">{e.field ? <code>{e.field}</code> : "—"}</td>
+              <td className="left">
+                {e.field ? <code>{e.field}</code> : EMPTY}
+              </td>
               <td className="left tone-negative">{csvErrorText(t, e.error)}</td>
             </tr>
           ))}
@@ -92,7 +95,9 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
                 <code>{e.file}.csv</code>
               </td>
               <td>{e.row}</td>
-              <td className="left">{e.field ? <code>{e.field}</code> : "—"}</td>
+              <td className="left">
+                {e.field ? <code>{e.field}</code> : EMPTY}
+              </td>
               <td className="left cell-message tone-negative">
                 {importProblemText(t, e.problem)}
               </td>

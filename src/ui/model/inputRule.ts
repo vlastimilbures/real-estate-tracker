@@ -5,7 +5,10 @@ import type { Dictionary } from "../../i18n";
 import { fmtNumber } from "../../lib/format";
 import { INT_RANGES } from "../../lib/rules";
 
-export function inputRuleText(t: Dictionary, code: ValidationCode): string {
+export function inputRuleText(
+  t: Pick<Dictionary, "inputRules">,
+  code: ValidationCode,
+): string {
   if (code === "INVALID_RECAST_MATURITY") {
     // The recast cap is the longest loan term the forms accept (MAX_LOAN_TERM_MONTHS).
     const years = INT_RANGES.loanTermYears.max;

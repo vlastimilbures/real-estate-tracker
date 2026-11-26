@@ -8,6 +8,8 @@ import {
   fmtPp,
   fmtSigned,
   toNumber,
+  EMPTY,
+  orDash,
 } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import type {
@@ -22,7 +24,7 @@ import { irrReasonText } from "./irr";
 import { lensKpis } from "./lensKpis";
 import { at } from "../../lib/arrays";
 import { BASE_SCENARIO_ID } from "./scenarios";
-import { SERIES } from "./chartData";
+import { SERIES } from "./chartSeries";
 import type { Cell, CellKind } from "./xlsxExport";
 
 /** One compared scenario: its projection in both lenses and its KPIs. */
@@ -50,8 +52,8 @@ export interface CompareValueRow extends CompareKpiRow {
   value: (r: CompareResult) => Cell;
 }
 
-const pct = (d: Decimal | null) => (d ? fmtPct(d) : "—");
-const mult = (d: Decimal | null) => (d ? fmtMultiple(d) : "—");
+const pct = (d: Decimal | null) => orDash(d, fmtPct);
+const mult = (d: Decimal | null) => orDash(d, fmtMultiple);
 
 const rowsOf = (r: CompareResult, mode: Mode) =>
   mode === "real" ? r.realProjection : r.projection;
@@ -129,7 +131,7 @@ export function compareKpiRows(
           {
             ...row,
             fmt: (r: CompareResult) =>
-              r.id === base.id ? "—" : delta(r, base).text,
+              r.id === base.id ? EMPTY : delta(r, base).text,
             note: (r: CompareResult) =>
               r.id === base.id ? undefined : delta(r, base).note,
           },
@@ -160,13 +162,13 @@ function kpiRowSpecs(
     base !== undefined && startsDifferently(r, base);
 
   // Δ cells: "—" when either side has no value, with a note when Base is the one missing.
-  const missingBase = { text: "—", note: s.deltaNoBaseValue };
+  const missingBase = { text: EMPTY, note: s.deltaNoBaseValue };
   const decimalDelta =
     (pick: (r: CompareResult) => Decimal | null, fmt: (d: Decimal) => string) =>
     (r: CompareResult, b: CompareResult): DeltaCell => {
       const v = pick(r);
       const w = pick(b);
-      if (v === null) return { text: "—" };
+      if (v === null) return { text: EMPTY };
       if (w === null) return missingBase;
       return { text: fmtSigned(v.minus(w), fmt) };
     };
@@ -175,7 +177,7 @@ function kpiRowSpecs(
     (r: CompareResult, b: CompareResult): DeltaCell => {
       const v = pick(r);
       const w = pick(b);
-      if (v === null) return { text: "—" };
+      if (v === null) return { text: EMPTY };
       if (w === null) return missingBase;
       return { text: s.deltaYears(v - w) };
     };
@@ -184,7 +186,6 @@ function kpiRowSpecs(
   const irrDelta = decimalDelta(irrRate, pp);
 
   // Each row's value, shared by its text, its Δ and its export cell.
-  const startEquity = (r: CompareResult) => at(rowsOf(r, mode), 0).equity;
   const multiple = (r: CompareResult) => lens(r).netWorthMultiple;
   const cagr = (r: CompareResult) => lens(r).cagr;
   const cumCf = (r: CompareResult) => lens(r).cumulativeNetCashFlow;
@@ -194,17 +195,17 @@ function kpiRowSpecs(
   return [
     {
       label: s.kpiStartingEquity,
-      fmt: (r) => fmtCzkM(startEquity(r)),
+      fmt: (r) => fmtCzkM(startingEquity(r)),
       kind: "money",
-      value: startEquity,
-      delta: decimalDelta(startEquity, fmtCzkM),
+      value: startingEquity,
+      delta: decimalDelta(startingEquity, fmtCzkM),
     },
     ...(base
       ? [
           {
             label: s.kpiNetWorthDeltaVsBase,
             fmt: (r: CompareResult) => {
-              if (r.id === base.id) return "—";
+              if (r.id === base.id) return EMPTY;
               return fmtSigned(netWorth(r).minus(netWorth(base)), fmtCzkM);
             },
             kind: "money" as const,
@@ -264,21 +265,21 @@ function kpiRowSpecs(
       delta: (r, b) =>
         irrRate(r) === null
           ? {
-              text: "—",
+              text: EMPTY,
               note: irrReasonText(t, lens(r).leveredIrr.reason),
             }
           : irrDelta(r, b),
     },
     {
       label: s.kpiFirstCfPositiveYear,
-      fmt: (r) => firstCfYear(r)?.toString() ?? "—",
+      fmt: (r) => orDash(firstCfYear(r), String),
       kind: "int",
       value: firstCfYear,
       delta: yearDelta(firstCfYear),
     },
     {
       label: s.kpiDebtFreeYear,
-      fmt: (r) => debtFreeYear(r)?.toString() ?? "—",
+      fmt: (r) => orDash(debtFreeYear(r), String),
       kind: "int",
       value: debtFreeYear,
       delta: yearDelta(debtFreeYear),
@@ -289,7 +290,7 @@ function kpiRowSpecs(
 /** Footnote for the marked returns: names each scenario whose starting equity differs
  *  from Base's; null without Base or when none differs (ADR 0089). */
 export function compareFootnote(
-  t: Dictionary,
+  t: Pick<Dictionary, "scenarios">,
   results: CompareResult[],
 ): string | null {
   const base = compareBase(results);
@@ -305,7 +306,7 @@ export function compareFootnote(
 /** One line per scenario naming the active properties whose own rate its appreciation or
  *  rent-indexation level does not replace (ADR 0102 §3, ADR 0190). */
 export function ownRateNotes(
-  t: Dictionary,
+  t: Pick<Dictionary, "scenarios">,
   scenarios: Scenario[],
   properties: Property[],
 ): string[] {
@@ -328,7 +329,10 @@ export function ownRateNotes(
 }
 
 /** Key-figures panel hint for the lens. */
-export function compareHint(t: Dictionary, mode: Mode): string {
+export function compareHint(
+  t: Pick<Dictionary, "scenarios">,
+  mode: Mode,
+): string {
   return mode === "real"
     ? t.scenarios.keyFiguresHintReal
     : t.scenarios.keyFiguresHint;

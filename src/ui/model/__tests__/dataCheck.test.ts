@@ -23,18 +23,17 @@ import { fmtCzk } from "../../../lib/format";
 import {
   dataCheckItems,
   findingFix,
-  findingText,
-  fixLabel,
   portfolioDataCheck,
   propertyDataCheck,
   type DataFinding,
 } from "../dataCheck";
+import { findingText, fixLabel } from "../dataCheckText";
 import { loanWarningText } from "../propertyDetail";
 
 function check(id: string, asOf: Date = BASE_DATE, p: Portfolio = portfolio) {
   const property = p.properties.find((x) => x.id === id);
   if (!property) throw new Error(`no property ${id}`);
-  return propertyDataCheck(property, p, asOf, BASE_DATE);
+  return propertyDataCheck(property, p, { asOf, baseDate: BASE_DATE });
 }
 
 function block(id: string): MortgageBlock {
@@ -485,7 +484,10 @@ describe("data check: scope (ADR 0118)", () => {
       future: true,
     });
     expect(
-      dataCheckItems(future.properties, future, BASE_DATE, BASE_DATE)
+      dataCheckItems(future.properties, future, {
+        asOf: BASE_DATE,
+        baseDate: BASE_DATE,
+      })
         .defaults.filter((r) => r.propertyId === "future")
         .map((r) => r.finding),
     ).toEqual([{ kind: "fundingUnknown", future: true }]);
@@ -512,7 +514,10 @@ describe("data check: the sample portfolio (ADR 0118)", () => {
   };
 
   const items = (asOf: Date) =>
-    dataCheckItems(portfolio.properties, portfolio, asOf, BASE_DATE);
+    dataCheckItems(portfolio.properties, portfolio, {
+      asOf,
+      baseDate: BASE_DATE,
+    });
 
   const funding: DataFinding = { kind: "fundingUnknown", future: false };
 
@@ -697,7 +702,10 @@ describe("data check lists (ADR 0118)", () => {
   it("lists every property's findings by group, each row with its property", () => {
     const asOf = isoDate("2029-01-15");
     const p = without(portfolio, ["v-dubova"]);
-    const lists = dataCheckItems(p.properties, p, asOf, BASE_DATE);
+    const lists = dataCheckItems(p.properties, p, {
+      asOf,
+      baseDate: BASE_DATE,
+    });
     expect(
       lists.attention.map((r) => `${r.propertyId}:${r.finding.kind}`),
     ).toEqual([
@@ -716,7 +724,7 @@ describe("data check lists (ADR 0118)", () => {
       "dubova:growthDefault",
       "dubova:fundingUnknown",
     ]);
-    expect(dataCheckItems([], p, asOf, BASE_DATE)).toEqual({
+    expect(dataCheckItems([], p, { asOf, baseDate: BASE_DATE })).toEqual({
       attention: [],
       defaults: [],
     });

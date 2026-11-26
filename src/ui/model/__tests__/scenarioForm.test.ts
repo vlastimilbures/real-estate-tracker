@@ -4,9 +4,9 @@ import { describe, it, expect } from "vitest";
 import {
   parseScenarioDraft,
   scenarioWriteErrors,
-  DEFAULT_SHOCK_YEARS,
   type ScenarioDraftFields,
 } from "../scenarioForm";
+import { DEFAULT_SHOCK_YEARS } from "../scenarios";
 import { en } from "../../../i18n/en";
 import type { EngineValidationError } from "../../../engine";
 import type { WriteError } from "../../../state/writeError";

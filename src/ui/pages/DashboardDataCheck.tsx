@@ -16,12 +16,8 @@ import {
   DataCheckShell,
   type DataCheckKind,
 } from "../components/DataCheckBlocks";
-import {
-  dataCheckGroups,
-  fixLabel,
-  type DataCheckFix,
-  type DataCheckItem,
-} from "../model/dataCheck";
+import { type DataCheckFix, type DataCheckItem } from "../model/dataCheck";
+import { dataCheckGroups, fixLabel } from "../model/dataCheckText";
 
 /** The element the page title's review pill scrolls to (ADR 0218 §1). */
 export const DATA_CHECK_ID = "dashboard-data-check";

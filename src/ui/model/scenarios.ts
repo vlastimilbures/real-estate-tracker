@@ -5,20 +5,27 @@ import { fmtPct, fmtPp, fmtSigned } from "../../lib/format";
 import { D, Decimal } from "../../lib/money";
 import { rate, type Scenario, type ScenarioOverrides } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { DEFAULT_SHOCK_YEARS } from "./scenarioForm";
+
+// A temporary shock reverts to trend after this many years: the presets' shocks and the
+// form's default.
+export const DEFAULT_SHOCK_YEARS = 3;
 
 /** The implicit Base = the saved assumptions (no overrides, no shock). */
 /** The id of the synthetic Base scenario (the saved assumptions). */
 export const BASE_SCENARIO_ID = "base";
 
-export function baseScenario(t: Dictionary): Scenario {
+export function baseScenario(t: Pick<Dictionary, "scenarios">): Scenario {
   return { id: BASE_SCENARIO_ID, name: t.scenarios.base, overrides: {} };
 }
 
 /** One-line human summary of a scenario's deltas vs base (for the list). `reach` is
  *  the rate shock's reach note, shown after it (ADR 0100). A shock delta comes signed
  *  (ADR 0178); the templates add no sign. */
-export function summarize(s: Scenario, t: Dictionary, reach?: string): string {
+export function summarize(
+  s: Scenario,
+  t: Pick<Dictionary, "scenarios">,
+  reach?: string,
+): string {
   const parts: string[] = [];
   const o = s.overrides;
   const sc = t.scenarios;
@@ -105,7 +112,10 @@ const shock = (pp: number) => ({
 });
 
 /** A rate-shock preset: +`pp` points for the default shock years. */
-export function ratePreset(pp: number, t: Dictionary): Preset {
+export function ratePreset(
+  pp: number,
+  t: Pick<Dictionary, "scenarios">,
+): Preset {
   const sc = t.scenarios;
   return {
     name: sc.rateForYears(sc.plusPp(pp), DEFAULT_SHOCK_YEARS),
@@ -114,7 +124,10 @@ export function ratePreset(pp: number, t: Dictionary): Preset {
 }
 
 /** An inflation-shock preset. */
-export function inflationPreset(pp: number, t: Dictionary): Preset {
+export function inflationPreset(
+  pp: number,
+  t: Pick<Dictionary, "scenarios">,
+): Preset {
   const sc = t.scenarios;
   return {
     name: sc.inflForYears(sc.plusPp(pp), DEFAULT_SHOCK_YEARS),
@@ -123,7 +136,10 @@ export function inflationPreset(pp: number, t: Dictionary): Preset {
 }
 
 /** The crash timing as a name suffix: none at the start (ADR 0101). */
-export function crashSuffix(crashAtYear: number, t: Dictionary): string {
+export function crashSuffix(
+  crashAtYear: number,
+  t: Pick<Dictionary, "common" | "scenarios">,
+): string {
   return crashAtYear === 0
     ? ""
     : t.scenarios.crashAt(t.common.plusYears(crashAtYear));

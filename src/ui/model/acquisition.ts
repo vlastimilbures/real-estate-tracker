@@ -2,7 +2,7 @@
 // detail Acquisition section and the Dashboard's Cash invested total.
 import type { AcquisitionSummary, Property } from "../../engine";
 import { ZERO, type Decimal } from "../../lib/money";
-import { fmtCzk } from "../../lib/format";
+import { fmtCzk, EMPTY } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
 
 /** A gap below this many Kč either way is rounding, not a warning (ADR 0119 §9). */
@@ -30,7 +30,7 @@ export function acquisitionView(
   note: string | undefined,
   d: Dictionary["propertyDetail"],
 ): AcquisitionView {
-  const row = (label: string, value: Decimal | null, missing = "—") => ({
+  const row = (label: string, value: Decimal | null, missing = EMPTY) => ({
     label,
     value,
     missing,
