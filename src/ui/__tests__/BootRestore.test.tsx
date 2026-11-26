@@ -16,6 +16,8 @@ import { seedIfEmpty } from "../../data/seed";
 import { exportToJson, type BackupFile } from "../../data/backup";
 import type { Sql } from "../../data/sql";
 import { invoke } from "@tauri-apps/api/core";
+import { toActionError } from "../../state/actionError";
+import type { CsvImportReport } from "../../state/csv";
 import {
   readBackFailedOf,
   startupErrorOf,
@@ -138,6 +140,34 @@ describe("restore from the startup error screen (ROW_INVALID)", () => {
       kind: "restored",
       file: named,
     });
+  });
+
+  // ADR 0154: replacing the data drops what described the old data (#468 pins it here).
+  const leftovers = () =>
+    act(() =>
+      useUiStore.setState({
+        failure: { action: "import", error: toActionError(new Error("x")) },
+        lastImport: { items: [] } as unknown as CsvImportReport,
+      }),
+    );
+
+  it("Continue drops the failure and the import report the old data left", async () => {
+    leftovers();
+    await restoreFromScreen();
+    await userEvent.click(button(en.boot.continue));
+    expect(useUiStore.getState().failure).toBeNull();
+    expect(useUiStore.getState().lastImport).toBeNull();
+  });
+
+  it("a restore that cannot be read back drops them too", async () => {
+    portfolioDb.set(reloadFails(db));
+    leftovers();
+    await restoreFromScreen();
+    expect(screen.getByRole("alert").textContent).toContain(
+      en.boot.readBackFailed,
+    );
+    expect(useUiStore.getState().failure).toBeNull();
+    expect(useUiStore.getState().lastImport).toBeNull();
   });
 
   it("Cancel goes back without restoring", async () => {
