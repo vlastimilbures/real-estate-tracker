@@ -4,6 +4,7 @@
 // heading, the section in view is aria-current) and a collapsed amortization schedule
 // whose export stays available. ADR 0118 (#35) adds the Data check section, whose fix
 // links move to the section that fixes a finding, also when opened from the Dashboard.
+import { StrictMode } from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -308,12 +309,28 @@ describe("Property detail data check (ADR 0118)", () => {
   });
 
   it("lands once on the section a Dashboard fix link asked for", () => {
-    act(() => useUiStore.setState({ propertyTarget: "financing" }));
-    render(<PropertyDetail />);
-    expect(document.activeElement).toBe(
-      screen.getByRole("heading", { name: pd.mortgagesTitle }),
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "financing", id: 1 },
+      }),
     );
-    expect(useUiStore.getState().propertyTarget).toBeNull();
+    render(
+      <StrictMode>
+        <PropertyDetail />
+      </StrictMode>,
+    );
+    const heading = screen.getByRole("heading", { name: pd.mortgagesTitle });
+    expect(document.activeElement).toBe(heading);
+    // Once per id (ADR 0269): the user moves on, and the landing effect runs again (the
+    // request is a new object with the same id), but focus stays where the user put it.
+    act(() => heading.blur());
+    expect(document.activeElement).not.toBe(heading);
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "financing", id: 1 },
+      }),
+    );
+    expect(document.activeElement).not.toBe(heading);
   });
 
   it("waits for the portfolio before landing", () => {
@@ -322,31 +339,38 @@ describe("Property detail data check (ADR 0118)", () => {
         portfolio: null,
         status: { kind: "loading" },
       });
-      useUiStore.setState({ propertyTarget: "holding" });
+      useUiStore.setState({
+        request: { page: "property", target: "holding", id: 1 },
+      });
     });
     render(<PropertyDetail />);
-    expect(useUiStore.getState().propertyTarget).toBe("holding");
+    expect(document.activeElement).toBe(document.body);
     setPortfolio(portfolio);
     expect(document.activeElement).toBe(
       screen.getByRole("heading", { name: pd.holdingCostsTitle }),
     );
-    expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 
   it("opens the property form when the Dashboard link asked for it", () => {
-    act(() => useUiStore.setState({ propertyTarget: "edit" }));
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "edit", id: 1 },
+      }),
+    );
     render(<PropertyDetail />);
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("false");
-    expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 
   it("opens the form at its Acquisition section when the Dashboard link asked for it (#178)", () => {
-    act(() => useUiStore.setState({ propertyTarget: "editFunding" }));
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "editFunding", id: 1 },
+      }),
+    );
     render(<PropertyDetail />);
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("true");
-    expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 });
 

@@ -35,3 +35,12 @@ export type PropertyFormTarget = "edit" | "editFunding";
 
 /** Where Property detail lands once: a section, or the open property form (ADR 0118). */
 export type PropertyTarget = PropertySection | PropertyFormTarget;
+
+/** What a navigation asks its page to do once, tagged by the page (ADR 0269): open
+ *  Properties' Add form (⌘N), bring a Guide glossary term into view, or land Property
+ *  detail on a section or its form. A new `id` for every request, so a repeat is new. */
+export type RouteRequest = { id: number } & (
+  | { page: "properties" }
+  | { page: "guide"; term: string }
+  | { page: "property"; target: PropertyTarget }
+);

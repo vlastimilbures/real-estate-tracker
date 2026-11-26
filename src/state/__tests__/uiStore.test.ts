@@ -38,9 +38,11 @@ describe("requestNewProperty", () => {
     useUiStore.getState().requestNewProperty();
     const s = useUiStore.getState();
     expect(s.route).toBe("properties");
-    expect(s.newPropertyRequested).toBe(true);
-    s.clearNewPropertyRequest();
-    expect(useUiStore.getState().newPropertyRequested).toBe(false);
+    expect(s.request?.page).toBe("properties");
+    // A repeat is a new request (ADR 0269).
+    const first = s.request?.id;
+    useUiStore.getState().requestNewProperty();
+    expect(useUiStore.getState().request?.id).not.toBe(first);
   });
 
   it("is held back by unsaved edits like any navigation (UX-030)", () => {
@@ -48,12 +50,12 @@ describe("requestNewProperty", () => {
     useUiStore.getState().requestNewProperty();
     let s = useUiStore.getState();
     expect(s.route).toBe("dashboard");
-    expect(s.newPropertyRequested).toBe(false);
+    expect(s.request).toBeNull();
     expect(s.pendingLeave).not.toBeNull();
     s.confirmLeave();
     s = useUiStore.getState();
     expect(s.route).toBe("properties");
-    expect(s.newPropertyRequested).toBe(true);
+    expect(s.request?.page).toBe("properties");
   });
 });
 
@@ -201,25 +203,23 @@ describe("scenario compare state", () => {
 
 // ADR 0118 (#35): a data check fix link opens a property on the section that fixes it.
 describe("data check state", () => {
-  it("openProperty() with a target records where the page lands, once", () => {
+  it("openProperty() with a target records where the page lands; the next move drops it", () => {
     useUiStore.getState().openProperty("lipova", "records");
     let s = useUiStore.getState();
     expect(s.route).toBe("property");
     expect(s.selectedPropertyId).toBe("lipova");
-    expect(s.propertyTarget).toBe("records");
-    s.clearPropertyTarget();
-    expect(useUiStore.getState().propertyTarget).toBeNull();
+    expect(s.request).toMatchObject({ page: "property", target: "records" });
     useUiStore.getState().openProperty("dubova");
     s = useUiStore.getState();
-    expect(s.propertyTarget).toBeNull();
+    expect(s.request).toBeNull();
   });
 
   it("the target waits behind unsaved edits like the navigation (UX-030)", () => {
     useUiStore.setState({ unsavedSources: ["test"] });
     useUiStore.getState().openProperty("lipova", "edit");
-    expect(useUiStore.getState().propertyTarget).toBeNull();
+    expect(useUiStore.getState().request).toBeNull();
     useUiStore.getState().confirmLeave();
-    expect(useUiStore.getState().propertyTarget).toBe("edit");
+    expect(useUiStore.getState().request).toMatchObject({ target: "edit" });
   });
 
   it("panel: no manual choice at first, then the one set", () => {

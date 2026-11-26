@@ -12,9 +12,7 @@ beforeEach(() => {
     route: "dashboard",
     selectedPropertyId: null,
     settingsTab: "assumptions",
-    guideTerm: null,
-    newPropertyRequested: false,
-    propertyTarget: null,
+    request: null,
     notice: null,
     unsavedSources: [],
     pendingLeave: null,
@@ -61,7 +59,7 @@ describe("what counts as leaving (guarded)", () => {
     ui().openProperty("p1", "financing");
     expect(asks()).toBe(true);
     ui().confirmLeave();
-    expect(ui().propertyTarget).toBe("financing");
+    expect(ui().request).toMatchObject({ target: "financing" });
   });
 
   it("another property asks, and Discard applies the id and the target together", () => {
@@ -70,27 +68,24 @@ describe("what counts as leaving (guarded)", () => {
     expect(ui().selectedPropertyId).toBe("p1");
     ui().confirmLeave();
     expect(ui().selectedPropertyId).toBe("p2");
-    expect(ui().propertyTarget).toBe("holding");
+    expect(ui().request).toMatchObject({ target: "holding" });
   });
 
-  it("⌘N on Properties asks, unless a request is still pending", () => {
-    useUiStore.setState({ route: "properties" });
+  it("⌘N on Properties asks, also while an earlier one is unhandled (ADR 0269)", () => {
+    // The first request lands (the form was clean), and nothing handles it.
+    ui().setUnsavedChanges("form", false);
+    ui().requestNewProperty();
+    ui().setUnsavedChanges("form", true);
     ui().requestNewProperty();
     expect(asks()).toBe(true);
-    ui().cancelLeave();
-    useUiStore.setState({ newPropertyRequested: true });
-    ui().requestNewProperty();
-    expect(asks()).toBe(false);
   });
 
-  it("a Guide term asks on the Guide, unless the same term is still pending", () => {
-    useUiStore.setState({ route: "guide" });
+  it("a Guide term asks on the Guide, also the same term again (ADR 0269)", () => {
+    ui().setUnsavedChanges("form", false);
+    ui().openGuide("noi");
+    ui().setUnsavedChanges("form", true);
     ui().openGuide("noi");
     expect(asks()).toBe(true);
-    ui().cancelLeave();
-    useUiStore.setState({ guideTerm: "noi" });
-    ui().openGuide("noi");
-    expect(asks()).toBe(false);
   });
 
   it("Clear sample sets its notice at once; only the move to the Dashboard waits", () => {

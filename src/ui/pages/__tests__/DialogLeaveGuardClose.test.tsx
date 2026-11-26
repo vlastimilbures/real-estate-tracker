@@ -101,9 +101,7 @@ describe("the scenario dialog leaves no leave-guard entry (ADR 0262 §2)", () =>
 
 describe("the property dialog leaves no leave-guard entry (ADR 0262 §2)", () => {
   async function dirtyProperty() {
-    act(() =>
-      useUiStore.setState({ route: "properties", newPropertyRequested: true }),
-    );
+    act(() => useUiStore.getState().requestNewProperty());
     render(<Properties />);
     await userEvent.type(
       screen.getByLabelText(en.propertyForm.name),

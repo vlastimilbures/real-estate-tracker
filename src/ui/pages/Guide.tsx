@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { PageFrame } from "../components/PageFrame";
-import { useUiStore } from "../../state/uiStore";
+import { usePageRequest } from "../hooks/usePageRequest";
 import { Panel } from "../components/layout";
 import { useT } from "../hooks/useT";
 import { useSectionSpy } from "../hooks/useSectionSpy";
@@ -60,16 +60,15 @@ function Defs({ rows, egLabel }: { rows: Def[]; egLabel: string }) {
 export function Guide() {
   const t = useT();
   const g = t.guide;
-  const guideTerm = useUiStore((s) => s.guideTerm);
-  const clearGuideTerm = useUiStore((s) => s.clearGuideTerm);
-  // A metric label asked for this term: bring it into view and focus it once.
+  // A metric label asked for this term: bring it into view and focus it, once per
+  // request (ADR 0269).
+  const request = usePageRequest("guide");
   useEffect(() => {
-    if (!guideTerm) return;
-    const el = document.getElementById(`glossary-${guideTerm}`);
+    if (!request) return;
+    const el = document.getElementById(`glossary-${request.term}`);
     el?.scrollIntoView?.({ block: "center" });
     el?.focus();
-    clearGuideTerm();
-  }, [guideTerm, clearGuideTerm]);
+  }, [request]);
   // Section links in the top bar, the current one marked while scrolling (ADR 0213).
   const sections = guideSections(t);
   const [currentSection, setCurrentSection] = useSectionSpy(

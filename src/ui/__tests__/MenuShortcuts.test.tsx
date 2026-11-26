@@ -93,7 +93,7 @@ describe("menu shortcuts (UX-066)", () => {
     emit("menu://new-property");
     const s = useUiStore.getState();
     expect(s.route).toBe("dashboard");
-    expect(s.newPropertyRequested).toBe(false);
+    expect(s.request).toBeNull();
   });
 });
 
@@ -150,7 +150,7 @@ describe("while the error screen shows (ADR 0228)", () => {
     emit("menu://settings");
     const s = useUiStore.getState();
     expect(s.route).toBe("dashboard");
-    expect(s.newPropertyRequested).toBe(false);
+    expect(s.request).toBeNull();
   });
 
   it("About does nothing, so it cannot pop up after Try again", async () => {

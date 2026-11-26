@@ -51,7 +51,7 @@ function menuHeld(): boolean {
   const s = useUiStore.getState();
   return (
     s.route === before.route &&
-    s.newPropertyRequested === before.newPropertyRequested &&
+    s.request === before.request &&
     s.aboutOpen === before.aboutOpen
   );
 }

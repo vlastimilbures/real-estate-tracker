@@ -30,6 +30,7 @@ import {
 } from "../model/sectionNav";
 import { PropertyDetailBody } from "./propertyDetail/PropertyDetailBody";
 import { PropertyHeaderActions } from "./propertyDetail/PropertyHeaderActions";
+import { usePageRequest, useUnhandled } from "../hooks/usePageRequest";
 
 /** The view state this page reads. */
 function usePageUi() {
@@ -41,8 +42,6 @@ function usePageUi() {
       mode: s.mode,
       asOf: s.asOf,
       setAsOf: s.setAsOf,
-      propertyTarget: s.propertyTarget,
-      clearPropertyTarget: s.clearPropertyTarget,
       amortizationOpen: s.amortizationOpen,
       setAmortizationOpen: s.setAmortizationOpen,
     })),
@@ -66,12 +65,31 @@ function shownPage<V>(
   return { property, portfolio, assumptions, view };
 }
 
+/** Where this visit's Data check link lands (ADR 0118, ADR 0269), once the page shows
+ *  the property: `form` is the property form it opens while the request waits, and a
+ *  section takes focus once per request. */
+function usePropertyLanding(shown: boolean) {
+  const request = usePageRequest("property");
+  const waiting = useUnhandled(shown && request ? request.id : null);
+  const landed = useRef<number | null>(null);
+  useEffect(() => {
+    if (!shown || !request || isFormTarget(request.target)) return;
+    if (landed.current === request.id) return;
+    landed.current = request.id;
+    focusSection(sectionId(request.target));
+  }, [request, shown]);
+  const target = request?.target ?? null;
+  const form: PropertyFormTarget | false =
+    waiting.waiting && isFormTarget(target) ? target : false;
+  return { form, handled: waiting.handled };
+}
+
 export function PropertyDetail() {
   const t = useT();
   // Only the fields this page reads, so an unrelated store change (error banner,
   // scenarios, status) does not re-render it.
   const ui = usePageUi();
-  const { propertyId, propertyTarget, clearPropertyTarget } = ui;
+  const { propertyId } = ui;
   const store = usePortfolioStore(
     useShallow((s) => ({
       portfolio: s.portfolio,
@@ -108,16 +126,11 @@ export function PropertyDetail() {
     sections.map(sectionId),
   );
   // A Dashboard data check link lands on its section, or opens the property form, once
-  // the page shows the property (ADR 0118). The form opens during render, as Properties'
-  // ⌘N request does; the effect moves focus and clears the request.
+  // the page shows the property (ADR 0118, ADR 0269): the form is open while its
+  // request waits, until it is closed; a section takes focus once per request.
   const shown = found !== undefined;
-  if (isFormTarget(propertyTarget) && shown && !editing)
-    setEditing(propertyTarget);
-  useEffect(() => {
-    if (!propertyTarget || !shown) return;
-    if (!isFormTarget(propertyTarget)) focusSection(sectionId(propertyTarget));
-    clearPropertyTarget();
-  }, [propertyTarget, shown, clearPropertyTarget]);
+  const landing = usePropertyLanding(shown);
+  const formOpen = editing !== false ? editing : landing.form;
 
   const page = shownPage(
     propertyId,
@@ -199,8 +212,11 @@ export function PropertyDetail() {
           open: ui.amortizationOpen,
           onToggle: () => ui.setAmortizationOpen(!ui.amortizationOpen),
         }}
-        editing={editing}
-        onCloseForm={() => setEditing(false)}
+        editing={formOpen}
+        onCloseForm={() => {
+          setEditing(false);
+          landing.handled();
+        }}
         onRecordFunding={(opener) => {
           acquisitionOpener.current = opener;
           setEditing("editFunding");

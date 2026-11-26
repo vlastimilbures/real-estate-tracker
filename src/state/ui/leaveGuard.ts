@@ -26,20 +26,29 @@ export interface LeaveGuardSlice {
 export const hasUnsavedChanges = (s: Pick<LeaveGuardSlice, "unsavedSources">) =>
   s.unsavedSources.length > 0;
 
-/** Navigation that leaves the current screen or Settings tab: held back while a form
- *  has unsaved edits; staying where you are never asks. */
+/** Navigation that leaves the current screen or Settings tab, or hands it a request:
+ *  held back while a form has unsaved edits. The location is compared by value, so
+ *  staying where you are with no request never asks (ADR 0269). */
 export function guarded(
   get: () => UiState,
   set: (s: Partial<UiState>) => void,
   target: Partial<UiState>,
 ) {
   const s = get();
-  const moves = (Object.keys(target) as (keyof UiState)[]).some(
-    (k) => s[k] !== target[k],
+  const moves = (Object.keys(target) as (keyof UiState)[]).some((k) =>
+    k === "request" ? target.request != null : s[k] !== target[k],
   );
   if (hasUnsavedChanges(s) && moves)
     set({ pendingLeave: () => set(target), pendingSource: null });
-  else set(target);
+  else set(moves ? target : stay(target));
+}
+
+/** A move to where the user already is keeps the visit's request: it never asks, so it
+ *  must not close the form the request opened either (ADR 0269 §4). */
+function stay(target: Partial<UiState>): Partial<UiState> {
+  const rest = { ...target };
+  delete rest.request;
+  return rest;
 }
 
 export function leaveGuardSlice({ set, get }: SliceCtx): LeaveGuardSlice {

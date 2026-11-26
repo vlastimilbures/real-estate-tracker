@@ -171,7 +171,7 @@ describe("successor-block note (ADR 0098)", () => {
     expect(learnMore.className).toBe("link-button underlined");
     await userEvent.click(learnMore);
     expect(useUiStore.getState().route).toBe("guide");
-    expect(useUiStore.getState().guideTerm).toBe("fixation");
+    expect(useUiStore.getState().request).toMatchObject({ term: "fixation" });
   });
 
   it("does not show for the first block", async () => {

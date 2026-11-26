@@ -37,7 +37,7 @@ beforeEach(async () => {
       dashboardPropertyIds: [],
       unsavedSources: [],
       pendingLeave: null,
-      guideTerm: null,
+      request: null,
     });
   });
 });

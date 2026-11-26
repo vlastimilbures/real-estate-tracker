@@ -28,15 +28,17 @@ describe("MetricLabel (UX-044)", () => {
     render(<MetricLabel term="ltv">LTV</MetricLabel>);
     fireEvent.click(screen.getByRole("button", { name: /LTV/ }));
     expect(useUiStore.getState().route).toBe("guide");
-    expect(useUiStore.getState().guideTerm).toBe("ltv");
+    expect(useUiStore.getState().request).toMatchObject({
+      page: "guide",
+      term: "ltv",
+    });
   });
 
   it("the Guide focuses the requested glossary entry", () => {
-    act(() => useUiStore.setState({ route: "guide", guideTerm: "noi" }));
+    act(() => useUiStore.getState().openGuide("noi"));
     render(<Guide />);
     const entry = document.getElementById("glossary-noi");
     expect(entry).not.toBeNull();
     expect(document.activeElement).toBe(entry);
-    expect(useUiStore.getState().guideTerm).toBeNull();
   });
 });
