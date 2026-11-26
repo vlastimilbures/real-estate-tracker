@@ -35,7 +35,8 @@ change](ux-capture/README.md#proving-a-ui-change)).
 
 A change is done when `pnpm check` passes. It runs these gates in order and stops at the
 first failure (the list is `scripts/gates.mjs`; `pnpm gates:docs` regenerates this table and
-the [README](README.md#quality)'s). CI runs the same commands on Linux.
+the [README](README.md#quality)'s). CI runs the same commands on Linux; the built-menu check
+also runs on a macOS runner.
 
 <!-- gates:start -->
 
@@ -88,10 +89,10 @@ still describe it. Which document owns what is listed in
 [docs/release.md](docs/release.md#who-owns-what).
 
 - **Git hooks** (husky + lint-staged): on commit, staged files are formatted (`.mjs`, `.cjs`
-  and `.html` included), linted (`.mjs` and `.cjs` included, not `.html`) and their related
-  Vitest tests run; on push, the full typecheck, `pnpm depcruise`, `pnpm knip`,
-  `pnpm knip:prod` and `pnpm adr:check` run. A green CI run is required to merge — do not
-  bypass the hooks.
+  and `.html` included), linted (`.mjs` and `.cjs` included, not `.html`; `.css` with
+  stylelint) and, for files under `src/`, their related Vitest tests run; on push, the full
+  typecheck, `pnpm depcruise`, `pnpm knip`, `pnpm knip:prod` and `pnpm adr:check` run. A
+  green CI run is required to merge — do not bypass the hooks.
 - **Git in tests** (#589): git sets `GIT_DIR` inside `git rebase --exec` run in a linked
   worktree and inside some hooks (a commit hook can also get `GIT_INDEX_FILE`), and a test
   that inherits it runs its git on the real repository (once: `core.bare=true` and a stray
@@ -218,7 +219,9 @@ still describe it. Which document owns what is listed in
 ### Architecture rules and the baseline
 
 `.dependency-cruiser.cjs` encodes the layer map (ADR 0072, amended by ADR 0171 and ADR 0244): the engine may import
-only `decimal.js`, `src/lib/money.ts` and `src/lib/rules.ts` (which imports only lib/money); Tauri calls live in `src/platform`; the UI reaches data,
+only `decimal.js`, `src/lib/money.ts` and `src/lib/rules.ts` (which imports only lib/money).
+ESLint also bans a direct `decimal.js` import in the engine, so `Decimal` comes from lib/money.
+Tauri calls live in `src/platform`; the UI reaches data,
 import and platform only through `src/state` (the facade modules there); no runtime import
 cycles. State and UI may import _types_ from any layer.
 
