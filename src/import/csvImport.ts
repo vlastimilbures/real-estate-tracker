@@ -1,10 +1,10 @@
 // DB access for CSV import. Distinct from csv.ts (pure parse) and plan.ts (the pure
 // plan) so each is testable.
 //
-// All or nothing (P5b, DR-023): the current rows are read once, every property name is
-// resolved (D-55) and the merged result is checked against the engine's input rules
-// BEFORE anything is written. The write is then a single `Sql.transaction` (D-14): every
-// statement commits, or none does.
+// All or nothing: the current rows are read once, every property name is
+// resolved (ADR 0049) and the merged result is checked against the engine's input
+// rules BEFORE anything is written. The write is then a single `Sql.transaction`
+// (ADR 0014): every statement commits, or none does.
 //
 // ADR 0096: `planImport` classifies each row as add / update / unchanged. The preview
 // and the commit share it; the commit writes the plan it builds at the click, and
