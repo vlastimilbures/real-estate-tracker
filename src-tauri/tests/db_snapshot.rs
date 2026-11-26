@@ -5,18 +5,13 @@
 use app_lib::db::{select_snapshot, Statement};
 use serde_json::{json, Value};
 use sqlx::{Executor, Pool, Sqlite};
-use std::path::PathBuf;
 
-async fn open(name: &str) -> (PathBuf, Pool<Sqlite>) {
-    let path = std::env::temp_dir().join(format!(
-        "ret-dbsnapshot-{}-{}.sqlite",
-        name,
-        std::process::id()
-    ));
-    let _ = std::fs::remove_file(&path);
-    let pool = Pool::<Sqlite>::connect(&format!("sqlite:{}?mode=rwc", path.display()))
-        .await
-        .unwrap();
+mod common;
+use common::TempDir;
+
+async fn open(name: &str) -> (TempDir, Pool<Sqlite>) {
+    let dir = TempDir::new(&format!("dbsnapshot-{name}"));
+    let pool = common::plugin_pool(&dir).await;
     pool.execute(
         "CREATE TABLE t (id TEXT PRIMARY KEY, amount TEXT NOT NULL, \
          n INTEGER, r REAL, note TEXT)",
@@ -32,14 +27,11 @@ async fn open(name: &str) -> (PathBuf, Pool<Sqlite>) {
     pool.execute("CREATE TABLE u (id INTEGER PRIMARY KEY, v TEXT)")
         .await
         .unwrap();
-    (path, pool)
+    (dir, pool)
 }
 
 fn st(query: &str) -> Statement {
-    Statement {
-        query: query.to_string(),
-        params: vec![],
-    }
+    common::st(query, vec![])
 }
 
 #[tokio::test]
@@ -66,7 +58,7 @@ async fn returns_one_row_list_per_statement_decoded_like_the_plugin() {
         ]
     );
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(path);
 }
 
 #[tokio::test]
@@ -94,7 +86,7 @@ async fn binds_parameters_and_reports_sql_errors() {
         .await
         .is_ok());
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(path);
 }
 
 #[tokio::test]
@@ -116,5 +108,5 @@ async fn decodes_by_storage_class_not_declared_type() {
         json!({"day": "2026-06-07", "flag": 1})
     );
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(path);
 }

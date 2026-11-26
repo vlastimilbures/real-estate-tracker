@@ -1,26 +1,16 @@
 //! P5a: behaviour of src/db.rs (D-14) against temporary file databases opened exactly as
 //! tauri-plugin-sql opens them. Never touches the real database.
 
-use app_lib::db::{backup_to, run_atomic, Statement};
+use app_lib::db::{backup_to, run_atomic};
 use serde_json::{json, Value};
 use sqlx::{Executor, Pool, Row, Sqlite};
-use std::path::PathBuf;
 
-fn temp_path(name: &str) -> PathBuf {
-    let path = std::env::temp_dir().join(format!(
-        "ret-dbatomic-{}-{}.sqlite",
-        name,
-        std::process::id()
-    ));
-    let _ = std::fs::remove_file(&path);
-    path
-}
+mod common;
+use common::{count, plugin_pool, st, TempDir};
 
-async fn open(name: &str) -> (PathBuf, Pool<Sqlite>) {
-    let path = temp_path(name);
-    let pool = Pool::<Sqlite>::connect(&format!("sqlite:{}?mode=rwc", path.display()))
-        .await
-        .unwrap();
+async fn open(name: &str) -> (TempDir, Pool<Sqlite>) {
+    let dir = TempDir::new(&format!("dbatomic-{name}"));
+    let pool = plugin_pool(&dir).await;
     pool.execute("CREATE TABLE p (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE)")
         .await
         .unwrap();
@@ -30,27 +20,12 @@ async fn open(name: &str) -> (PathBuf, Pool<Sqlite>) {
     )
     .await
     .unwrap();
-    (path, pool)
+    (dir, pool)
 }
 
-fn st(query: &str, params: Vec<Value>) -> Statement {
-    Statement {
-        query: query.to_string(),
-        params,
-    }
-}
-
-async fn count(pool: &Pool<Sqlite>, table: &str) -> i64 {
-    sqlx::query(&format!("SELECT COUNT(*) FROM {table}"))
-        .fetch_one(pool)
-        .await
-        .unwrap()
-        .get(0)
-}
-
-async fn cleanup(path: PathBuf, pool: Pool<Sqlite>) {
+async fn cleanup(dir: TempDir, pool: Pool<Sqlite>) {
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(dir);
 }
 
 #[tokio::test]
@@ -153,7 +128,7 @@ async fn backup_writes_a_verified_copy_and_never_overwrites() {
     )
     .await
     .unwrap();
-    let dest = temp_path("backup-dest");
+    let dest = path.join("backup-dest.sqlite");
     backup_to(&pool, &dest).await.unwrap();
     let copy = Pool::<Sqlite>::connect(&format!("sqlite:{}?mode=ro", dest.display()))
         .await
@@ -163,16 +138,13 @@ async fn backup_writes_a_verified_copy_and_never_overwrites() {
     copy.close().await;
     let err = backup_to(&pool, &dest).await.unwrap_err().to_string();
     assert!(err.starts_with("BACKUP_EXISTS"), "{err}");
-    let _ = std::fs::remove_file(&dest);
     cleanup(path, pool).await;
 }
 
 #[tokio::test]
 async fn backup_into_a_missing_directory_fails() {
     let (path, pool) = open("backup-baddir").await;
-    let dest = std::env::temp_dir()
-        .join(format!("ret-no-such-dir-{}", std::process::id()))
-        .join("x.sqlite");
+    let dest = path.join("no-such-dir").join("x.sqlite");
     let err = backup_to(&pool, &dest).await.unwrap_err().to_string();
     assert!(err.starts_with("BACKUP_FAILED"), "{err}");
     cleanup(path, pool).await;
