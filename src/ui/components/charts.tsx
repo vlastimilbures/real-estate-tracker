@@ -56,7 +56,7 @@ function czkUnitFromRows(
 }
 
 // CSS-var strings resolve inside SVG, so the grid and tick colours track the active
-// theme. Recharts 3.11+ writes a tick's fill as an inline style (its #666 default when
+// theme. Recharts 3.11+ writes a tick's fill as an inline style (its `#666` default when
 // none is given), which outranks any stylesheet rule, so the tick colour is a prop; the
 // tick size stays in charts.css (ADR 0114).
 const GRID = "var(--hairline)";
