@@ -136,7 +136,8 @@
   cursor: pointer;
 }
 /* Two classes, so the border beats .chip's (shell.css) whichever stylesheet loads first:
-   chunk order is not source order (#494, App.tsx:11-12). Before :hover, which wins. */
+   chunk order is not source order (see App.tsx's stylesheet imports). Before :hover,
+   which wins. */
 .chip.dc-chip {
   border-color: var(--hairline-strong);
 }

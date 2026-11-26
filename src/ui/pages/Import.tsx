@@ -158,7 +158,7 @@ export function Import() {
       const imported = await importCsv(batch);
       if (imported.ok) {
         setLastImport(imported.value);
-        // Imported: clear the files so a second click cannot import them again (UX-038).
+        // Imported: clear the files so a second click cannot import them again.
         setProperties(null);
         setValuations(null);
         setRents(null);
@@ -166,16 +166,16 @@ export function Import() {
         showToast(t.importPage.importComplete);
       }
       // Import is one transaction: only a failure before the commit lands here, so
-      // nothing was written (DR-023). A failed read-back after it succeeds, and the app
+      // nothing was written. A failed read-back after it succeeds, and the app
       // stops on the error screen (ADR 0228).
       else if (imported.error.kind === "planRefused") {
         // The plan built at the click has problems: show them as the preview does,
         // which also disables Import (ADR 0229 §2).
         setPreview(imported.error.preview);
       } else {
-        // Logged by the store. A constraint the CSV checks missed (a generated-id clash
-        // was one, now fixed: DR-137) gets the translated wording, not SQLite's text. In
-        // the notice, so it reaches the owner on any page (ADR 0154).
+        // Logged by the store. A constraint the CSV checks missed gets the translated
+        // wording, not SQLite's text. In the notice, so it reaches the owner on any page
+        // (ADR 0154).
         setFailure("import", imported.error);
       }
     } finally {

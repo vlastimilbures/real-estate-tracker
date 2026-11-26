@@ -125,12 +125,12 @@
   font-size: var(--fs-13);
 }
 /* Scenario headers are coloured like their chart line; brass as text needs the darker
-   text tone to reach 4.5:1 (UX-025). Charts outside the table keep --series-2. */
+   text tone to reach 4.5:1. Charts outside the table keep --series-2. */
 .compare-table {
   --series-2: var(--series-2-text);
 }
 /* The key figures (ADR 0216): the shared data table, columns in shares (the metric
-   column's width is set inline, 1.4 shares; each scenario one, UX-081), the metric
+   column's width is set inline, 1.4 shares; each scenario one), the metric
    column pinned, each scenario's header in its line's colour. */
 table.data.compare-table {
   table-layout: fixed;

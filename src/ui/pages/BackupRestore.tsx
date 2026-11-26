@@ -102,7 +102,7 @@ export function BackupRestorePanel() {
     try {
       const exported = await exportBackup();
       const outcome = exported.ok ? exported.value : null;
-      // A cancelled save dialog is the user's own choice: no toast (UX-001).
+      // A cancelled save dialog is the user's own choice: no toast.
       if (!exported.ok) setFailure("backupExport", exported.error);
       else if (outcome?.kind === "saved")
         showToast(t.backup.savedTo(outcome.filename));
@@ -161,9 +161,9 @@ export function BackupRestorePanel() {
         dataReplaced();
         setNotice({ kind: "restored", file: restored.value.safetyBackup });
       }
-      // One transaction: only a failure before the commit lands here, so the current
-      // data is unchanged (DR-019). A failed read-back after it succeeds, and the app
-      // stops on the error screen (ADR 0228).
+      // One transaction: only a failure before the commit lands here, so the current data
+      // is unchanged. A failed read-back after it succeeds, and the app stops on the
+      // error screen (ADR 0228).
       else setFailure("restore", restored.error);
     } finally {
       setRestoring(false);

@@ -18,10 +18,10 @@ export function ActivationBanner({
   propertyName: string;
   isActive: boolean;
   confirmingDeactivate: boolean;
-  /** Deactivates; the confirm stays open with the reason when it fails (UX-050). */
+  /** Deactivates; the confirm stays open with the reason when it fails. */
   onConfirmDeactivate: () => Promise<MutationResult>;
   onCancelDeactivate: () => void;
-  /** Why the last activation failed, shown in the inactive banner (UX-050). */
+  /** Why the last activation failed, shown in the inactive banner. */
   error?: string | null;
 }) {
   const t = useT();

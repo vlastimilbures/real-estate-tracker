@@ -71,7 +71,7 @@ export function Scenarios() {
   const { showToast } = useToast();
 
   // Which loans each saved scenario's rate shock hits (ADR 0100). Each note builds a
-  // block schedule per loan, so it is built once per data change (#163 R4-09).
+  // block schedule per loan, so it is built once per data change.
   const reach = useMemo(
     () =>
       new Map(

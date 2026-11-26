@@ -79,7 +79,7 @@ export function CompareView({
     ...compareSeriesStyle(i),
   }));
 
-  // Each scenario under the Nominal/Real lens, real by its own CPI (UX-055).
+  // Each scenario under the Nominal/Real lens, real by its own CPI.
   const netWorthRows = mergeCompareMetric(results, mode, (y) => y.equity);
   const cashFlowRows = mergeCompareMetric(results, mode, (y) => y.netCashFlow, {
     flow: true,
@@ -128,7 +128,7 @@ export function CompareView({
       >
         {notice}
         {/* A real table for assistive technology: caption, scenario column headers,
-            metric row headers (UX-081, DR-145). */}
+            metric row headers. */}
         <TableWrap label={t.scenarios.keyFiguresTitle}>
           <table className="data compare-table">
             <caption className="sr-only">{t.scenarios.keyFiguresTitle}</caption>

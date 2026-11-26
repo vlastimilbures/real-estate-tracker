@@ -149,7 +149,7 @@
   overflow-wrap: anywhere;
 }
 
-/* UX-044: the entry a metric label opened is focused; mark it. */
+/* The entry a metric label opened is focused; mark it. */
 .guide-gloss:focus {
   outline: 2px solid var(--accent);
   outline-offset: 4px;

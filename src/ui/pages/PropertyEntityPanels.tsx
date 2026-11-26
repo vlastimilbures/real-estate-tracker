@@ -1,6 +1,6 @@
 // The editable child-entity panels of Property detail (valuations, leases, mortgage
-// blocks): column layout, form specs, draft/build mapping. Split out of
-// PropertyDetail.tsx (DR-057); each panel reads its own store actions.
+// blocks): column layout, form specs, draft/build mapping. Each panel reads its own store
+// actions.
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { Money, Pct } from "../components/primitives";
 import { EntityPanel, type PanelTable } from "../components/EntityPanel";
