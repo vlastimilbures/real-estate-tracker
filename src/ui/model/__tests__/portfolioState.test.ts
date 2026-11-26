@@ -4,9 +4,7 @@ import { portfolioState } from "../portfolioState";
 import type { Portfolio } from "../../../engine";
 import { mixed } from "../../../engine/__tests__/support/mixed";
 
-const withActive = (
-  active: (id: string) => boolean | undefined,
-): Portfolio => ({
+const withActive = (active: (id: string) => boolean): Portfolio => ({
   ...mixed,
   properties: mixed.properties.map((p) => ({ ...p, active: active(p.id) })),
 });
@@ -25,12 +23,10 @@ describe("portfolioState", () => {
     });
   });
 
-  it("is ready with one active property, a missing flag counting as active", () => {
+  // A missing flag counting as active is the mapper's now (property-active.test, #480).
+  it("is ready with one active property", () => {
     expect(portfolioState(mixed).kind).toBe("ready");
-    expect(
-      portfolioState(withActive((id) => (id === "dev" ? undefined : false)))
-        .kind,
-    ).toBe("ready");
+    expect(portfolioState(withActive((id) => id === "dev")).kind).toBe("ready");
   });
 
   it("counts a pending purchase as active", () => {
