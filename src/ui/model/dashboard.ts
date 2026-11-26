@@ -73,6 +73,23 @@ export function tilesForAsOf(
     : snapshot;
 }
 
+/** The as-of a property's figures are read at: its basis, the resolved date the snapshot
+ *  was evaluated at, and the assumptions (base date, price index). One object, so the as-of
+ *  date cannot be swapped with a purchase or base date. */
+interface AsOfContext {
+  basis: AsOfBasis;
+  asOf: Date;
+  assumptions: Assumptions;
+}
+
+/** One property's inputs to its tiles: its engine snapshot, its lens-adjusted projection
+ *  rows and its purchase date. */
+interface PropertyFigures {
+  snapshot: PropertySnapshot;
+  series: SeriesRow[];
+  purchaseDate: Date;
+}
+
 /**
  * Property-detail counterpart of `tilesForAsOf` (ADR 0019): the same as-of basis, so
  * the property tiles add up to the Dashboard. The property snapshot carries no `asOf`,
@@ -81,13 +98,9 @@ export function tilesForAsOf(
  * Properties row (ADR 0156).
  */
 export function propertyTilesForAsOf(
-  snapshot: PropertySnapshot,
-  series: SeriesRow[],
-  basis: AsOfBasis,
-  asOf: Date,
+  { snapshot, series, purchaseDate }: PropertyFigures,
+  { basis, asOf, assumptions }: AsOfContext,
   mode: Mode,
-  assumptions: Assumptions,
-  purchaseDate: Date,
 ): PropertySnapshot {
   const tiles =
     basis.kind === "projection"
@@ -147,24 +160,22 @@ export function propertyRowsForAsOf(
   perProperty: PropertySnapshot[],
   properties: readonly Property[],
   projections: ReadonlyMap<string, ProjectionYear[]>,
-  basis: AsOfBasis,
-  asOf: Date,
-  assumptions: Assumptions,
+  ctx: AsOfContext,
 ): PropertyRow[] {
   const purchase = new Map(properties.map((p) => [p.id, p.purchaseDate]));
   return perProperty.map((p) => {
     // Every row comes from `properties`, so its purchase date is always there.
-    const purchaseDate = purchase.get(p.propertyId) ?? asOf;
+    const purchaseDate = purchase.get(p.propertyId) ?? ctx.asOf;
     return {
       ...propertyTilesForAsOf(
-        p,
-        // Nominal rows are the projection itself.
-        projections.get(p.propertyId) ?? [],
-        basis,
-        asOf,
+        {
+          snapshot: p,
+          // Nominal rows are the projection itself.
+          series: projections.get(p.propertyId) ?? [],
+          purchaseDate,
+        },
+        ctx,
         "nominal",
-        assumptions,
-        purchaseDate,
       ),
       purchaseDate,
     };
@@ -230,17 +241,23 @@ export function asOfHint(
   return c.asOfHintSnapshot(fmtDate(basis.date));
 }
 
+/** What the Dashboard subtitle notes: the property filter (`effectiveCount` of
+ *  `totalCount` shown) and the as-of date. */
+interface SubtitleInput {
+  filterActive: boolean;
+  effectiveCount: number;
+  totalCount: number;
+  isToday: boolean;
+  asOf: Date;
+}
+
 /**
  * Dashboard page subtitle: notes an active property filter and/or a non-today as-of
  * date; falls back to a plain default when neither applies.
  */
 export function dashboardSubtitle(
   t: Dictionary,
-  filterActive: boolean,
-  effectiveCount: number,
-  totalCount: number,
-  isToday: boolean,
-  asOf: Date,
+  { filterActive, effectiveCount, totalCount, isToday, asOf }: SubtitleInput,
 ): string {
   const parts: string[] = [];
   if (filterActive)

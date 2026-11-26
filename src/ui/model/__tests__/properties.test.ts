@@ -27,11 +27,13 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
       assumptions,
     );
     const total = propertiesTotal(
-      out.snapshot,
-      out.projection,
-      basis,
-      assumptions,
-      portfolio.properties,
+      {
+        snapshot: out.snapshot,
+        projection: out.projection,
+        basis,
+        assumptions,
+        properties: portfolio.properties,
+      },
       en,
     )!;
     expect(total).toEqual({
@@ -58,11 +60,13 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
       assumptions,
     );
     const total = propertiesTotal(
-      out.snapshot,
-      out.projection,
-      basis,
-      assumptions,
-      portfolio.properties,
+      {
+        snapshot: out.snapshot,
+        projection: out.projection,
+        basis,
+        assumptions,
+        properties: portfolio.properties,
+      },
       en,
     )!;
     expect(total.value).toBe(dash.totalReportedValue);
@@ -76,11 +80,13 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
     );
     expect(
       propertiesTotal(
-        out.snapshot,
-        out.projection,
-        basis,
-        assumptions,
-        properties,
+        {
+          snapshot: out.snapshot,
+          projection: out.projection,
+          basis,
+          assumptions,
+          properties,
+        },
         en,
       )?.label,
     ).toBe(en.properties.totalRowActive);
@@ -90,13 +96,15 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
     const { out, basis } = at("2026-10-01", true);
     const total = (inactive: number[]) =>
       propertiesTotal(
-        out.snapshot,
-        out.projection,
-        basis,
-        assumptions,
-        portfolio.properties.map((p, i) =>
-          inactive.includes(i) ? { ...p, active: false } : p,
-        ),
+        {
+          snapshot: out.snapshot,
+          projection: out.projection,
+          basis,
+          assumptions,
+          properties: portfolio.properties.map((p, i) =>
+            inactive.includes(i) ? { ...p, active: false } : p,
+          ),
+        },
         en,
       );
     expect(total([0, 1])).toBeNull();
@@ -109,11 +117,13 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
     const out = portfolioOutputs(mixed, assumptions, isoDate("2026-10-01"));
     const basis = asOfView(assumptions.baseDate, out.snapshot.asOf, true);
     const total = propertiesTotal(
-      out.snapshot,
-      out.projection,
-      basis,
-      assumptions,
-      mixed.properties,
+      {
+        snapshot: out.snapshot,
+        projection: out.projection,
+        basis,
+        assumptions,
+        properties: mixed.properties,
+      },
       en,
     )!;
     expect(total.label).toBe(en.properties.totalRowOwned);
@@ -126,11 +136,13 @@ describe("propertiesTotal (ADR 0205 §5)", () => {
     const { out, basis } = at("2026-10-01", true);
     expect(
       propertiesTotal(
-        out.snapshot,
-        out.projection,
-        basis,
-        assumptions,
-        portfolio.properties.slice(0, 1),
+        {
+          snapshot: out.snapshot,
+          projection: out.projection,
+          basis,
+          assumptions,
+          properties: portfolio.properties.slice(0, 1),
+        },
         en,
       ),
     ).toBeNull();

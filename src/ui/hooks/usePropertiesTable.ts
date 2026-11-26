@@ -38,20 +38,20 @@ export function usePropertiesTable(): PropertiesTableData {
           snapshot.perProperty,
           portfolio.properties,
           projections,
-          basis,
-          view.date,
-          assumptions,
+          { basis, asOf: view.date, assumptions },
         ),
       )
     : [];
   return {
     rows,
     total: propertiesTotal(
-      snapshot,
-      engine.projection,
-      basis,
-      assumptions,
-      portfolio.properties,
+      {
+        snapshot,
+        projection: engine.projection,
+        basis,
+        assumptions,
+        properties: portfolio.properties,
+      },
       t,
     ),
     subtitle:

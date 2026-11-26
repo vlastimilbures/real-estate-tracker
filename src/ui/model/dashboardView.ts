@@ -109,14 +109,13 @@ export function dashboardView(
     baseDate,
     horizonYears,
   );
-  const subtitle = dashboardSubtitle(
-    t,
-    filter.filterActive,
-    filter.effectiveIds.length,
-    filter.properties.length,
-    view.isToday,
-    s.asOf,
-  );
+  const subtitle = dashboardSubtitle(t, {
+    filterActive: filter.filterActive,
+    effectiveCount: filter.effectiveIds.length,
+    totalCount: filter.properties.length,
+    isToday: view.isToday,
+    asOf: s.asOf,
+  });
   return {
     subtitle,
     pickerHint: asOfHint(t, basis, baseDate),

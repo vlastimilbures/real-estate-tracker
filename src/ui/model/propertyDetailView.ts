@@ -179,13 +179,13 @@ export function propertyBodyView(
   const chartRows = toChartRows(series);
   return {
     tiles: propertyTilesForAsOf(
-      out.snapshot,
-      series,
-      basis,
-      out.asOf,
+      {
+        snapshot: out.snapshot,
+        series,
+        purchaseDate: property.purchaseDate,
+      },
+      { basis, asOf: out.asOf, assumptions },
       mode,
-      assumptions,
-      property.purchaseDate,
     ),
     basis,
     chartRows,

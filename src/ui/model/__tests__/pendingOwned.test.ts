@@ -36,13 +36,23 @@ function ownedAt(asOf: IsoDate, mode: Mode, isToday = false): boolean {
     assumptions,
   );
   return propertyTilesForAsOf(
-    propertySnapshot(future, mixed, assumptions, asOf, fullSchedule.rows),
-    series,
-    asOfView(assumptions.baseDate, asOf, isToday),
-    asOf,
+    {
+      snapshot: propertySnapshot(
+        future,
+        mixed,
+        assumptions,
+        asOf,
+        fullSchedule.rows,
+      ),
+      series,
+      purchaseDate: future.purchaseDate,
+    },
+    {
+      basis: asOfView(assumptions.baseDate, asOf, isToday),
+      asOf,
+      assumptions,
+    },
     mode,
-    assumptions,
-    future.purchaseDate,
   ).owned;
 }
 
@@ -71,9 +81,7 @@ describe("propertyRowsForAsOf", () => {
       portfolioSnapshot(mixed, assumptions, asOf).perProperty,
       mixed.properties,
       propertyProjections(mixed, assumptions),
-      asOfView(assumptions.baseDate, asOf, false),
-      asOf,
-      assumptions,
+      { basis: asOfView(assumptions.baseDate, asOf, false), asOf, assumptions },
     );
     for (const r of rows) {
       const p = mixed.properties.find((x) => x.id === r.propertyId)!;
