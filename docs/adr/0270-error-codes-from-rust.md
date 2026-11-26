@@ -112,10 +112,14 @@ constraint? }`.
      OS and SQLite codes kept, ADR 0175 point 5). `log_error` keeps its caps (80 characters
      for the code field, 500 for the context, `src-tauri/src/error_log.rs:8`), and the
      prefix counts towards the 500.
-   - **No personal data and no new free text.** A code is upper snake case with no digits
-     and comes from a closed list, so it carries no amount, name, id or path, and masking
-     cannot change it. The names and ids the log already holds (option B in ADR 0147) are
-     neither added to nor removed.
+   - **No personal data and no new free text.** A code is upper snake case (letters,
+     digits, underscores) from a closed list, so it carries no amount, name, id or path.
+     The prefix is written as it is, not masked, so a digit in a code stays
+     (`BACKUP_PATH_NOT_UTF8`, which keeps its `BACKUP_*` prefix under point 1). The names
+     and ids the log already holds (option B in ADR 0147) are neither added to nor
+     removed. (Corrected 2026-11-26: the accepted text said "with no digits", which
+     `BACKUP_PATH_NOT_UTF8` contradicts. The owner kept the point 1 name, and the reason,
+     a closed list with no personal data or free text, is unchanged.)
 
 ## Visible effects
 
