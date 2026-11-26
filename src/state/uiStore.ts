@@ -6,7 +6,7 @@ import { loadDictionary } from "../i18n";
 import { useUiStore } from "./ui/store";
 
 export { useUiStore } from "./ui/store";
-export type { Route, SettingsTab } from "./ui/navigation";
+export type { Route, SettingsTab } from "./navigation";
 export type { Theme } from "./themePreference";
 export type { OutcomeAction, Notice, Failure } from "./ui/feedback";
 /** How long a toast stays.

@@ -1,3 +1,3 @@
-// The Nominal/Real lens: which money terms the screens show. A presentation mode, so the
-// type lives with the presentation model; the UI store holds the current value.
-export type Mode = "nominal" | "real";
+// The Nominal/Real lens: which money terms the screens show. State owns the type, with
+// the other navigation types; the UI store holds the current value.
+export type { Mode } from "../../state/navigation";

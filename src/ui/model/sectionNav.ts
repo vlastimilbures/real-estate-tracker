@@ -1,15 +1,12 @@
 // Pure model for Property detail's section nav (ADR 0107): which sections the page shows,
 // in page order, and which one is in view.
 
-export type PropertySection =
-  | "overview"
-  | "dataCheck"
-  | "records"
-  | "financing"
-  | "acquisition"
-  | "holding"
-  | "projection"
-  | "amortization";
+import type {
+  PropertyFormTarget,
+  PropertySection,
+} from "../../state/navigation";
+
+export type { PropertyFormTarget, PropertySection };
 
 /** The sections Property detail renders, in page order. Records, Financing and Holding
  *  costs are always there (they stay editable with invalid data); the rest need output.
@@ -35,9 +32,6 @@ export function propertySections(has: {
   ];
 }
 
-/** The property form as a landing target: plain, or opened at its Acquisition section
- *  (a Data check link, ADR 0118). */
-export type PropertyFormTarget = "edit" | "editFunding";
 export const isFormTarget = (
   x: PropertySection | PropertyFormTarget | null,
 ): x is PropertyFormTarget => x === "edit" || x === "editFunding";
