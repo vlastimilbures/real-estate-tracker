@@ -15,8 +15,7 @@ import {
 import type { HoldingCost, CostDefaults } from "../../../engine";
 import type { MutationResult } from "../../../state/portfolioStore";
 import { useT } from "../../hooks/useT";
-
-const newId = () => crypto.randomUUID();
+import { newId } from "../../../lib/newId";
 
 /** Holding costs (ADR 0207): a read view of the six costs, a blank field showing the
  *  portfolio default it falls back to; the pencil opens the form in place. */

@@ -37,6 +37,7 @@ export type {
   FieldChange,
   ImportItem,
 } from "./plan";
+import { newId } from "../lib/newId";
 
 /** What an import wrote: one item per CSV row, as the preview showed it. */
 export interface CsvImportReport {
@@ -80,7 +81,7 @@ function newIds(): (key: string) => string {
   const known = new Map<string, string>();
   return (key) => {
     let id = known.get(key);
-    if (id === undefined) known.set(key, (id = crypto.randomUUID()));
+    if (id === undefined) known.set(key, (id = newId()));
     return id;
   };
 }

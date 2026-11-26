@@ -26,6 +26,7 @@ import type { WriteError } from "../../state/writeError";
 import { useFormSubmit } from "../hooks/useFormSubmit";
 import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import { useT } from "../hooks/useT";
+import { newId } from "../../lib/newId";
 
 export { DEFAULT_SHOCK_YEARS };
 
@@ -63,7 +64,7 @@ export function ScenarioForm({
   }));
   const [draft, setDraft] = useState(initialDraft);
   // One id per form, so a retry after a failed save cannot add a second scenario.
-  const [id] = useState(() => scenario?.id ?? crypto.randomUUID());
+  const [id] = useState(() => scenario?.id ?? newId());
   // The line above the buttons goes with the next edit or Save (ADR 0262 §1). A throwing
   // onSubmit is shown like a returned failure.
   const { busy, errors, formError, submit, clearFields } = useFormSubmit({

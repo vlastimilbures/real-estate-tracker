@@ -19,6 +19,7 @@ import { DateInput } from "../../components/DateInput";
 import { Field, SelectInput, TextInput } from "../../components/fields";
 import { useT } from "../../hooks/useT";
 import type { Dictionary } from "../../../i18n";
+import { cx } from "../../../lib/cx";
 
 /** Draft-derived notes of a row list: soft warnings per draft row and a footer line. */
 export interface ListNotes {
@@ -345,7 +346,7 @@ function EventRowGroup<K extends EventListKind>({
           .filter(Boolean)
           .join(" ") || undefined
       }
-      className={`event-row${rowError ? " invalid" : ""}`}
+      className={cx("event-row", rowError && "invalid")}
     >
       <Field
         invalid={invalid}

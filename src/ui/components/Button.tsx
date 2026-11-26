@@ -1,6 +1,7 @@
 // The app's buttons: one look per role (ADR 0201), and a segmented choice.
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { cx } from "../../lib/cx";
 
 export function SegmentedToggle<T extends string>({
   options,
@@ -58,9 +59,7 @@ export function Button({
   size?: "sm" | undefined;
   icon?: LucideIcon | undefined;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const cls = ["btn", variant === "default" ? "" : variant, size ?? ""]
-    .filter(Boolean)
-    .join(" ");
+  const cls = cx("btn", variant !== "default" && variant, size);
   return (
     // type defaults to "button" so only an explicit type="submit" submits a form.
     <button className={cls} type={type} {...rest}>

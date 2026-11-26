@@ -4,6 +4,7 @@ import { useState, type ReactNode, type Ref } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useWriteRunning } from "../../state/portfolioStore";
 import { isEscape, useDismiss } from "../hooks/useDismiss";
+import { cx } from "../../lib/cx";
 
 /** The group of a row's actions, right-aligned with 4 px between targets. */
 export function RowActions({ children }: { children: ReactNode }) {
@@ -52,9 +53,7 @@ export function RowAction({
     open: hovered && !tipOff,
     escape: "tip",
   });
-  const cls = ["row-action", danger ? "danger" : "", tipOff ? "tip-off" : ""]
-    .filter(Boolean)
-    .join(" ");
+  const cls = cx("row-action", danger && "danger", tipOff && "tip-off");
   return (
     <button
       ref={buttonRef}

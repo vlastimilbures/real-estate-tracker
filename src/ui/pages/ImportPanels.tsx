@@ -22,6 +22,7 @@ import {
 import { csvErrorText, importProblemText } from "../model/importMessages";
 import type { FileState } from "../model/importSession";
 import "../styles/import.css";
+import { cx } from "../../lib/cx";
 
 function saveCsv(filename: string, content: string) {
   return saveFile({
@@ -193,7 +194,7 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
 
   return (
     <li
-      className={`import-row${dragOver ? " drag-over" : ""}`}
+      className={cx("import-row", dragOver && "drag-over")}
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);
@@ -212,7 +213,7 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
     >
       <span className="import-row-type">{title}</span>
       {/* The expected name until a file is chosen, then the chosen file's. */}
-      <span className={`import-row-file${fileState ? " num is-chosen" : ""}`}>
+      <span className={cx("import-row-file", fileState && "num is-chosen")}>
         {fileState?.name ?? file}
       </span>
       <span className="import-row-actions">

@@ -14,6 +14,7 @@ import { inConfirmRow } from "../components/panelFocus";
 import { KEEP, useBusyFocus, type BusyFocusTarget } from "./useBusyFocus";
 import { useToast } from "./useToast";
 import { useT } from "./useT";
+import { newId } from "../../lib/newId";
 
 /** A preset or Duplicate gets focus back after any outcome (ADR 0248 §2); a delete's
  *  confirm row places focus itself (ADR 0173, ADR 0248 §1). */
@@ -137,7 +138,7 @@ function useScenarioWrites(
       showToast(t.scenarios.alreadySaved(existing.name));
       return;
     }
-    const id = crypto.randomUUID();
+    const id = newId();
     const res = await run(() => addScenario({ id, name, overrides }));
     if (!res.ok) return showError(res.error);
     showToast(
@@ -148,7 +149,7 @@ function useScenarioWrites(
   }
 
   async function duplicate(s: Scenario) {
-    const id = crypto.randomUUID();
+    const id = newId();
     const res = await run(() =>
       duplicateScenario(s.id, id, t.scenarios.copyName(s.name)),
     );

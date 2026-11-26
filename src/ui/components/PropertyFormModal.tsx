@@ -25,6 +25,7 @@ import { type Dictionary } from "../../i18n";
 import { useDraftForm } from "../hooks/useDraftForm";
 import { useT } from "../hooks/useT";
 import { formWriteErrors, type ErrorField } from "../model/writeError";
+import { newId } from "../../lib/newId";
 
 /** Where a failed save shows: a rule tied to one of the form's fields (named like the
  *  engine field) on that field, anything else above the buttons (ADR 0261). */
@@ -293,8 +294,8 @@ export function PropertyFormModal({
 
   // A new property's id is random and made once, so a retry cannot add a second row
   // (ADR 0127); an edit keeps the property's id.
-  const [newId] = useState(() => crypto.randomUUID());
-  const id = propertyId ?? newId;
+  const [freshId] = useState(newId);
+  const id = propertyId ?? freshId;
   // Shut on add; open on edit when a record exists, so what is stored is seen (ADR 0119 §9),
   // or when a Data check link asked for it.
   const [fundingOpen, setFundingOpen] = useState(

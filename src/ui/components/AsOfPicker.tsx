@@ -11,11 +11,14 @@ import { addYears } from "../../engine";
 import { useT } from "../hooks/useT";
 import { DateInput } from "./DateInput";
 import { clampAsOf, resolveAsOf, type AsOfBounds } from "../model/asOf";
+import { cx } from "../../lib/cx";
+
+/** The "+N years" presets after Today. */
+const PRESET_YEARS = [1, 5] as const;
 
 export function AsOfPicker({
   value,
   onChange,
-  anchor,
   bounds,
   hint,
 }: {
@@ -23,9 +26,6 @@ export function AsOfPicker({
   onChange: (date: Date | null) => void;
   /** The projection window; a date outside it moves to its nearest end. */
   bounds: AsOfBounds;
-  // Date the "+Ny" presets step from. Defaults to today; every caller uses the
-  // default so presets always mean "N years from now", not from a stored date.
-  anchor?: Date;
   /** How the date maps to what the page shows (ADR 0088); none at Today. */
   hint?: string | null;
 }) {
@@ -33,7 +33,6 @@ export function AsOfPicker({
   const labelId = useId();
   const hintId = useId();
   const today = todayUtc();
-  const presetAnchor = anchor ?? today;
   const { date: effective, isToday } = resolveAsOf(value, today, bounds);
   const [draft, setDraft] = useState(dateDraft(effective));
 
@@ -60,14 +59,13 @@ export function AsOfPicker({
     else setDraft(dateDraft(effective));
   };
 
-  // Highlight a preset chip when the shown date equals its target. Reuse the exact
-  // addYears(presetAnchor, n) the onClick uses so they can never drift.
-  const is1y =
-    value !== null &&
-    effective.getTime() === addYears(presetAnchor, 1).getTime();
-  const is5y =
-    value !== null &&
-    effective.getTime() === addYears(presetAnchor, 5).getTime();
+  // A preset steps from today, never from a stored date, and is lit when the shown date
+  // is its target: the one date both the pick and the highlight use.
+  const presets = PRESET_YEARS.map((years) => {
+    const target = addYears(today, years);
+    const on = value !== null && effective.getTime() === target.getTime();
+    return { years, target, on };
+  });
 
   // The hint follows the group as the filter bar's own row (ADR 0198), so it may use the
   // bar's full width and never changes the picker's size.
@@ -99,31 +97,25 @@ export function AsOfPicker({
         <div className="pill-group">
           <button
             type="button"
-            className={`pill${isToday ? " on" : ""}`}
+            className={cx("pill", isToday && "on")}
             aria-pressed={isToday}
             onClick={() => onChange(null)}
             data-testid="asof-today"
           >
             {t.common.today}
           </button>
-          <button
-            type="button"
-            className={`pill${is1y ? " on" : ""}`}
-            aria-pressed={is1y}
-            onClick={() => pick(addYears(presetAnchor, 1))}
-            data-testid="asof-1y"
-          >
-            {t.common.plusYears(1)}
-          </button>
-          <button
-            type="button"
-            className={`pill${is5y ? " on" : ""}`}
-            aria-pressed={is5y}
-            onClick={() => pick(addYears(presetAnchor, 5))}
-            data-testid="asof-5y"
-          >
-            {t.common.plusYears(5)}
-          </button>
+          {presets.map(({ years, target, on }) => (
+            <button
+              key={years}
+              type="button"
+              className={cx("pill", on && "on")}
+              aria-pressed={on}
+              onClick={() => pick(target)}
+              data-testid={`asof-${years}y`}
+            >
+              {t.common.plusYears(years)}
+            </button>
+          ))}
         </div>
       </div>
       {hint && (

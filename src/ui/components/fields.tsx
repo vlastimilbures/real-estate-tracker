@@ -1,6 +1,7 @@
 // Field controls — a labelled Field and the inputs that read its context (fieldContext).
 import { useId, type ReactNode } from "react";
 import { FieldContext, useFieldControlProps } from "./fieldContext";
+import { cx } from "../../lib/cx";
 
 export function Field({
   id: idProp,
@@ -27,7 +28,7 @@ export function Field({
   const noteId = `${id}-note`;
   const note = error ?? help;
   return (
-    <div className={`field${error || invalid ? " invalid" : ""}`}>
+    <div className={cx("field", (error || invalid) && "invalid")}>
       {/* The "*" is CSS generated content with empty alt text: seen, not read
           (the control is aria-required instead). */}
       <label htmlFor={id} className={required ? "required" : undefined}>
