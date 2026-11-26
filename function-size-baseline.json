@@ -55,14 +55,6 @@
       "Function 'csvErrorText'": 22
     }
   },
-  "src/ui/pages/Properties.tsx": {
-    "complexity": {
-      "Function 'Properties'": 22
-    },
-    "lines": {
-      "Function 'Properties'": 316
-    }
-  },
   "src/ui/pages/ScenarioCompare.tsx": {
     "lines": {
       "Function 'CompareView'": 181
