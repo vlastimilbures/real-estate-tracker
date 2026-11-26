@@ -73,10 +73,10 @@ export const GATES = [
   {
     id: "lint",
     run: "pnpm lint",
-    what: "ESLint with zero warnings (engine purity, function sizes #456); stylesheets (lint:css)",
+    what: "ESLint with zero warnings (engine purity, function sizes #456); comment references (#457); stylesheets (lint:css)",
     where: "check",
     readme:
-      "ESLint with zero warnings, incl. engine-purity rules; function sizes; stylesheets",
+      "ESLint with zero warnings, incl. engine-purity rules; function sizes; comment references; stylesheets",
   },
   {
     id: "depcruise",

@@ -39,22 +39,22 @@ the [README](README.md#quality)'s). CI runs the same commands on Linux.
 
 <!-- gates:start -->
 
-| `pnpm check` runs                                                                | What it checks                                                                         |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `pnpm exec prettier --check .`                                                   | Prettier formatting                                                                    |
-| `pnpm typecheck`                                                                 | TypeScript strict: the app, the strict config, ux-capture and the Node config          |
-| `pnpm lint`                                                                      | ESLint with zero warnings (engine purity, function sizes #456); stylesheets (lint:css) |
-| `pnpm depcruise`                                                                 | layer rules, no runtime cycles                                                         |
-| `pnpm depcruise:baseline-check`                                                  | the layer-violation baseline never grows against origin/main                           |
-| `pnpm lint:size:baseline-check`                                                  | the function-size baseline never grows against origin/main                             |
-| `pnpm knip`                                                                      | no unused files, exports or dependencies                                               |
-| `pnpm knip:prod`                                                                 | the shipped app only: an export only tests use is dead                                 |
-| `pnpm adr:check`                                                                 | the ADR index is current, Amends / Supersedes links paired                             |
-| `pnpm test:coverage`                                                             | full suite + per-folder coverage floors (includes test:parity)                         |
-| `pnpm coverage:ratchet`                                                          | no floor more than 3 points below measured                                             |
-| `cargo fmt --check --manifest-path src-tauri/Cargo.toml`                         | Rust formatting                                                                        |
-| `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` | Rust lints, warnings are errors                                                        |
-| `cargo test --manifest-path src-tauri/Cargo.toml`                                | Rust integration tests                                                                 |
+| `pnpm check` runs                                                                | What it checks                                                                                                    |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `pnpm exec prettier --check .`                                                   | Prettier formatting                                                                                               |
+| `pnpm typecheck`                                                                 | TypeScript strict: the app, the strict config, ux-capture and the Node config                                     |
+| `pnpm lint`                                                                      | ESLint with zero warnings (engine purity, function sizes #456); comment references (#457); stylesheets (lint:css) |
+| `pnpm depcruise`                                                                 | layer rules, no runtime cycles                                                                                    |
+| `pnpm depcruise:baseline-check`                                                  | the layer-violation baseline never grows against origin/main                                                      |
+| `pnpm lint:size:baseline-check`                                                  | the function-size baseline never grows against origin/main                                                        |
+| `pnpm knip`                                                                      | no unused files, exports or dependencies                                                                          |
+| `pnpm knip:prod`                                                                 | the shipped app only: an export only tests use is dead                                                            |
+| `pnpm adr:check`                                                                 | the ADR index is current, Amends / Supersedes links paired                                                        |
+| `pnpm test:coverage`                                                             | full suite + per-folder coverage floors (includes test:parity)                                                    |
+| `pnpm coverage:ratchet`                                                          | no floor more than 3 points below measured                                                                        |
+| `cargo fmt --check --manifest-path src-tauri/Cargo.toml`                         | Rust formatting                                                                                                   |
+| `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` | Rust lints, warnings are errors                                                                                   |
+| `cargo test --manifest-path src-tauri/Cargo.toml`                                | Rust integration tests                                                                                            |
 
 `pnpm check:release` adds the dependency audits, which CI runs too:
 
@@ -113,6 +113,14 @@ still describe it. Which document owns what is listed in
   properties are exempt from "used": we only set them, and react-day-picker's own
   stylesheet reads them. A needed `!important` gets a
   `stylelint-disable-next-line … -- reason` comment.
+- **Comment references** (#457): `pnpm lint` runs `scripts/check-comment-refs.mjs`. A
+  comment in the app's source (`src/**/*.ts`, `.tsx`, `.css`; tests are out of scope)
+  cites a decision as `ADR nnnn`, which must have a file in `docs/adr`. Ids from the
+  retired refactor archive (`DR-nnn`, `UX-nnn`, `J-nn`, `Q-nn`, `D-nn`, phase ids such as
+  `P5b`) are refused: say the reason in words or cite the ADR. So is an issue number
+  (`#nnn`) unless the issue is open and on `CITED_OPEN_ISSUES` in the script; the pull
+  request that closes one of those removes it there. Only comments are read, so a string
+  or JSX text is never flagged.
 - **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches). Never
   lower one to pass. CI runs `pnpm coverage:ratchet` after `pnpm test:coverage` and fails when
   a floor sits more than the slack (`MAX_SLACK` in `scripts/check-coverage-ratchet.mjs`, 3
