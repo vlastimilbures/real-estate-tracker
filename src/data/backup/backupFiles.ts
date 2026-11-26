@@ -3,7 +3,6 @@
 // restore itself. No React — the UI page only drives state/toasts off the results below.
 // A restore writes and verifies a safety backup, and only then replaces the data in one
 // transaction (ADR 0014): on any failure the current data stays.
-import { invoke } from "@tauri-apps/api/core";
 import type { Sql } from "../sql";
 import { stamp } from "../migrations";
 import { messageOf } from "../errors";
@@ -12,6 +11,7 @@ import {
   type SaveFileOptions,
   type SaveOutcome,
 } from "../../platform/saveFileTypes";
+import { openBackupFile, writeAppBackup } from "../../platform/appBackupFile";
 import { BACKUP_MAX_BYTES, exportToJson, type BackupFile } from "./format";
 import { backupTooLarge, parseBackupText, type RestoreIssue } from "./validate";
 import {
@@ -101,10 +101,7 @@ export async function chooseRestoreFile(
   // Rust opens the dialog and refuses an oversized file before reading it.
   let picked: { name: string; text: string } | null;
   try {
-    picked = await invoke<{ name: string; text: string } | null>(
-      "open_backup_file",
-      { maxBytes: BACKUP_MAX_BYTES },
-    );
+    picked = await openBackupFile(BACKUP_MAX_BYTES);
   } catch (e) {
     if (e === "BACKUP_TOO_LARGE") throw backupTooLarge();
     throw new BackupReadError(e);
@@ -147,7 +144,7 @@ export async function writeSafetyBackup(
     const safetyBackup = await exportToJson(sql, now);
     const json = JSON.stringify(safetyBackup, null, 2);
     // Verified temp file + rename in `<app config>/backups` (src-tauri/src/files.rs).
-    await invoke("write_app_backup", { filename, json });
+    await writeAppBackup(filename, json);
   } catch (e) {
     throw new SafetyBackupError(e);
   }
