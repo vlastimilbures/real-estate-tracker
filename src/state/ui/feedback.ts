@@ -80,7 +80,7 @@ export function feedbackSlice({ set, get }: SliceCtx): FeedbackSlice {
     dataReplaced: () => set({ notice: null, failure: null, lastImport: null }),
     showSampleCleared: (safetyBackup) => {
       set({ notice: { kind: "sampleCleared", file: safetyBackup } });
-      guarded(get, set, { route: "dashboard" });
+      guarded(get, set, { route: "dashboard", request: null });
     },
     backupHintDismissed: false,
     dismissBackupHint: () => set({ backupHintDismissed: true }),

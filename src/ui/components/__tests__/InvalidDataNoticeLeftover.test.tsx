@@ -74,7 +74,7 @@ describe("the invalid-data notice for a leftover block (ADR 0258)", () => {
     const ui = useUiStore.getState();
     expect(ui.route).toBe("property");
     expect(ui.selectedPropertyId).toBe("dubova");
-    expect(ui.propertyTarget).toBe("financing");
+    expect(ui.request).toMatchObject({ target: "financing" });
   });
 
   it("opens the property as before for another rule", async () => {
@@ -92,7 +92,7 @@ describe("the invalid-data notice for a leftover block (ADR 0258)", () => {
       screen.getByRole("button", { name: en.errorBoundary.openProperty }),
     );
     expect(useUiStore.getState().selectedPropertyId).toBe("dubova");
-    expect(useUiStore.getState().propertyTarget).toBeNull();
+    expect(useUiStore.getState().request).toBeNull();
   });
 
   it("offers Go to Financing only without Open property and with a hint", () => {

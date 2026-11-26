@@ -303,6 +303,6 @@ describe("empty states (ADR 0094)", () => {
       screen.getByRole("button", { name: en.sample.stepAddProperty }),
     );
     expect(useUiStore.getState().route).toBe("properties");
-    expect(useUiStore.getState().newPropertyRequested).toBe(true);
+    expect(useUiStore.getState().request?.page).toBe("properties");
   });
 });

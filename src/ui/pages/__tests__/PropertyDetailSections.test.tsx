@@ -308,12 +308,19 @@ describe("Property detail data check (ADR 0118)", () => {
   });
 
   it("lands once on the section a Dashboard fix link asked for", () => {
-    act(() => useUiStore.setState({ propertyTarget: "financing" }));
-    render(<PropertyDetail />);
-    expect(document.activeElement).toBe(
-      screen.getByRole("heading", { name: pd.mortgagesTitle }),
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "financing", id: 1 },
+      }),
     );
-    expect(useUiStore.getState().propertyTarget).toBeNull();
+    const { rerender } = render(<PropertyDetail />);
+    const heading = screen.getByRole("heading", { name: pd.mortgagesTitle });
+    expect(document.activeElement).toBe(heading);
+    // Once: focus moved on and a re-render leaves it there (ADR 0269).
+    act(() => document.body.focus());
+    act(() => heading.blur());
+    rerender(<PropertyDetail />);
+    expect(document.activeElement).not.toBe(heading);
   });
 
   it("waits for the portfolio before landing", () => {
@@ -322,31 +329,38 @@ describe("Property detail data check (ADR 0118)", () => {
         portfolio: null,
         status: { kind: "loading" },
       });
-      useUiStore.setState({ propertyTarget: "holding" });
+      useUiStore.setState({
+        request: { page: "property", target: "holding", id: 1 },
+      });
     });
     render(<PropertyDetail />);
-    expect(useUiStore.getState().propertyTarget).toBe("holding");
+    expect(document.activeElement).toBe(document.body);
     setPortfolio(portfolio);
     expect(document.activeElement).toBe(
       screen.getByRole("heading", { name: pd.holdingCostsTitle }),
     );
-    expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 
   it("opens the property form when the Dashboard link asked for it", () => {
-    act(() => useUiStore.setState({ propertyTarget: "edit" }));
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "edit", id: 1 },
+      }),
+    );
     render(<PropertyDetail />);
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("false");
-    expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 
   it("opens the form at its Acquisition section when the Dashboard link asked for it (#178)", () => {
-    act(() => useUiStore.setState({ propertyTarget: "editFunding" }));
+    act(() =>
+      useUiStore.setState({
+        request: { page: "property", target: "editFunding", id: 1 },
+      }),
+    );
     render(<PropertyDetail />);
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(acquisitionToggle().getAttribute("aria-expanded")).toBe("true");
-    expect(useUiStore.getState().propertyTarget).toBeNull();
   });
 });
 

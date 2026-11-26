@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // UX-066 (DR-143): File ▸ New Property… (⌘N) lands on Properties with a one-shot
-// request; the page opens the Add form once and clears the request.
+// request; the page opens the Add form for it, once (ADR 0269).
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { Properties } from "../Properties";
@@ -20,13 +20,12 @@ beforeEach(() => {
 });
 
 describe("Properties — New Property request (UX-066)", () => {
-  it("opens the Add form once and clears the request", () => {
-    act(() => useUiStore.setState({ newPropertyRequested: true }));
+  it("opens the Add form for the request", () => {
+    act(() => useUiStore.getState().requestNewProperty());
     render(<Properties />);
     expect(
       screen.getByRole("dialog", { name: en.propertyForm.addTitle }),
     ).toBeTruthy();
-    expect(useUiStore.getState().newPropertyRequested).toBe(false);
   });
 
   it("without a request no form opens", () => {

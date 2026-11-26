@@ -237,7 +237,7 @@ function showDashboard(
       route: "dashboard",
       dashboardPropertyIds: ids,
       asOf,
-      propertyTarget: null,
+      request: null,
       unsavedSources: [],
       pendingLeave: null,
     });
@@ -255,11 +255,11 @@ describe("Data check on the Dashboard page (ADR 0118, ADR 0206)", () => {
     ).toBeNull();
     await userEvent.click(chip(/^Byt Lipova · 15\.01\.2029/));
     const ui = useUiStore.getState();
-    expect([ui.route, ui.selectedPropertyId, ui.propertyTarget]).toEqual([
-      "property",
-      "lipova",
-      "financing",
-    ]);
+    expect([
+      ui.route,
+      ui.selectedPropertyId,
+      ui.request?.page === "property" && ui.request.target,
+    ]).toEqual(["property", "lipova", "financing"]);
   });
 
   it("is the last section of the page (ADR 0206 §1)", () => {
