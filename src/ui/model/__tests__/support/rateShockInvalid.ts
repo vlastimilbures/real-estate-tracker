@@ -2,10 +2,9 @@
 // note must not walk its payment grid. Shared by rateShockNote-invalid.test.ts and the
 // child process it runs each case in first, so a case that never returns cannot hang
 // the suite.
-import { isoDate, rate } from "../../../../engine";
+import { isoDate, rate, mortgageBlock } from "../../../../engine";
 import type {
   Assumptions,
-  MortgageBlock,
   MortgageBlockFields,
   Portfolio,
 } from "../../../../engine";
@@ -25,7 +24,7 @@ if (!first) throw new Error("the seed has loans");
 /** The seed portfolio with its first loan changed. */
 const withFirst = (change: Partial<MortgageBlockFields>): Portfolio => ({
   ...portfolio,
-  mortgages: [{ ...first, ...change } as MortgageBlock, ...rest],
+  mortgages: [mortgageBlock({ ...first, ...change }), ...rest],
 });
 
 const CASES = {

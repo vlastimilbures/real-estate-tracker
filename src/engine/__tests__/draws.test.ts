@@ -23,11 +23,12 @@ import type {
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 const EPS = D("1e-12");
 
 const base = (b: Partial<MortgageBlock>): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "x",
     propertyId: "javorova",
     startDate: isoDate("2021-01-31"),
@@ -36,7 +37,7 @@ const base = (b: Partial<MortgageBlock>): MortgageBlock =>
     interestRatePa: rate("0.029"),
     monthlyInstalment: money("15000"),
     ...b,
-  }) as MortgageBlock;
+  });
 
 /** Loans covering each schedule branch (the golden master's edge loans). */
 const edgeLoans: Record<string, MortgageBlock> = {
@@ -265,13 +266,14 @@ describe("DR-092 — ProjectionYear.draws + refinanced equals the balance back-o
 
 describe("scheduledPrincipal", () => {
   it("is the initial principal plus every draw", () => {
-    const block = {
+    // Only the principal and the draws count; the rest is the edge-loan base.
+    const block = base({
       initialPrincipal: money("1000000"),
       draws: [
         { date: isoDate("2027-01-01"), amount: money("250000") },
         { date: isoDate("2028-01-01"), amount: money("0.5") },
       ],
-    } as unknown as MortgageBlock;
+    });
     expect(scheduledPrincipal(block).toString()).toBe("1250000.5");
     expect(scheduledPrincipal({ ...block, draws: undefined }).toString()).toBe(
       "1000000",

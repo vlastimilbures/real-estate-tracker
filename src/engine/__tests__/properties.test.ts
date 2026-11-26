@@ -32,6 +32,7 @@ import {
 import { KC, near } from "./support/tolerance";
 import { rate as brandRate, type IsoDate, type Rate } from "../brands";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 // Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
 // Hunt locally with FC_SEED=<n> FC_RUNS=<n>.
@@ -512,7 +513,7 @@ describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
   });
 
   it("development loan without loanTermYears ⇒ MISSING_TERM_FOR_DEV_LOAN (DR-043)", () => {
-    const block = {
+    const block = mortgageBlock({
       id: "dev",
       propertyId: "p",
       startDate: utc(2025, 1, 15),
@@ -521,7 +522,7 @@ describe("invalid loans — typed errors (D-17)", { timeout: TIMEOUT }, () => {
       interestRatePa: brandRate("0.05"),
       monthlyInstalment: money(5_000),
       draws: [{ date: utc(2027, 1, 1), amount: money(500_000) }],
-    } as unknown as MortgageBlock; // deliberately invalid (DR-051)
+    }); // deliberately invalid (DR-051)
     expect(codeOf(() => termMonths(block))).toBe("MISSING_TERM_FOR_DEV_LOAN");
     expect(codeOf(() => buildSchedule(block, assumptions))).toBe(
       "MISSING_TERM_FOR_DEV_LOAN",

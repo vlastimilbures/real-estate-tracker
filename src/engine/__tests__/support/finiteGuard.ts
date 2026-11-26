@@ -11,10 +11,11 @@ import type { MortgageBlock } from "../../types";
 import { assumptions, portfolio } from "./seed";
 import { devBlock } from "./mixed";
 import { loan } from "./loan";
+import { mortgageBlock } from "../../loanBlock";
 
 /** A dev loan on the seed's first property: `undrawnPrincipal` asserts dev loans only. */
 const dev = (b: Partial<MortgageBlock>): MortgageBlock =>
-  ({ ...devBlock, id: "m-x", propertyId: "javorova", ...b }) as MortgageBlock;
+  mortgageBlock({ ...devBlock, id: "m-x", propertyId: "javorova", ...b });
 
 const CASES = {
   plainPrincipalMinusInf: loan({ initialPrincipal: money(-Infinity) }),

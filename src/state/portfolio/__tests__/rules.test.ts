@@ -10,6 +10,7 @@ import {
   type MortgageBlock,
   type Portfolio,
   type Scenario,
+  mortgageBlock,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { RangeRuleError, ScenarioRuleError } from "../../writeError";
@@ -106,10 +107,13 @@ describe("checkEdit", () => {
       (over: Partial<MortgageBlock>) =>
       (p: Portfolio): Portfolio => ({
         ...p,
-        mortgages: withRow(p.mortgages, {
-          ...p.mortgages[0]!,
-          ...over,
-        } as MortgageBlock),
+        mortgages: withRow(
+          p.mortgages,
+          mortgageBlock({
+            ...p.mortgages[0]!,
+            ...over,
+          }),
+        ),
       });
     const both = thrown(() =>
       checkEdit(

@@ -14,6 +14,7 @@ import { ZERO, type Decimal } from "../../lib/money";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "../types";
 import { assumptions as seedAssumptions, portfolio } from "./support/seed";
 import { expectKc, near } from "./support/tolerance";
+import { mortgageBlock } from "../loanBlock";
 
 const assumptions: Assumptions = { ...seedAssumptions, horizonYears: 10 };
 const N = assumptions.horizonYears;
@@ -30,7 +31,7 @@ const INSTALMENT = 25_000;
 const REPAID = 33_542.25;
 
 const loan = (patch: Partial<MortgageBlock> = {}): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "m-buy",
     propertyId: "buy",
     startDate: EARLY,
@@ -39,7 +40,7 @@ const loan = (patch: Partial<MortgageBlock> = {}): MortgageBlock =>
     interestRatePa: rate("0.05"),
     monthlyInstalment: money(INSTALMENT),
     ...patch,
-  }) as MortgageBlock;
+  });
 
 /** The seed plus one future buy with its own blocks. */
 function withBuy(

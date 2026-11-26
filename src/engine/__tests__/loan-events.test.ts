@@ -25,6 +25,7 @@ import type {
 } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock } from "./support/mixed";
+import { mortgageBlock } from "../loanBlock";
 
 const seedJavorova = portfolio.mortgages.find(
   (m) => m.propertyId === "javorova",
@@ -56,7 +57,7 @@ const withEvents = (
   b: MortgageBlock,
   prepayments?: MortgagePrepayment[],
   recasts?: LoanRecast[],
-): MortgageBlock => ({ ...b, prepayments, recasts }) as MortgageBlock;
+): MortgageBlock => mortgageBlock({ ...b, prepayments, recasts });
 
 /** Grid month of the last row that pays anything. */
 const lastPayment = (rows: AmortizationRow[]) =>
@@ -84,12 +85,12 @@ describe("ADR 0109: inert without events", () => {
 
   it("a future development loan reports nothing, before or after its draw", () => {
     // Starts in grid month 4 (after three undrawn months), draws a tranche later.
-    const future = {
+    const future = mortgageBlock({
       ...devBlock,
       id: "m-future-dev",
       startDate: isoDate("2026-09-15"),
       draws: [{ date: isoDate("2027-01-20"), amount: money(1000000) }],
-    } as MortgageBlock;
+    });
     expect(outcomesOf(future)).toEqual([]);
   });
 
@@ -217,7 +218,7 @@ describe("ADR 0179: shortenTerm sizes the term at the next payment's rate (#164)
     // prepayment on 2026-05-20 follows payment 64 (due 2026-05-17); payment 65 is due
     // 2026-06-17, after baseDate 2026-06-07.
     const floating = withEvents(
-      { ...javorova, fixationYears: 0 } as MortgageBlock,
+      mortgageBlock({ ...javorova, fixationYears: 0 }),
       [prepay("2026-05-20", 600000, "shortenTerm")],
     );
     const opening = openingBalance(floating, assumptions);
@@ -271,7 +272,7 @@ describe("ADR 0179: a shortenTerm that cannot shorten is reported", () => {
     expect(
       issues(withEvents(javorova, [prepay("2031-01-17", 100000)])),
     ).toEqual([null]);
-    const dev = withEvents({ ...devBlock, id: "m-dev" } as MortgageBlock, [
+    const dev = withEvents(mortgageBlock({ ...devBlock, id: "m-dev" }), [
       prepay("2027-01-10", 200000, "shortenTerm"),
     ]);
     expect(issues(dev)).toEqual([null]);
@@ -291,10 +292,10 @@ describe("ADR 0179: a shortenTerm that cannot shorten is reported", () => {
   it("a replayed one is reported as well (before baseDate)", () => {
     // Javorova five years earlier: its fixation ends 2026-01-17, before baseDate, and
     // the 100,000 Kč prepayment there is replayed into the opening balance.
-    const earlier = {
+    const earlier = mortgageBlock({
       ...javorova,
       startDate: isoDate("2016-01-17"),
-    } as MortgageBlock;
+    });
     const [o] = outcomesOf(
       withEvents(earlier, [prepay("2026-01-17", 100000, "shortenTerm")]),
     );
@@ -497,7 +498,7 @@ describe("ADR 0109: placement on the loan's own payments", () => {
   });
 
   it("a future loan's prepayment follows its first payment, never the draw row", () => {
-    const fut = {
+    const fut = mortgageBlock({
       id: "f",
       propertyId: "f",
       startDate: isoDate("2027-01-15"),
@@ -506,7 +507,7 @@ describe("ADR 0109: placement on the loan's own payments", () => {
       interestRatePa: rate("0.04"),
       monthlyInstalment: money(8000),
       prepayments: [prepay("2027-01-20", 100000)],
-    } as MortgageBlock;
+    });
     const rows = buildSchedule(fut, assumptions);
     const drawIdx = rows.findIndex((r) => r.drawn.greaterThan(0));
     expect(rows[drawIdx].prepaid.isZero()).toBe(true);
@@ -578,7 +579,7 @@ describe("ADR 0109: recasts", () => {
 
   it("a future loan's later maturity is built out to its last payment", () => {
     // Drawn in grid month 13 (2027-07-07); payment p falls in grid month 13 + p.
-    const fut = {
+    const fut = mortgageBlock({
       id: "f",
       propertyId: "f",
       startDate: isoDate("2027-06-17"),
@@ -587,7 +588,7 @@ describe("ADR 0109: recasts", () => {
       interestRatePa: rate("0.05"),
       monthlyInstalment: money(16105),
       recasts: [toMaturity("2030-06-17", "2072-06-17")], // payment 540
-    } as MortgageBlock;
+    });
     const rows = buildSchedule(fut, assumptions);
     expect(lastPayment(rows)).toBe(13 + 540);
     expect(rows).toHaveLength(13 + 540);
@@ -642,7 +643,7 @@ describe("ADR 0116: reading a schedule with a prepayment in grid month 1", () =>
 describe("ADR 0109: development loans", () => {
   const dev = (prepayments?: MortgagePrepayment[], recasts?: LoanRecast[]) =>
     withEvents(
-      { ...devBlock, id: "m-dev" } as MortgageBlock,
+      mortgageBlock({ ...devBlock, id: "m-dev" }),
       prepayments,
       recasts,
     );
@@ -700,7 +701,7 @@ describe("ADR 0116 §2: a tranche on the maturity payment", () => {
   // dated 2027-07-20, follows that same payment. It restores the contract term instead
   // of being repaid in one shot.
   const b = withEvents(
-    {
+    mortgageBlock({
       ...devBlock,
       id: "m-dev",
       draws: [
@@ -708,7 +709,7 @@ describe("ADR 0116 §2: a tranche on the maturity payment", () => {
         { date: isoDate("2027-07-20"), amount: money("1000000") },
       ],
       completionDate: undefined,
-    } as MortgageBlock,
+    }),
     undefined,
     [toMaturity("2027-01-10", "2027-08-01")],
   );
@@ -724,7 +725,7 @@ describe("ADR 0116 §2: a tranche on the maturity payment", () => {
 
 describe("ADR 0109: refinance handovers", () => {
   const refi = (start: string): MortgageBlock =>
-    ({
+    mortgageBlock({
       id: "refi",
       propertyId: javorova.propertyId,
       startDate: isoDate(start),
@@ -732,7 +733,7 @@ describe("ADR 0109: refinance handovers", () => {
       fixationYears: 5,
       interestRatePa: rate("0.039"),
       monthlyInstalment: money(9800),
-    }) as MortgageBlock;
+    });
 
   it("a prepayment on the refix date is paid before the successor takes over", () => {
     const s = propertySchedule(

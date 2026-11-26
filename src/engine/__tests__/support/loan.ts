@@ -9,9 +9,10 @@ import type {
   Portfolio,
 } from "../../types";
 import { portfolio } from "./seed";
+import { mortgageBlock } from "../../loanBlock";
 
 export const loan = (b: Partial<MortgageBlockFields>): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "m-x",
     propertyId: "javorova",
     startDate: isoDate("2021-01-17"),
@@ -20,7 +21,7 @@ export const loan = (b: Partial<MortgageBlockFields>): MortgageBlock =>
     interestRatePa: rate("0.0169"),
     monthlyInstalment: money("6721.8"),
     ...b,
-  }) as MortgageBlock;
+  });
 
 /** The seed portfolio with `loan(b)` as its only mortgage. */
 export const withLoan = (b: Partial<MortgageBlockFields>): Portfolio => ({

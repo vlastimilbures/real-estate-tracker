@@ -11,7 +11,8 @@ import { money } from "../brands";
 import { D, ZERO, type Decimal } from "../../lib/money";
 import { assumptions, portfolio as seed } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
-import type { MortgageBlock, Portfolio, ProjectionYear } from "../types";
+import type { Portfolio, ProjectionYear } from "../types";
+import { mortgageBlock } from "../loanBlock";
 
 // Decimal keeps 40 significant digits: sums of 1e7 Kč figures agree far below 1e-20 Kč.
 const EPS = D("1e-20");
@@ -34,7 +35,7 @@ const futureDev: Portfolio = {
     },
   ],
   mortgages: [
-    {
+    mortgageBlock({
       ...devBlock,
       startDate: isoDate("2027-03-01"),
       draws: [
@@ -42,7 +43,7 @@ const futureDev: Portfolio = {
         { date: isoDate("2028-08-20"), amount: money("1000000") },
       ],
       completionDate: isoDate("2028-08-20"),
-    } as MortgageBlock,
+    }),
   ],
   valuations: [
     {

@@ -18,6 +18,7 @@ import { propertySchedules } from "../schedule";
 import type { MortgageBlock, Portfolio, ProjectionYear } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { mixedCashOutside } from "./support/synthetic";
+import { mortgageBlock } from "../loanBlock";
 
 const N = assumptions.horizonYears;
 
@@ -145,7 +146,7 @@ describe("ADR 0161: cash to owner", () => {
       ...portfolio,
       mortgages: [
         ...portfolio.mortgages,
-        {
+        mortgageBlock({
           id: "m-refi",
           propertyId: "javorova",
           startDate: isoDate("2031-01-17"),
@@ -156,7 +157,7 @@ describe("ADR 0161: cash to owner", () => {
           loanTermYears: 20,
           completionDate: isoDate("2032-01-17"),
           draws: [{ date: isoDate("2031-01-30"), amount: money("100000") }],
-        } as MortgageBlock,
+        }),
       ],
     };
     const javorova = perProperty(p).get("javorova")!;

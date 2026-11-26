@@ -3,7 +3,7 @@
 // dev path that fires only when `draws` or `completionDate` are present.
 import { describe, it, expect } from "vitest";
 import { instalmentFor } from "../loanInstalment";
-import { isDevLoan } from "../loanBlock";
+import { isDevLoan, mortgageBlock } from "../loanBlock";
 import { termMonths } from "../loanTerm";
 import { buildSchedule, balanceAtMonth } from "../schedule";
 import { EngineInputError } from "../errors";
@@ -59,10 +59,10 @@ describe("isDevLoan gate", () => {
 
 describe("termMonths — dev loan must carry an explicit term", () => {
   it("throws when a dev loan omits loanTermYears (no silent NaN/zero-length schedule)", () => {
-    const noTerm = {
+    const noTerm = mortgageBlock({
       ...devFuture,
       loanTermYears: undefined,
-    } as unknown as MortgageBlock; // deliberately invalid (DR-051)
+    }); // deliberately invalid (DR-051)
     expect(isDevLoan(noTerm)).toBe(true);
     expect(() => termMonths(noTerm)).toThrow(EngineInputError);
     expect(() => termMonths(noTerm)).toThrow(/MISSING_TERM_FOR_DEV_LOAN/);

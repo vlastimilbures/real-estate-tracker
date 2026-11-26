@@ -15,10 +15,11 @@ import {
 } from "../schedule";
 import { schedulesByProperty } from "./support/schedules";
 import { assumptions, portfolio } from "./support/seed";
-import type { MortgageBlock, Portfolio } from "../types";
+import type { Portfolio } from "../types";
 import { devBlock } from "./support/mixed";
 import { KC, RATIO, near } from "./support/tolerance";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 const schedules = schedulesByProperty(
   portfolio.mortgages,
@@ -316,7 +317,7 @@ describe("ADR 0116: the instalment after a month's prepayment", () => {
   it("keeps the month's own instalment when the next row draws a tranche", () => {
     // Dev loan: a prepayment in the interest-only month before the 2027-08-20
     // tranche; the next row's instalment is sized on the drawn balance.
-    const dev = {
+    const dev = mortgageBlock({
       ...devBlock,
       id: "m-dev",
       propertyId: "javorova",
@@ -327,7 +328,7 @@ describe("ADR 0116: the instalment after a month's prepayment", () => {
           effect: "lowerInstalment" as const,
         },
       ],
-    } as MortgageBlock;
+    });
     const p: Portfolio = {
       ...portfolio,
       mortgages: [

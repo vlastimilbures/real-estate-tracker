@@ -20,8 +20,7 @@ import { getDict } from "../../../i18n";
 import { describeWriteError } from "../../model/writeError";
 import type { FieldSpec } from "../../model/formParse";
 import type { WriteError } from "../../../state/writeError";
-import { isoDate, money } from "../../../engine";
-import type { MortgageBlock } from "../../../engine";
+import { isoDate, money, mortgageBlock } from "../../../engine";
 import type { Sql } from "../../../data/sql";
 import { openMemorySql } from "../../../data/__tests__/betterSqlite";
 import { migrate } from "../../../data/migrations";
@@ -93,13 +92,15 @@ describe("a refused form save stays in the form (R4-05)", () => {
               onAdd: async () => ({ ok: true }),
               // A development loan without a term: the store refuses it (an input rule).
               onSave: () =>
-                usePortfolioStore.getState().saveMortgageBlock({
-                  ...block,
-                  draws: [
-                    { date: isoDate("2026-09-01"), amount: money("100") },
-                  ],
-                  completionDate: isoDate("2028-10-10"),
-                } as unknown as MortgageBlock),
+                usePortfolioStore.getState().saveMortgageBlock(
+                  mortgageBlock({
+                    ...block,
+                    draws: [
+                      { date: isoDate("2026-09-01"), amount: money("100") },
+                    ],
+                    completionDate: isoDate("2028-10-10"),
+                  }),
+                ),
             }}
           />
         </PageFrame>

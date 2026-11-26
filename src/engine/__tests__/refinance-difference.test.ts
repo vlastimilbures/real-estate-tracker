@@ -11,6 +11,7 @@ import { openingDebt, propertySchedule } from "../schedule";
 import type { AmortizationRow, MortgageBlock, Portfolio } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { mixedWithRefi } from "./support/synthetic";
+import { mortgageBlock } from "../loanBlock";
 
 const javorova = portfolio.mortgages.filter((m) => m.propertyId === "javorova");
 
@@ -19,7 +20,7 @@ const refi = (
   principal: Decimal | string,
   extra: Partial<MortgageBlock> = {},
 ): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "m-refi",
     propertyId: "javorova",
     startDate: isoDate(start),
@@ -28,7 +29,7 @@ const refi = (
     interestRatePa: rate("0.039"),
     monthlyInstalment: money("9800"),
     ...extra,
-  }) as MortgageBlock;
+  });
 
 const withRefi = (block: MortgageBlock): Portfolio => ({
   ...portfolio,

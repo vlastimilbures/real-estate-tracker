@@ -8,8 +8,8 @@ import {
   portfolioProjection,
   propertySchedules,
   rate,
-  type MortgageBlock,
   type Portfolio,
+  mortgageBlock,
 } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
@@ -24,7 +24,7 @@ const withRefi = (principal: string): Portfolio => ({
   ...portfolio,
   mortgages: [
     ...portfolio.mortgages,
-    {
+    mortgageBlock({
       id: "m-refi",
       propertyId: "javorova",
       startDate: isoDate("2031-01-17"),
@@ -32,7 +32,7 @@ const withRefi = (principal: string): Portfolio => ({
       fixationYears: 5,
       interestRatePa: rate("0.039"),
       monthlyInstalment: money("9800"),
-    } as MortgageBlock,
+    }),
   ],
 });
 
