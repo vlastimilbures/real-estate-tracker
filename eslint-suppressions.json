@@ -42,19 +42,6 @@
       "count": 1
     }
   },
-  "src/ui/pages/Import.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/ui/pages/ImportPanels.tsx": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "src/ui/pages/ScenarioCompare.tsx": {
     "max-lines-per-function": {
       "count": 1

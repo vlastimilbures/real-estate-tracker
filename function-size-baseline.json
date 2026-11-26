@@ -42,19 +42,6 @@
       "Function 'Guide'": 197
     }
   },
-  "src/ui/pages/Import.tsx": {
-    "complexity": {
-      "Function 'Import'": 26
-    },
-    "lines": {
-      "Function 'Import'": 200
-    }
-  },
-  "src/ui/pages/ImportPanels.tsx": {
-    "complexity": {
-      "Function 'csvErrorText'": 22
-    }
-  },
   "src/ui/pages/ScenarioCompare.tsx": {
     "lines": {
       "Function 'CompareView'": 181
