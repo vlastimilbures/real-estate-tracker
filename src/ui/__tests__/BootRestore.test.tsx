@@ -71,7 +71,10 @@ async function restoreFromScreen() {
 describe("restore from the startup error screen (ROW_INVALID)", () => {
   it("a failed pick says why; the next pick forgets it and asks to confirm", async () => {
     vi.mocked(invoke).mockImplementationOnce(() =>
-      Promise.reject("Operation not permitted (os error 1)"),
+      Promise.reject({
+        code: "IO",
+        detail: "Operation not permitted (os error 1)",
+      }),
     );
     render(<BootFailure />);
     await userEvent.click(button(en.boot.restoreBackup));

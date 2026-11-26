@@ -59,7 +59,8 @@ export class DataError extends Error {
   }
 }
 
-/** The underlying message of anything thrown (Tauri `invoke` rejects with a string). */
+/** The underlying message of anything thrown: a failed app command's Rust detail
+ *  (`CommandError`, ADR 0270), or the text of a plain string rejection. */
 export function messageOf(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }

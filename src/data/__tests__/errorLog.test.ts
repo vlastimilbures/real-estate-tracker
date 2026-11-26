@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { describeFailure, logFailure, maskNumbers } from "../errorLog";
 import { DataError } from "../errors";
 import { isTauri } from "../../lib/tauri";
+import { unhandledRejections } from "../../__tests__/support/unhandled";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("../../lib/tauri", () => ({ isTauri: vi.fn(() => false) }));
@@ -97,12 +98,12 @@ describe("error log lines", () => {
 
   it("swallows a failed log_error, so logging is never a second failure (#115)", async () => {
     vi.mocked(isTauri).mockReturnValue(true);
-    const rejected = Promise.reject(new Error("log plugin gone"));
+    vi.mocked(invoke).mockRejectedValue(new Error("log plugin gone"));
     // The rejection must get a handler; an unhandled one would surface as a new error.
-    const handled = vi.spyOn(rejected, "catch");
-    vi.mocked(invoke).mockReturnValue(rejected);
-    expect(() => logFailure("STARTUP", new Error("x"))).not.toThrow();
-    expect(handled).toHaveBeenCalledOnce();
-    await expect(handled.mock.results[0]?.value).resolves.toBeUndefined();
+    const unhandled = await unhandledRejections(() => {
+      expect(() => logFailure("STARTUP", new Error("x"))).not.toThrow();
+    });
+    expect(invoke).toHaveBeenCalledOnce();
+    expect(unhandled).toEqual([]);
   });
 });

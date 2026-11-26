@@ -66,7 +66,10 @@ describe("Backup & Restore failures (ADR 0147)", () => {
   });
 
   it("a failed restore pick is logged as RESTORE (#122)", async () => {
-    vi.mocked(invoke).mockRejectedValue("Operation not permitted (os error 1)");
+    vi.mocked(invoke).mockRejectedValue({
+      code: "IO",
+      detail: "Operation not permitted (os error 1)",
+    });
     render(
       <>
         <BackupRestorePanel />
@@ -83,7 +86,10 @@ describe("Backup & Restore failures (ADR 0147)", () => {
   });
 
   it("a backup file that cannot be read says so (#122)", async () => {
-    vi.mocked(invoke).mockRejectedValue("Operation not permitted (os error 1)");
+    vi.mocked(invoke).mockRejectedValue({
+      code: "IO",
+      detail: "Operation not permitted (os error 1)",
+    });
     render(
       <>
         <BackupRestorePanel />

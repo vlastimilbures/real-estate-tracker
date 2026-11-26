@@ -146,7 +146,10 @@ describe("Restore a backup (#118)", () => {
   });
 
   it("a file over the size limit is refused with the limit", async () => {
-    vi.mocked(invoke).mockRejectedValue("BACKUP_TOO_LARGE");
+    vi.mocked(invoke).mockRejectedValue({
+      code: "BACKUP_TOO_LARGE",
+      detail: "BACKUP_TOO_LARGE",
+    });
     renderPanel();
 
     await userEvent.click(
@@ -318,9 +321,10 @@ describe("Show data folder (ADR 0175, #151 item 7)", () => {
   });
 
   it("a failed pick is forgotten when the next pick works, which asks to confirm", async () => {
-    vi.mocked(invoke).mockRejectedValueOnce(
-      "Operation not permitted (os error 1)",
-    );
+    vi.mocked(invoke).mockRejectedValueOnce({
+      code: "IO",
+      detail: "Operation not permitted (os error 1)",
+    });
     await pick(await backupText());
     expect(screen.getByRole("alert")).toBeDefined();
     await userEvent.click(

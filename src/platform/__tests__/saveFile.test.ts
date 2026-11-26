@@ -62,14 +62,17 @@ describe("saveFile", () => {
   });
 
   it("a file that reads back different is a failure", async () => {
-    core.invoke.mockRejectedValue("the saved file does not match");
+    core.invoke.mockRejectedValue({
+      code: "SAVED_FILE_MISMATCH",
+      detail: "the saved file does not match",
+    });
     const e = await saveFile(opts).catch((err: unknown) => err);
     expect(e).toBeInstanceOf(SaveFileError);
     expect((e as SaveFileError).detail).toMatch(/does not match/);
   });
 
   it("a write error is a failure with its reason", async () => {
-    core.invoke.mockRejectedValue("permission denied");
+    core.invoke.mockRejectedValue({ code: "IO", detail: "permission denied" });
     const e = await saveFile({ ...opts, data: "a,b" }).catch(
       (err: unknown) => err,
     );

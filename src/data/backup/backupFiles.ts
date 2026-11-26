@@ -12,6 +12,7 @@ import {
   type SaveOutcome,
 } from "../../platform/saveFileTypes";
 import { openBackupFile, writeAppBackup } from "../../platform/appBackupFile";
+import { isCommandError } from "../../platform/commandError";
 import { BACKUP_MAX_BYTES, exportToJson, type BackupFile } from "./format";
 import { backupTooLarge, parseBackupText, type RestoreIssue } from "./validate";
 import {
@@ -103,7 +104,7 @@ export async function chooseRestoreFile(
   try {
     picked = await openBackupFile(BACKUP_MAX_BYTES);
   } catch (e) {
-    if (e === "BACKUP_TOO_LARGE") throw backupTooLarge();
+    if (isCommandError(e, "BACKUP_TOO_LARGE")) throw backupTooLarge();
     throw new BackupReadError(e);
   }
   if (picked === null) return null;

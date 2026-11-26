@@ -1,6 +1,7 @@
 // Backup file orchestration against a fake of the app's file commands
 // (src-tauri/src/commands/backup.rs): the pre-restore safety backup (DR-019, D-52), the restore
-// pick (DR-138) and the export outcome (DR-026). The fake mirrors the Rust contract;
+// pick (DR-138) and the export outcome (DR-026). The fake mirrors the Rust contract,
+// failures included: Rust rejects with `{ code, detail }` (ADR 0270);
 // the temp + rename write and its read-back are tested in src-tauri/tests/files.rs.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { openMemorySql, type TestSql } from "./betterSqlite";
@@ -23,16 +24,22 @@ import { localIsoDay } from "../../lib/day";
 import { saveFile } from "../../platform/saveFile";
 import { PINNED_DAY, setClock } from "../../__tests__/support/clock";
 
+/** A failure as Rust sends it (src-tauri/src/error.rs, ADR 0270). */
+interface RustError {
+  code: string;
+  detail: string;
+}
+
 /** The files the fake commands wrote, by full path. */
 const files = vi.hoisted(() => new Map<string, string>());
 /** What the fake dialogs and disk do; reset before each test. */
 const rust = vi.hoisted(() => ({
   /** Path picked in the save dialog (null = cancelled). */
   savePick: null as string | null,
-  /** Result of the open dialog: a file, null (cancelled) or an error code. */
-  openPick: null as { name: string; text: string } | null | string,
+  /** Result of the open dialog: a file, null (cancelled) or a Rust error. */
+  openPick: null as { name: string; text: string } | null | RustError,
   /** A write error to raise, if any. */
-  writeError: null as string | null,
+  writeError: null as RustError | null,
   /** What a written file reads back as. */
   readBack: (_path: string, text: string): string => text,
 }));
@@ -55,11 +62,14 @@ async function fakeInvoke(
       const text = new TextDecoder().decode(args as Uint8Array);
       files.set(rust.savePick, text);
       if (rust.readBack(rust.savePick, text) !== text)
-        throw "the saved file does not match";
+        throw {
+          code: "SAVED_FILE_MISMATCH",
+          detail: "the saved file does not match",
+        };
       return { kind: "saved", filename: rust.savePick.split("/").pop() };
     }
     case "open_backup_file":
-      if (typeof rust.openPick === "string") throw rust.openPick;
+      if (rust.openPick && "code" in rust.openPick) throw rust.openPick;
       return rust.openPick;
     case "write_app_backup": {
       const { filename, json } = args as { filename: string; json: string };
@@ -130,7 +140,7 @@ function commands(): string[] {
 
 describe("confirmRestore — safety backup (DR-019, D-52)", () => {
   it("aborts without touching the DB when the safety backup cannot be written", async () => {
-    rust.writeError = "disk full";
+    rust.writeError = { code: "IO", detail: "disk full" };
     const backup = await emptyBackup();
 
     const err = await confirmRestore(sql, backup, checkInputRules).catch(
@@ -142,8 +152,11 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
   });
 
   it("stops when a safety backup of that name exists (ADR 0175)", async () => {
-    rust.writeError =
-      "BACKUP_EXISTS: /app-config/backups/portfolio-before-restore-20261001T120000Z.json";
+    rust.writeError = {
+      code: "BACKUP_EXISTS",
+      detail:
+        "BACKUP_EXISTS: /app-config/backups/portfolio-before-restore-20261001T120000Z.json",
+    };
     const err = await confirmRestore(
       sql,
       await emptyBackup(),
@@ -255,7 +268,7 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
   });
 
   it("an oversized file is refused with the D-53 message before it is read", async () => {
-    rust.openPick = "BACKUP_TOO_LARGE";
+    rust.openPick = { code: "BACKUP_TOO_LARGE", detail: "BACKUP_TOO_LARGE" };
     const err = await chooseRestoreFile(checkInputRules).catch(
       (e: unknown) => e,
     );
@@ -267,7 +280,10 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
   });
 
   it("a file that cannot be read is a BackupReadError (#122)", async () => {
-    rust.openPick = "Operation not permitted (os error 1)";
+    rust.openPick = {
+      code: "IO",
+      detail: "Operation not permitted (os error 1)",
+    };
     const err = await chooseRestoreFile(checkInputRules).catch(
       (e: unknown) => e,
     );
@@ -325,7 +341,7 @@ describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
 
   it("throws BackupExportError when the file cannot be written", async () => {
     rust.savePick = "/Users/me/backup.json";
-    rust.writeError = "permission denied";
+    rust.writeError = { code: "IO", detail: "permission denied" };
     const err = await exportWithAppDeps(sql).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(BackupExportError);
     expect((err as BackupExportError).detail).toBe("permission denied");

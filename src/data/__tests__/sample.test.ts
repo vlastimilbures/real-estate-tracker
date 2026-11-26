@@ -38,7 +38,8 @@ vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn((command: string, args: { filename: string; json: string }) => {
     if (command !== "write_app_backup")
       return Promise.reject(new Error(`unexpected command ${command}`));
-    if (disk.fail) return Promise.reject("No space left on device");
+    if (disk.fail)
+      return Promise.reject({ code: "IO", detail: "No space left on device" });
     written.set(args.filename, args.json);
     return Promise.resolve();
   }),

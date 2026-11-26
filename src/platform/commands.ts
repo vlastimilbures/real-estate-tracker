@@ -13,6 +13,7 @@ import {
   type InvokeArgs,
   type InvokeOptions,
 } from "@tauri-apps/api/core";
+import { toCommandError } from "./commandError";
 import type { NativeMenuLabels } from "./menuLabels";
 import type { SaveOutcome } from "./saveFileTypes";
 
@@ -57,12 +58,16 @@ type CallRest<K extends CommandName> = Commands[K]["args"] extends undefined
   ? []
   : [args: Commands[K]["args"], options?: InvokeOptions];
 
-/** Call an app command. Rejects with whatever Rust returned as the error. */
+/** Call an app command. Rust's failure rejects as a `CommandError` (ADR 0270). */
 export function call<K extends CommandName>(
   name: K,
   ...rest: CallRest<K>
 ): Promise<Commands[K]["result"]> {
   // Passed on as given, so a command without arguments is sent without any.
   const sent = rest as [InvokeArgs?, InvokeOptions?];
-  return invoke<Commands[K]["result"]>(name, ...sent);
+  return invoke<Commands[K]["result"]>(name, ...sent).catch(
+    (rejection: unknown) => {
+      throw toCommandError(rejection);
+    },
+  );
 }

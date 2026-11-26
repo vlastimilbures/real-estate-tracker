@@ -21,8 +21,14 @@ describe("revealDataDir", () => {
   });
 
   it("passes a failure on, for the screen to show the path instead", async () => {
-    invoke.mockRejectedValueOnce("no folder for /x");
-    await expect(revealDataDir()).rejects.toBe("no folder for /x");
+    invoke.mockRejectedValueOnce({
+      code: "NO_FOLDER",
+      detail: "no folder for /x",
+    });
+    await expect(revealDataDir()).rejects.toMatchObject({
+      code: "NO_FOLDER",
+      message: "no folder for /x",
+    });
   });
 
   it("does nothing outside the desktop app", async () => {
