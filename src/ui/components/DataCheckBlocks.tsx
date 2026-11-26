@@ -61,12 +61,12 @@ export function DataCheckCounts({
   return (
     <span className="dc-pills">
       {attention > 0 ? (
-        <span className="dc-pill warn">
+        <span className="chip dc-pill warn">
           <AlertTriangle size={14} aria-hidden="true" />
           {d.needAttention(attention)}
         </span>
       ) : (
-        <span className="dc-pill ok">
+        <span className="chip dc-pill ok">
           <CheckCircle2 size={14} aria-hidden="true" />
           {d.attentionNone}
         </span>
@@ -75,7 +75,7 @@ export function DataCheckCounts({
         <>
           {/* Two counts, two phrases for a screen reader too. */}
           <span className="sr-only"> · </span>
-          <span className="dc-pill">
+          <span className="chip dc-pill">
             <Info size={14} aria-hidden="true" />
             {d.useDefaults(defaults)}
           </span>

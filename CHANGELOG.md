@@ -37,6 +37,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- The Data check's **"need attention" count** has the same amber border as the review pill
+  by the page title, so the two read as one signal; before, its border was grey. Its text,
+  colours and size do not change. The other counts, the fix links and the toggles look as
+  before (ADR 0268, #495). No new texts.
 - Property detail with invalid stored data no longer shows the **Nominal/Real switch**,
   which changed nothing there: the page has no figures until a record is fixed. Edit and
   Deactivate move to the right edge. The chosen lens is kept, and the switch comes back
