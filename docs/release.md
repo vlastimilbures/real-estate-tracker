@@ -119,19 +119,21 @@ is not provided** (backlog): FileVault protects the disk as a whole.
 ## Security posture
 
 - The webview gets only the permissions in `src-tauri/capabilities/default.json`: listening
-  for native-menu events, the SQL plugin's load/execute/select, and the app's own commands.
+  for native-menu events, the SQL plugin's load and select, and the app's own commands.
   There is no fs, dialog, shell, http, opener or updater permission; file dialogs and file
   writes happen in Rust (`src-tauri/src/fs_atomic.rs` and `src-tauri/src/commands/`).
 - A strict CSP (`tauri.conf.json` → `app.security.csp`) allows only the app's own scripts and
   styles and IPC; there are no remote origins. A navigation guard (`src-tauri/src/nav.rs`)
   refuses any navigation away from the app.
 - Devtools are not compiled into release builds (no `devtools` cargo feature).
-- The webview keeps `sql:allow-load`, `sql:allow-execute` and `sql:allow-select` (ADR 0064).
-  It can run any SQL, including `ATTACH DATABASE` to any path the user can write, through the
-  plugin and through `db_execute` and `db_transaction` alike. That is accepted because no remote content can
-  run in it. The app's `execute` wrapper refuses transaction control, a tripwire against
-  mistakes, not a security guard (ADR 0175 §7). One Rust SQL path with an
-  `ATTACH` deny waits for a forced sqlx upgrade (#171).
+- The webview keeps `sql:allow-load` and `sql:allow-select` (ADR 0064). Every write goes
+  through the app's own commands (`db_execute`, `db_transaction`), so the plugin's
+  `execute` is not granted (ADR 0270). The webview can still run any SQL, including
+  `ATTACH DATABASE` to any path the user can write, through those commands and the
+  plugin's `select`. That is accepted because no remote content can run in it. The app's
+  `execute` wrapper refuses transaction control, a tripwire against mistakes, not a
+  security guard (ADR 0175 §7). One Rust SQL path with an `ATTACH` deny waits for a
+  forced sqlx upgrade (#171).
 
 ### Manual check: an outside request is blocked
 

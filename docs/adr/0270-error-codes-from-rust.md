@@ -10,6 +10,8 @@
   (see "Resolved questions").
 - Amends: [0147](0147-failure-messages-and-log.md) (decision 7: a log line for a failed
   command also records its Rust code)
+- Amends: [0064](0064-file-io-in-rust.md) (the webview no longer gets the SQL plugin's
+  `execute`, see Consequences)
 - Related: [0014](0014-rust-transaction-command.md) (writes in a Rust command),
   [0175](0175-verified-file-writes-error-codes-backup-folder.md) (the `BACKUP_*` texts).
   It replaces the rule in the header of `src-tauri/src/error.rs` that the display text is
@@ -178,6 +180,15 @@ name, restore, safety-backup and boot-failure messages in all three languages.
   a reported problem.
 - Out of scope, each with its own follow-up: translating the `BACKUP_*` details (a
   follow-up ADR) and consolidating the data-layer error classes (issue #677).
+- **The SQL plugin's `execute` is no longer granted** (amends ADR 0064; decided
+  2026-11-26 under the owner's standing direction on #463 (follow best practice, customer
+  first); listed for the owner's morning review). Once `tauriSql.execute` calls
+  `db_execute` (point 4), the webview calls the plugin only for `Database.load` and
+  `select`, so `capabilities/default.json` drops `sql:allow-execute` and keeps
+  `sql:allow-load` and `sql:allow-select`. `src-tauri/tests/commands.rs` checks that the
+  plugin is granted exactly those two. This narrows what the webview can reach. It does
+  not change ADR 0064's accepted risk: any SQL still runs through `db_transaction`,
+  `db_execute` and `select`.
 
 ## Resolved questions
 
