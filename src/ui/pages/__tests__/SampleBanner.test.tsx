@@ -12,7 +12,7 @@ import { Properties } from "../Properties";
 import { SettingsPage as Settings } from "../Settings";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
-import { SafetyBackupError } from "../../../data/backup";
+import { FileStepError } from "../../../data/backup";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import { failure, success } from "../../../__tests__/support/result";
@@ -176,7 +176,7 @@ describe("Clear sample dialog (ADR 0094)", () => {
   it("shows a failed safety backup and keeps the dialog open", async () => {
     const clearSample = vi
       .fn()
-      .mockResolvedValue(failure(new SafetyBackupError("disk full")));
+      .mockResolvedValue(failure(new FileStepError("safety", "disk full")));
     act(() => usePortfolioStore.setState({ clearSample }));
     render(<Dashboard />);
     await userEvent.click(
@@ -216,7 +216,7 @@ describe("Clear sample dialog (ADR 0094)", () => {
     await userEvent.click(document.querySelector(".modal-overlay")!);
     expect(screen.getByRole("dialog")).toBeTruthy();
 
-    await act(async () => fail(new SafetyBackupError("disk full")));
+    await act(async () => fail(new FileStepError("safety", "disk full")));
     expect(
       screen.getByText(en.sample.safetyBackupFailed("disk full")),
     ).toBeTruthy();

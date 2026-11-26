@@ -1,59 +1,9 @@
 // Reading a backup file's text: the size cap (ADR 0053), the JSON parse and the
-// top-level shape and version check, and the error a refused file raises. The rows are
-// checked by the restore plan (restorePlan.ts).
-import type { ValidationCode } from "../../engine";
-import type { IntRange } from "../../lib/rules";
+// top-level shape and version check, and the RestoreError a refused file raises (the
+// class lives in data/errors.ts). The rows are checked by the restore plan
+// (restorePlan.ts).
+import { RestoreError } from "../errors";
 import { BACKUP_MAX_BYTES, SCHEMA_HEAD, type BackupFile } from "./format";
-
-export type RestoreErrorCode =
-  /** Larger than BACKUP_MAX_BYTES (ADR 0053). */
-  | "BACKUP_TOO_LARGE"
-  /** Not JSON at all. */
-  | "BACKUP_NOT_JSON"
-  /** Not a backup: wrong shape, missing table, unknown column, non-scalar cell. */
-  | "BACKUP_INVALID"
-  /** Written by a newer app version. */
-  | "BACKUP_NEWER"
-  /** Rows that the app cannot read or that break its rules; see `issues`. */
-  | "BACKUP_ROWS_INVALID";
-
-/** One offending row. Never carries a value — table, id, column and rule only. */
-export interface RestoreIssue {
-  table: string;
-  id?: string;
-  column?: string;
-  rule:
-    | ValidationCode
-    | "UNREADABLE_VALUE"
-    | "DUPLICATE_KEY"
-    | "MISSING_ASSUMPTIONS"
-    | "OUT_OF_RANGE"
-    | "BEYOND_LIMIT";
-  /** The allowed range of an OUT_OF_RANGE or BEYOND_LIMIT field. */
-  range?: IntRange;
-}
-
-/** The backup was refused before anything was changed. */
-export class RestoreError extends Error {
-  readonly code: RestoreErrorCode;
-  readonly issues: RestoreIssue[];
-  /** BACKUP_INVALID: what is wrong · BACKUP_NEWER: "v<file> > v<app>". */
-  readonly detail: string;
-  constructor(
-    code: RestoreErrorCode,
-    message: string,
-    {
-      issues = [],
-      detail = "",
-    }: { issues?: RestoreIssue[]; detail?: string } = {},
-  ) {
-    super(message);
-    this.name = "RestoreError";
-    this.code = code;
-    this.issues = issues;
-    this.detail = detail;
-  }
-}
 
 export const invalid = (detail: string) =>
   new RestoreError(
