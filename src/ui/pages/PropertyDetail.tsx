@@ -157,6 +157,8 @@ export function PropertyDetail() {
   return (
     <PageFrame
       title={property.name}
+      // No figures with invalid data, so nothing for the lens to switch (ADR 0265).
+      showLens={invalid === null}
       attention={
         // The same pill as the Dashboard's (ADR 0218 §1, 0223 §5).
         reviewPill(t, v.toReview, () => focusSection(sectionId("dataCheck")))

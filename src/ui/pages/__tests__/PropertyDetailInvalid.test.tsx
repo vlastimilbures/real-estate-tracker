@@ -4,7 +4,7 @@
 // the property's records — so the bad one can be fixed here — with the UX-049 message,
 // instead of falling back to the app-wide error screen.
 import { describe, it, expect, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { useUiStore } from "../../../state/uiStore";
@@ -93,5 +93,43 @@ describe("Property detail with a loan shape ADR 0226 refuses", () => {
     expect(
       screen.queryByText(en.propertyDetail.projectionTitle(30)),
     ).toBeNull();
+  });
+});
+
+// ADR 0265: with no figures, the Nominal/Real switch would change nothing on this page,
+// so it is hidden, as on every other page with nothing to switch. The lens is kept.
+describe("the Nominal/Real switch on Property detail (ADR 0265)", () => {
+  const lens = () =>
+    screen.queryByRole("group", { name: en.shell.nominalOrReal });
+
+  it("is hidden while the property's data is invalid", () => {
+    render(<PropertyDetail />);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(lens()).toBeNull();
+  });
+
+  it("is shown with valid data", () => {
+    act(() => {
+      usePortfolioStore.setState({ portfolio });
+    });
+    render(<PropertyDetail />);
+    expect(lens()).not.toBeNull();
+  });
+
+  it("comes back with the same lens once the data is valid again", () => {
+    act(() => {
+      useUiStore.setState({ mode: "real" });
+    });
+    render(<PropertyDetail />);
+    expect(lens()).toBeNull();
+    expect(useUiStore.getState().mode).toBe("real");
+    act(() => {
+      usePortfolioStore.setState({ portfolio });
+    });
+    const group = lens();
+    expect(group).not.toBeNull();
+    const real = within(group!).getByRole("button", { name: en.common.real });
+    expect(real.getAttribute("aria-pressed")).toBe("true");
+    expect(useUiStore.getState().mode).toBe("real");
   });
 });

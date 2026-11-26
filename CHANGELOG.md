@@ -37,6 +37,10 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- Property detail with invalid stored data no longer shows the **Nominal/Real switch**,
+  which changed nothing there: the page has no figures until a record is fixed. Edit and
+  Deactivate move to the right edge. The chosen lens is kept, and the switch comes back
+  with it once the data is valid (ADR 0265, #607). No new texts.
 - **The database schema starts at version 8** (ADR 0230, #450). A database last opened with
   1.4.0 or later upgrades as before. An older one is no longer upgraded: the app stops on
   the start-up screen with "This database was last opened with a version older than
