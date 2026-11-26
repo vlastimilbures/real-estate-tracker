@@ -11,7 +11,8 @@ const db = vi.hoisted(() => ({
 vi.mock("@tauri-apps/plugin-sql", () => ({
   default: { load: vi.fn(async () => db) },
 }));
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+const core = vi.hoisted(() => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/api/core", () => core);
 vi.mock("../../lib/tauri", () => ({ isTauri: () => true }));
 
 beforeEach(() => {
@@ -51,5 +52,59 @@ describe("tauriSql.execute (ADR 0175)", () => {
     );
     await sql.execute("DELETE FROM endpoints");
     expect(db.execute).toHaveBeenCalledTimes(2);
+  });
+});
+
+// The wire format of the app's own database commands (src-tauri/src/db.rs): the command
+// names, the argument keys and the connection they name.
+describe("tauriSql commands", () => {
+  const statements = [
+    { query: "DELETE FROM t WHERE id = ?", params: [1] },
+    { query: "DELETE FROM u" },
+  ];
+  const sent = [
+    { query: "DELETE FROM t WHERE id = ?", params: [1] },
+    { query: "DELETE FROM u", params: [] },
+  ];
+
+  beforeEach(() => {
+    core.invoke.mockReset();
+  });
+
+  it("sends a transaction to db_transaction, every statement with its params", async () => {
+    core.invoke.mockResolvedValue(undefined);
+    const sql = await openTauriSql("sqlite:x.db");
+    await sql.transaction(statements);
+    expect(core.invoke.mock.calls).toEqual([
+      ["db_transaction", { db: "sqlite:x.db", statements: sent }],
+    ]);
+  });
+
+  it("reads a snapshot through db_select_snapshot and returns its rows", async () => {
+    const rows = [[{ a: 1 }], []];
+    core.invoke.mockResolvedValue(rows);
+    const sql = await openTauriSql();
+    await expect(sql.selectSnapshot(statements)).resolves.toBe(rows);
+    expect(core.invoke.mock.calls).toEqual([
+      ["db_select_snapshot", { db: "sqlite:portfolio.db", statements: sent }],
+    ]);
+  });
+
+  it("backs up through db_backup and returns the file name", async () => {
+    core.invoke.mockResolvedValue("portfolio-x.db");
+    const sql = await openTauriSql();
+    await expect(sql.backup("before-migration")).resolves.toBe(
+      "portfolio-x.db",
+    );
+    expect(core.invoke.mock.calls).toEqual([
+      ["db_backup", { db: "sqlite:portfolio.db", label: "before-migration" }],
+    ]);
+  });
+
+  it("passes a refused command on", async () => {
+    const refused = new Error("database is locked");
+    core.invoke.mockRejectedValue(refused);
+    const sql = await openTauriSql();
+    await expect(sql.transaction(statements)).rejects.toBe(refused);
   });
 });
