@@ -175,6 +175,11 @@ const resizeObserverBans = [
       "CallExpression[callee.object.name='vi'][callee.property.name='stubGlobal'][arguments.0.value='ResizeObserver']",
     message: resizeObserverMessage,
   },
+  {
+    selector:
+      "CallExpression[callee.object.name='Object'][callee.property.name='defineProperty'][arguments.1.value='ResizeObserver']",
+    message: resizeObserverMessage,
+  },
 ];
 
 // Only src/lib/money.ts touches decimal.js directly (DR-075): one Decimal configuration.

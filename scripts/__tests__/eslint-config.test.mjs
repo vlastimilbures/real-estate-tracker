@@ -148,6 +148,36 @@ describe("test bans in eslint.config.js", () => {
     expect(casts.map((m) => m.line)).toEqual(lines);
   });
 
+  // #458: one ResizeObserver stub (src/__tests__/support/dom.ts), none written by hand.
+  const RESIZE_OBSERVERS = [
+    'import { vi } from "vitest";',
+    "globalThis.ResizeObserver ??= class {} as unknown as typeof ResizeObserver;",
+    "window.ResizeObserver = X;",
+    'vi.stubGlobal("ResizeObserver", X);',
+    'Object.defineProperty(globalThis, "ResizeObserver", { value: X });',
+    'Object.defineProperty(window, "ResizeObserver", { value: X });',
+    "",
+  ].join("\n");
+  it.each([
+    "src/engine/__tests__/x.test.ts",
+    "src/lib/__tests__/x.test.ts",
+    "src/ui/__tests__/x.test.tsx",
+    "src/state/__tests__/x.test.ts",
+  ])("reject a hand-written ResizeObserver in %s", async (file) => {
+    const [result] = await eslint.lintText(RESIZE_OBSERVERS, {
+      filePath: file,
+    });
+    const stubs = result.messages.filter((m) =>
+      m.message.startsWith("Use stubResizeObserver()"),
+    );
+    expect(stubs.map((m) => m.line)).toEqual([2, 3, 4, 5, 6]);
+  });
+
+  it("let the shared stub in src/__tests__/support/dom.ts lint clean", async () => {
+    const [result] = await eslint.lintFiles(["src/__tests__/support/dom.ts"]);
+    expect(result.messages).toEqual([]);
+  });
+
   it("keep each block's own bans: a lib/day mock in a state test", async () => {
     const [result] = await eslint.lintText(
       'import { vi } from "vitest";\nvi.mock("../../lib/day");\n',
