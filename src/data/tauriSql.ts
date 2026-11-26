@@ -17,19 +17,21 @@ import {
 const TRANSACTION_CONTROL =
   /^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
 
+/** The SQL plugin connection of the app's one database; the Rust database commands run
+ *  on its pool (src-tauri/src/paths.rs `DB_URL`). */
+export const DB_URL = "sqlite:portfolio.db";
+
 /**
  * Open (or create) the on-disk SQLite database in the app's config dir and return an
  * `Sql` adapter over it. `migrate`/`seedIfEmpty` can then be run against the result.
  */
-export async function openTauriSql(
-  connection = "sqlite:portfolio.db",
-): Promise<Sql> {
+export async function openTauriSql(): Promise<Sql> {
   if (!isTauri()) {
     throw new Error(
       "Tauri runtime not available — open the desktop app, not a browser.",
     );
   }
-  const db = await Database.load(connection);
+  const db = await Database.load(DB_URL);
   // FK enforcement needs no PRAGMA here: sqlx turns `foreign_keys` on for every pooled
   // connection it opens (proven in src-tauri/tests/h14_pool_transactions.rs).
   return {
@@ -50,15 +52,15 @@ export async function openTauriSql(
       return db.select<T[]>(query, params);
     },
     async transaction(statements: SqlStatement[]): Promise<void> {
-      await dbTransaction(connection, statements);
+      await dbTransaction(statements);
     },
     async selectSnapshot(
       statements: SqlStatement[],
     ): Promise<Record<string, unknown>[][]> {
-      return dbSelectSnapshot(connection, statements);
+      return dbSelectSnapshot(statements);
     },
     async backup(label: string): Promise<string> {
-      return dbBackup(connection, label);
+      return dbBackup(label);
     },
   };
 }

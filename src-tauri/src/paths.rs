@@ -6,8 +6,12 @@ use tauri::{AppHandle, Manager, Runtime};
 
 use crate::error::AppError;
 
-/// The database's file name in the app folder (`sqlite:portfolio.db`, src/data/tauriSql.ts).
+/// The database's file name in the app folder.
 pub const DB_FILE: &str = "portfolio.db";
+
+/// The SQL plugin connection the webview opens the database on (src/data/tauriSql.ts
+/// `DB_URL`); the database commands run on its pool. The app has one database.
+pub const DB_URL: &str = "sqlite:portfolio.db";
 
 /// The app folder's subfolder for backups (D-52): next to the database.
 pub const BACKUPS_DIR: &str = "backups";

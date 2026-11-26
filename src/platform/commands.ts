@@ -22,9 +22,8 @@ interface WireStatement {
   params: unknown[];
 }
 
-/** Statements run against the named plugin connection (`sqlite:portfolio.db`). */
+/** Statements run on the app's database. */
 interface DbStatements {
-  db: string;
   statements: WireStatement[];
 }
 
@@ -35,7 +34,7 @@ export interface Commands {
     args: DbStatements;
     result: Record<string, unknown>[][];
   };
-  db_backup: { args: { db: string; label: string }; result: string };
+  db_backup: { args: { label: string }; result: string };
   log_error: { args: { code: string; context: string }; result: void };
   perf_enabled: { args: undefined; result: boolean };
   perf_report: { args: { name: string; ms: number | null }; result: void };
