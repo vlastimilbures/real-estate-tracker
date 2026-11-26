@@ -1,5 +1,5 @@
 // Pure instalment hints for the mortgage edit form (the loan rules themselves are the
-// engine's, checked by the store before a save, UX-047).
+// engine's, checked by the store before a save).
 // Kept out of the page component so they are unit-testable in the node test env
 // (no DOM).
 import {
@@ -203,10 +203,10 @@ const nonEmpty = <T>(list: T[] | null | undefined): T[] | undefined =>
   list && list.length > 0 ? list : undefined;
 
 /**
- * The mortgage block a submitted form describes. The contract maturity (D-29) comes from
- * its field (UX-054, blank clears it); a caller without that field carries the stored
- * value over (DR-129). Prepayments and recasts likewise: the form's rows replace the
- * stored events (no row clears them), a caller without them carries them over (ADR 0116).
+ * The mortgage block a submitted form describes. The contract maturity (ADR 0029) comes
+ * from its field (blank clears it); a caller without that field carries the stored value
+ * over. Prepayments and recasts likewise: the form's rows replace the stored events (no
+ * row clears them), a caller without them carries them over (ADR 0116).
  */
 export function mortgageFromForm(
   v: MortgageFormValues,

@@ -1,6 +1,6 @@
-// Health-band policy for the LTV and DSCR markers and badges: which value counts as good, a warning
-// or bad. Presentation policy, not formatting, so it lives here and not in lib/format
-// (DR-048). Dashboard, Properties and Property detail all read these two functions.
+// Health-band policy for the LTV and DSCR markers and badges: which value counts as good,
+// a warning or bad. Presentation policy, not formatting, so it lives here and not in
+// lib/format. Dashboard, Properties and Property detail all read these two functions.
 import { D, type Decimal } from "../../lib/money";
 import type { Dictionary } from "../../i18n";
 
@@ -22,7 +22,7 @@ const DSCR_GOOD = D("1.2");
 /** LTV colour band: lower is safer. null = debt on no value → neutral (ADR 0133). */
 export function ltvBand(value: Decimal | null): Band {
   if (value === null) return "neutral";
-  // Decimal comparisons, no float conversion at the thresholds (DR-079).
+  // Decimal comparisons, no float conversion at the thresholds.
   if (value.lessThanOrEqualTo(LTV_GOOD)) return "good";
   if (value.lessThanOrEqualTo(LTV_WARN)) return "warn";
   return "bad";
@@ -36,8 +36,8 @@ export function dscrBand(value: Decimal | null): Band {
   return "bad";
 }
 
-/** The LTV band in words (UX-027): the same words as the Dashboard tile. No value
- *  (null) has no word (ADR 0133). */
+/** The LTV band in words: the same words as the Dashboard tile. No value (null) has no
+ *  word (ADR 0133). */
 export function ltvBandWord(
   t: Pick<Dictionary, "dashboard">,
   value: Decimal | null,

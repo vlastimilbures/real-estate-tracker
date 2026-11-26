@@ -1,4 +1,4 @@
-// Pure presentation model for PropertyDetail's loan warnings (UX-054): instalment health,
+// Pure presentation model for PropertyDetail's loan warnings: instalment health,
 // contract maturity and an expired fixation, for every block from the one in force onward.
 // Also the Loan outlook: payoff, remaining term and each block's reset (ADR 0116, 0117).
 import { remainingTermText } from "./termText";
@@ -31,11 +31,11 @@ import { ZERO, type Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate, fmtPct } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
 
-/** One loan warning on Property detail (UX-054). */
+/** One loan warning on Property detail. */
 export type LoanWarning =
   /** The instalment does not repay the block by its term (closed-form health). */
   | { kind: "underpays"; block: MortgageBlock; suggestedInstalment: Decimal }
-  /** The instalment-implied maturity is > 1 month from the contract's (D-29).
+  /** The instalment-implied maturity is > 1 month from the contract's (ADR 0029).
    *  `months` = implied − contract: positive ⇒ the loan is paid off later. */
   | {
       kind: "maturity";
@@ -44,7 +44,7 @@ export type LoanWarning =
       contract: IsoDate;
       months: number;
     }
-  /** The fixation ended on/before baseDate and no follow-on block is entered (D-30),
+  /** The fixation ended on/before baseDate and no follow-on block is entered (ADR 0030),
    *  or the next one starts only on `until`, after the first floating payment
    *  (ADR 0129 §4). */
   | {
@@ -63,8 +63,8 @@ export type LoanWarning =
 /**
  * The months an ended fixation runs at the assumed reset rate: from its end, unless the
  * next block starts before the first payment after it falls due — until that block, if
- * there is one (D-30, ADR 0129 §4). Undefined while the fixation runs or the next block
- * covers it.
+ * there is one (ADR 0030, ADR 0129 §4). Undefined while the fixation runs or the next
+ * block covers it.
  */
 function refixGap(
   current: MortgageBlock,
@@ -78,7 +78,7 @@ function refixGap(
     current.startDate,
     current.fixationYears * 12 + 1,
   );
-  // A payment due on the next block's start stays with this one (D-47).
+  // A payment due on the next block's start stays with this one (ADR 0021).
   return next.startDate.getTime() >= firstFloating.getTime()
     ? { fixationEnd, until: next.startDate }
     : undefined;
@@ -86,10 +86,10 @@ function refixGap(
 
 /**
  * Warnings for a property's loan: every block from the one in force at baseDate (or the
- * earliest upcoming) onward, so a follow-on block is checked too (DR-125). A block a
- * later one replaced before baseDate is history and is skipped. Development loans have
- * an engine-derived instalment and an explicit term, so they get neither the instalment
- * nor the maturity check. Event outcomes with an issue follow, on their block (ADR 0116).
+ * earliest upcoming) onward, so a follow-on block is checked too. A block a later one
+ * replaced before baseDate is history and is skipped. Development loans have an
+ * engine-derived instalment and an explicit term, so they get neither the instalment nor
+ * the maturity check. Event outcomes with an issue follow, on their block (ADR 0116).
  */
 export function loanWarnings(
   mortgages: MortgageBlock[],
@@ -321,7 +321,7 @@ function drawdownView(
       count > 1 && block
         ? d.drawdownTitleFrom(fmtDate(block.startDate))
         : d.drawdownTitle,
-    // Nothing drawn at start: no "Drawn at start 0 Kč" row (review of PR #302).
+    // Nothing drawn at start: no "Drawn at start 0 Kč" row.
     rows: dd.tranches
       .filter((t) => !(t.start && t.amount.isZero()))
       .map((t) => ({
@@ -350,7 +350,7 @@ export function amortizationExtras(
   ]);
 }
 
-/** Excel column map for the amortization schedule, headers as on screen (UX-062). */
+/** Excel column map for the amortization schedule, headers as on screen. */
 export function amortizationColumns(
   t: Pick<Dictionary, "propertyDetail">,
   rows: AmortizationRow[],

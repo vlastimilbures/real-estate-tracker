@@ -1,6 +1,6 @@
 // CSV import preview and report shaping (ADR 0096): the plan's items grouped per file,
 // record labels, and each changed column as display text. Replaces the per-table
-// "N added or updated" rows (UX-034).
+// "N added or updated" rows.
 import type { Dictionary } from "../../i18n";
 import type {
   CsvFile,

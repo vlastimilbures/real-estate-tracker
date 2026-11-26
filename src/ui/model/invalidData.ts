@@ -1,4 +1,4 @@
-// The ErrorBoundary's text for stored data that breaks an engine rule (UX-049, DR-119):
+// The ErrorBoundary's text for stored data that breaks an engine rule:
 // one line per problem naming the property (or the assumptions) and the rule, plus the
 // property to open, and a hint for a leftover mortgage block (ADR 0258). Pure.
 import type { Dictionary } from "../../i18n";

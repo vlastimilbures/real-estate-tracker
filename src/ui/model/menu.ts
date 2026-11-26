@@ -1,5 +1,5 @@
-// Native menu → page (UX-066, DR-143). The View menu (⌘1–⌘5) sends a page name with
-// `menu://navigate`; only the pages it lists are accepted.
+// Native menu → page. The View menu (⌘1–⌘5) sends a page name with `menu://navigate`;
+// only the pages it lists are accepted.
 import type { Route } from "../../state/uiStore";
 import type { Dictionary } from "../../i18n";
 
@@ -16,8 +16,8 @@ export function menuRoute(payload: unknown): Route | null {
   return MENU_ROUTES.find((r) => r === payload) ?? null;
 }
 
-/** Labels of the native menu items the app adds, in the UI language (UX-076). Sent to
- *  the Rust shell, which checks them (src-tauri/src/menu.rs). Keys follow its View pages. */
+/** Labels of the native menu items the app adds, in the UI language. Sent to the Rust
+ *  shell, which checks them (src-tauri/src/menu.rs). Keys follow its View pages. */
 export function menuLabels(t: Pick<Dictionary, "menu" | "nav">) {
   return {
     about: t.menu.about,

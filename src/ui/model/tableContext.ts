@@ -1,4 +1,4 @@
-// Table context lines (ADR 0111, #21): the page subtitle names the currency, period and
+// Table context lines (ADR 0111): the page subtitle names the currency, period and
 // date of the table below it, so column headers stay unit-free.
 import { fmtDate } from "../../lib/format";
 import type { Dictionary } from "../../i18n";

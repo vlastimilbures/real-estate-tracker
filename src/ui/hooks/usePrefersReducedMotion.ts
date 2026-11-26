@@ -13,7 +13,7 @@ const snapshot = () =>
   typeof window.matchMedia === "function" && window.matchMedia(QUERY).matches;
 
 /** macOS "Reduce motion" (or the browser's emulation of it): charts skip their entry
- *  animation (UX-058). Follows the setting live. */
+ *  animation. Follows the setting live. */
 export function usePrefersReducedMotion(): boolean {
   return useSyncExternalStore(subscribe, snapshot, () => false);
 }

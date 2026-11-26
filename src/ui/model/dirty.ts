@@ -1,4 +1,4 @@
-// Unsaved-input check for form drafts (UX-029): a draft is dirty when any field differs
+// Unsaved-input check for form drafts: a draft is dirty when any field differs
 // from the values the form opened with. Drafts are flat records of strings/booleans/null.
 
 export function isDirty<T extends object>(initial: T, current: T): boolean {

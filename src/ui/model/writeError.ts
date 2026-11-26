@@ -1,4 +1,4 @@
-// Translated text for a failed write (DR-133): which message to show and, when one form
+// Translated text for a failed write: which message to show and, when one form
 // field is at fault, which field to show it on. Pure; the store hands over a WriteError.
 import type { Dictionary } from "../../i18n";
 import type { EngineValidationError, ValidationCode } from "../../engine";
@@ -30,7 +30,7 @@ export interface WriteErrorText {
 }
 
 /** CHECK constraint → engine rule wording + the field it guards, named like the engine
- *  field. One list for the schema and this map (src/lib/checkConstraints.ts, #470). */
+ *  field. One list for the schema and this map (src/lib/checkConstraints.ts). */
 const CHECKS: Record<
   string,
   { rule: ValidationCode | "flag" | "json"; field?: string }
@@ -139,7 +139,7 @@ export function writeErrorTexts(
 }
 
 /** A form's own key for a failure's field (and list item): where the form shows it, or
- *  null when it shows it above the buttons (ADR 0261, #440). Each form declares one. */
+ *  null when it shows it above the buttons (ADR 0261). Each form declares one. */
 export type ErrorField = (field: string, index?: number) => string | null;
 
 /** The ErrorField of a form that shows `fields` under their own names. An error on a list

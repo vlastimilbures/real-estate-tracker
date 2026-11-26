@@ -28,8 +28,8 @@ export { monthlyFlow } from "../../engine";
 
 /** Projection year (0..horizon) closest to an as-of date, on the baseDate-anchored
  *  whole-year grid the projection/charts use. ≤ baseDate ⇒ 0 (the current snapshot).
- *  Months count on the D-21 month-end grid, as value growth and the CPI index count them,
- *  so 31 Aug → 28 Feb is six months (ADR 0150). */
+ *  Months count on the month-end grid (ADR 0021), as value growth and the CPI index count
+ *  them, so 31 Aug → 28 Feb is six months (ADR 0150). */
 export function projectionYearForAsOf(baseDate: Date, asOf: Date): number {
   const months = lastGridMonthOnOrBefore(baseDate, asOf);
   if (months <= 0) return 0;
@@ -74,7 +74,7 @@ export function tilesForAsOf(
 }
 
 /**
- * Property-detail counterpart of `tilesForAsOf` (DR-054, D-62): the same as-of basis, so
+ * Property-detail counterpart of `tilesForAsOf` (ADR 0019): the same as-of basis, so
  * the property tiles add up to the Dashboard. The property snapshot carries no `asOf`,
  * so the caller passes the date it was evaluated at. `owned` follows `ownedOn` under the
  * same basis, so a pending purchase reads the same on the tiles, the subtitle and the

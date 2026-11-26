@@ -35,7 +35,8 @@ export function compareWorkbook(
   notes: string[] = [],
 ): { filename: string; sheets: XlsxSheetCells[] } {
   const names = t.xlsx.sheetNames;
-  // Real names the base date its Kč are in: the opening year is the base-date point (D-22).
+  // Real names the base date its Kč are in: the opening year is the base-date point
+  // (ADR 0022).
   const lens = lensLabel(t, mode, results[0]?.projection[0]?.periodEnd);
   const chart = (
     name: string,

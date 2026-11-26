@@ -1,9 +1,9 @@
 // Presentation-layer Excel export. Column-driven so any table (projection, amortization)
 // reuses the same writer. NOT engine code — lives in ui/model. Pure: building the bytes;
-// handing them to the user is src/ui/exportXlsx.ts (DR-066).
+// handing them to the user is src/ui/exportXlsx.ts.
 //
-// D-10: every number cell holds the value rounded exactly as the screen shows it
-// (src/lib/format.ts cell* helpers), as a number with a matching Excel format, so the
+// Every number cell holds the value rounded exactly as the screen shows it (ADR 0010;
+// src/lib/format.ts cell* helpers), as a number with a matching Excel format, so the
 // sheet shows and sums what the app shows; a non-finite number is an empty cell. Text is
 // written as typed; text Excel could read as a formula gets the Text format (ADR 0145).
 import type { Worksheet } from "exceljs";

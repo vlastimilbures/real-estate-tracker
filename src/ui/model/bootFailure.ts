@@ -1,4 +1,4 @@
-// What the startup error screen offers for each failure (#115, ADR 0153). Try again only
+// What the startup error screen offers for each failure (ADR 0153). Try again only
 // where a retry can succeed; details are "records involved" only when they are records.
 // After a failed read-back, the writes it refused are named (ADR 0255).
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";

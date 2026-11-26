@@ -26,7 +26,7 @@ export const COMMITTED_DASH = "6 3";
 // A type alias (not interface) so it's structurally assignable to Record<string, number>
 // — the charts accept arbitrary string-keyed series for the Scenarios compare view.
 export type ChartRow = {
-  /** Projection year t (0 = opening), for the "Y5 · 2031" tooltip label (UX-032). */
+  /** Projection year t (0 = opening), for the "Y5 · 2031" tooltip label. */
   year: number;
   calendarYear: number;
   value: number;
@@ -37,7 +37,7 @@ export type ChartRow = {
   equity: number;
   ltv: number | null; // null: debt on no value, a gap in the line (ADR 0133)
   // Flows are null in year 0 (the opening point has none), so the lines start at year 1
-  // instead of rising from a plotted 0 (UX-033).
+  // instead of rising from a plotted 0.
   grossRent: number | null;
   effectiveRent: number | null;
   noi: number | null;
@@ -146,7 +146,7 @@ export function seriesTipItems(
   });
 }
 
-/** A chart-table cell's value (UX-075): a plotted number, or null for a gap. */
+/** A chart-table cell's value: a plotted number, or null for a gap. */
 export function tableValue(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }

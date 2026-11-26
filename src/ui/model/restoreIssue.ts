@@ -1,4 +1,4 @@
-// Translated text for one refused restore row (P5b). Pure; never shows the row's value,
+// Translated text for one refused restore row. Pure; never shows the row's value,
 // only the rule and, for OUT_OF_RANGE, the allowed range (ADR 0086).
 import type { Dictionary } from "../../i18n";
 import type { RestoreIssue } from "../../state/backup";

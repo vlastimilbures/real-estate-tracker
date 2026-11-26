@@ -1,4 +1,4 @@
-// The series of the projection charts, shared by the Dashboard and Property detail (#485).
+// The series of the projection charts, shared by the Dashboard and Property detail.
 // Pure: names, colours and dashes only; the rows carry the lens.
 import type { Dictionary } from "../../i18n";
 import type { Mode } from "./lens";

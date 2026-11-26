@@ -3,7 +3,7 @@
 // flipping this one attribute re-themes the whole app (charts included — CSS vars
 // resolve inside SVG). Kept free of React/store imports so main.tsx can call it before
 // first paint (no light-flash) without pulling in the store. The stored preference
-// itself lives in src/state/themePreference.ts (ADR 0072, DR-165).
+// itself lives in src/state/themePreference.ts (ADR 0072).
 import type { Theme } from "../state/themePreference";
 
 const darkQuery = (): MediaQueryList | null =>

@@ -1,6 +1,6 @@
-// The As-of picker's window and presets (UX-059, D-19): snapshots exist from the base
+// The As-of picker's window and presets (ADR 0019): snapshots exist from the base
 // date (the projection start) to the end of the horizon, and "+N years" steps like the
-// engine's EDATE, so 29 Feb + 1 year is 28 Feb (DR-072). Pure.
+// engine's EDATE, so 29 Feb + 1 year is 28 Feb. Pure.
 import { addYears } from "../../engine";
 
 export interface AsOfBounds {

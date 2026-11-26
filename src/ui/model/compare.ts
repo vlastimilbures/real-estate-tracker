@@ -1,6 +1,6 @@
 // Pure presentation model for Scenario compare: picks each scenario's nominal or real
-// projection (the engine deflates with the scenario's own CPI, D-23) and the key-figure
-// rows for the lens (UX-055, DR-093). Moved out of ScenarioCompare.tsx.
+// projection (the engine deflates with the scenario's own CPI, ADR 0023) and the
+// key-figure rows for the lens.
 import {
   fmtCzkM,
   fmtMultiple,
@@ -37,7 +37,7 @@ export interface CompareResult {
 export interface CompareKpiRow {
   label: string;
   fmt: (r: CompareResult) => string;
-  /** Why a cell has no value, shown as its tooltip (UX-079). */
+  /** Why a cell has no value, shown as its tooltip. */
   note?: (r: CompareResult) => string | undefined;
   /** The cell points to the rebased-returns footnote (ADR 0089). */
   mark?: (r: CompareResult) => boolean;
@@ -253,7 +253,7 @@ function kpiRowSpecs(
       value: (r) => irrRate(r) ?? t.common.notApplicable,
       note: (r) => irrReasonText(t, lens(r).leveredIrr.reason),
       mark: rebased,
-      // A scenario IRR without a value keeps its reason (UX-079).
+      // A scenario IRR without a value keeps its reason.
       delta: (r, b) =>
         irrRate(r) === null
           ? {

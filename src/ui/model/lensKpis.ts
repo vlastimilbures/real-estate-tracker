@@ -11,7 +11,7 @@ export interface LensKpis {
   cagr: PortfolioKPIs["cagrNominal"];
   cumulativeNetCashFlow: Decimal; // cash to owner (ADR 0161)
   totalInterest: Decimal;
-  /** With the reason it has no value (UX-079, DR-158). */
+  /** With the reason it has no value. */
   leveredIrr: LeveredIrr;
 }
 

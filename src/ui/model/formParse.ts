@@ -1,5 +1,6 @@
-// Pure parse/format helpers for draft strings ⇄ engine types. Kept out of the form
-// component file so fast-refresh stays happy and the parsing is unit-testable.
+// Pure form helpers: draft strings ⇄ engine types, and the field specs, hints and value
+// collection the forms share. Kept out of the component files so fast refresh stays
+// happy and the parsing is unit-testable.
 import { D, type Decimal } from "../../lib/money";
 import { fmtCzk, fmtDate } from "../../lib/format";
 import {
@@ -48,7 +49,7 @@ export function parsePercentToRatio(raw: string): Rate | null {
   return d === null ? null : rate(d.div(100));
 }
 
-/** Whole, unsigned, at most 9 digits like CSV import (ADR 0075, DR-078): a longer entry
+/** Whole, unsigned, at most 9 digits like CSV import (ADR 0075): a longer entry
  *  is rejected instead of becoming Infinity. */
 export function parseIntField(raw: string): number | null {
   const cleaned = raw.replace(/\s/g, "");
@@ -73,18 +74,18 @@ export function parseDate(raw: string): IsoDate | null {
   const [, dd, mm, yyyy] = m;
   const year = Number(yyyy);
   // New dates start on the date floor (lib/rules.ts); earlier is almost certainly a
-  // typo (ADR 0149 §5, DR-035, UX-052).
+  // typo (ADR 0149 §5).
   if (year < DATE_FLOOR_YEAR) return null;
   return calendarDay(year, Number(mm), Number(dd)); // UTC midnight, no roll-over
 }
 
 // draft formatters (Decimal/Date → editable string)
 /** The stored precision, never rounded or in exponent form: a form saves the record it
- *  shows, so a rounded draft would rewrite an amount nobody touched (ADR 0131, #201). */
+ *  shows, so a rounded draft would rewrite an amount nobody touched (ADR 0131). */
 export function moneyDraft(d: Decimal | undefined): string {
   return d == null ? "" : d.toFixed();
 }
-/** A stored ratio as its exact percentage, for the same reason (ADR 0131, #208): the
+/** A stored ratio as its exact percentage, for the same reason (ADR 0131): the
  *  `times(100)` and the parse's `div(100)` are exact at Decimal precision. */
 export function percentDraft(d: Decimal | undefined): string {
   return d == null ? "" : d.times(100).toFixed();
@@ -177,7 +178,7 @@ export function shownFields(
   ];
 }
 
-/** The message for a value that does not parse: the expected format of its kind (UX-040). */
+/** The message for a value that does not parse: the expected format of its kind. */
 export function invalidHint(
   t: Pick<Dictionary, "forms">,
   kind: FieldKind,
@@ -185,7 +186,7 @@ export function invalidHint(
   return t.forms.invalidHint[kind];
 }
 
-/** "Must be a whole number from 1 to 10 000" (UX-068, ADR 0259). */
+/** "Must be a whole number from 1 to 10 000" (ADR 0259). */
 export function intRangeHint(
   t: Pick<Dictionary, "forms">,
   r: IntRange,

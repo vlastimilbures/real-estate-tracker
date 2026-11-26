@@ -1,4 +1,4 @@
-// Property detail's records (#484): one property's rows, the mortgage table's development
+// Property detail's records: one property's rows, the mortgage table's development
 // summary and the valuation an added one closes. Pure.
 import {
   dayBefore,

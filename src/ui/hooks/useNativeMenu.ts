@@ -8,8 +8,8 @@ import { menuLabels, menuRoute } from "../model/menu";
 import { useT } from "./useT";
 
 /**
- * The bridge to the native menu (UX-066): App ▸ About…, View ▸ page (⌘1–⌘5), File ▸ New
- * Property… (⌘N) and Settings… (⌘,, UX-074). Ignored while a dialog is open, so a menu key
+ * The bridge to the native menu: App ▸ About…, View ▸ page (⌘1–⌘5), File ▸ New
+ * Property… (⌘N) and Settings… (⌘,). Ignored while a dialog is open, so a menu key
  * never leaves a form behind or stacks About over it (ADR 0157). They are also ignored while
  * the app is not ready (loading or an error screen), so Try again returns to the page the
  * owner was on, with no About left to pop up (ADR 0228). Guarded by the Tauri check (mirrors
@@ -21,7 +21,7 @@ export function useNativeMenu(): void {
   useEffect(() => {
     if (!isTauri()) return;
     // A modal dialog is open: from the layer stack, where a dropdown's list does not
-    // count (#600).
+    // count.
     const held = () =>
       modalOpen() || usePortfolioStore.getState().status.kind !== "ready";
     const offs = [
@@ -44,7 +44,7 @@ export function useNativeMenu(): void {
     };
   }, []);
 
-  // The native menu items the app adds follow the UI language (UX-076): sent at start and
+  // The native menu items the app adds follow the UI language: sent at start and
   // on every language change (`t` is one dictionary object per language).
   useEffect(() => {
     if (isTauri()) setMenuLabels(menuLabels(t));
