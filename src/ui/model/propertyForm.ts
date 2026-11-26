@@ -10,7 +10,8 @@ import {
 import { INT_RANGES, type IntRange } from "../../lib/rules";
 import { CZK } from "../../lib/currency";
 import { propertyKey } from "../../lib/propertyKey";
-import type { AcquisitionFunding, Property } from "../../engine";
+import type { AcquisitionFunding } from "../../engine";
+import type { PropertyEdit } from "../../state/portfolioStore";
 import type { Dictionary } from "../../i18n";
 
 /** Where a field sits in the dialog: the property's identity, its purchase, or the
@@ -203,7 +204,7 @@ export type PropertyFormResult =
   | {
       valid: true;
       errors: Record<string, never>;
-      property: Property;
+      property: PropertyEdit;
       address: string | null;
       garage: boolean | null;
     }
@@ -216,8 +217,8 @@ export type PropertyFormResult =
     };
 
 /**
- * Validate an in-progress property form and, when valid, assemble the engine
- * `Property` plus the address/garage extras (persisted for fidelity but not engine
+ * Validate an in-progress property form and, when valid, assemble the
+ * `PropertyEdit` (the engine `Property` without its `active` flag) plus the address/garage extras (persisted for fidelity but not engine
  * inputs). `id` is the property's id: the edited one's, or a new random one the caller
  * made (ADR 0127). `existingNames` is every other property's name — used for the
  * uniqueness check, matched by `propertyKey` like CSV import (ADR 0184 §4), so a name
@@ -262,7 +263,7 @@ export function parsePropertyForm(
   const note = form.fundingNote.trim();
   if (note) funding.note = note;
 
-  const property: Property = {
+  const property: PropertyEdit = {
     id,
     name,
     type: form.type.trim() || undefined,

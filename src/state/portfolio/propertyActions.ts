@@ -43,11 +43,11 @@ export function propertyActions({
         const stored = get().portfolio?.properties.find(
           (x) => x.id === edited.id,
         );
-        // The form carries no flag: keep the stored. It always sends a funding record
-        // (`{}` clears); one an edit leaves out is kept (ADR 0119 §8).
+        // A PropertyEdit carries no flag: keep the stored. The form always sends a
+        // funding record (`{}` clears); one an edit leaves out is kept (ADR 0119 §8).
         const p = {
           ...edited,
-          active: edited.active ?? stored?.active,
+          active: stored?.active,
           funding: edited.funding ?? stored?.funding,
         };
         checkEdit(

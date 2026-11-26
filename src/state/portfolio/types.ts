@@ -57,6 +57,11 @@ export interface StartupError {
   upgrade?: UpgradeStop;
 }
 
+/** What the property form sends: a property without its `active` flag. The form never
+ *  sets the flag (Deactivate / Reactivate does, `setPropertyActive`), so an add stores
+ *  it active and an edit keeps the stored flag (#480). */
+export type PropertyEdit = Omit<Property, "active">;
+
 export interface PortfolioState {
   portfolio: Portfolio | null;
   assumptions: Assumptions | null;
@@ -112,13 +117,16 @@ export interface PortfolioState {
   saveHoldingCost: (h: HoldingCost) => Promise<MutationResult>;
   // properties
   addProperty: (
-    p: Property,
+    p: PropertyEdit,
     cost: HoldingCost,
     extra: PropertyExtras,
   ) => Promise<MutationResult>;
-  /** An omitted `p.active` keeps the stored flag, so an edit never re-activates. An
-   *  omitted `p.funding` keeps the stored record; `{}` clears it (ADR 0119 §8). */
-  editProperty: (p: Property, extra: PropertyExtras) => Promise<MutationResult>;
+  /** The stored `active` flag is kept, so an edit never re-activates. An omitted
+   *  `p.funding` keeps the stored record; `{}` clears it (ADR 0119 §8). */
+  editProperty: (
+    p: PropertyEdit,
+    extra: PropertyExtras,
+  ) => Promise<MutationResult>;
   /** Address/garage aren't engine inputs so `portfolio.properties` drops them; this
    *  reads them straight from the DB to prefill the edit form. Never throws. */
   getPropertyExtras: (

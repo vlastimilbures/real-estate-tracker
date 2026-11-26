@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, type RefObject } from "react";
 import { DisclosureButton } from "./Disclosure";
 import { useDisclosure } from "../hooks/useDisclosure";
-import { usePortfolioStore } from "../../state/portfolioStore";
+import {
+  usePortfolioStore,
+  type PropertyEdit,
+} from "../../state/portfolioStore";
 import { dateDraft, moneyDraft, percentDraft } from "../model/formParse";
 import {
   parsePropertyForm,
@@ -16,7 +19,7 @@ import { Checkbox, Field, TextArea, TextInput } from "./fields";
 import { DateInput } from "./DateInput";
 import { Button, ErrorBanner } from "./primitives";
 import { Modal } from "./Modal";
-import type { Portfolio, Property } from "../../engine";
+import type { Portfolio } from "../../engine";
 import { type Dictionary } from "../../i18n";
 import { useDraftForm } from "../hooks/useDraftForm";
 import { useT } from "../hooks/useT";
@@ -29,7 +32,7 @@ const propertyErrorField: ErrorField = (field) =>
 
 /** What a save writes, once the form's checks pass. */
 interface SaveValues {
-  property: Property;
+  property: PropertyEdit;
   address: string | null;
   garage: boolean | null;
 }

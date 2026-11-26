@@ -10,6 +10,8 @@ export type { MutationResult, StartupError, Status } from "./portfolio/types";
 /** Address and garage: stored, but not engine inputs (ADR 0184 §3).
  *  @internal test seam: UI tests reach the type through the state facade (ADR 0072). */
 export type { PropertyExtras } from "./portfolio/types";
+/** What the property form sends: a property without its `active` flag (#480). */
+export type { PropertyEdit } from "./portfolio/types";
 
 const { store, db } = createPortfolioStore({
   open: defaultOpen,
