@@ -1,10 +1,6 @@
 import { MetricLabel } from "../../components/MetricLabel";
-import {
-  KpiBand,
-  KpiBandGroup,
-  KpiTile,
-  Money,
-} from "../../components/primitives";
+import { KpiBand, KpiBandGroup, KpiTile } from "../../components/Kpi";
+import { Money } from "../../components/figures";
 import { DscrTile, LtvTile, NetCashFlowTile } from "../../components/kpiTiles";
 import { fmtCzkM, noBreak } from "../../../lib/format";
 import { undrawnPart } from "../../model/debt";

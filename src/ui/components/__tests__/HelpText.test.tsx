@@ -4,7 +4,7 @@
 // keeps context only. ADR 0217: definitions go to an InfoTip instead.
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Panel } from "../primitives";
+import { Panel } from "../layout";
 import { HelpText } from "../HelpText";
 
 describe("Panel help (ADR 0214 §2)", () => {

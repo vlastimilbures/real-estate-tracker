@@ -2,7 +2,8 @@
 // blocks): column layout, form specs, draft/build mapping. Each panel reads its own store
 // actions.
 import { usePortfolioStore } from "../../state/portfolioStore";
-import { Money, Pct } from "../components/primitives";
+import { Money } from "../components/figures";
+import { Pct } from "../components/rates";
 import { EntityPanel, type PanelTable } from "../components/EntityPanel";
 import { moneyDraft, dateDraft } from "../model/formParse";
 import { fmtDate } from "../../lib/format";

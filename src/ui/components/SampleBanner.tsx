@@ -1,6 +1,6 @@
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useT } from "../hooks/useT";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 import { ClearSampleButton } from "./ClearSampleDialog";
 
 /** Says the first-run data is a fictional sample, with "Clear sample and start my own"

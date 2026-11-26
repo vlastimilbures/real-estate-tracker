@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OutcomeRegions, ToastRegion } from "../OutcomeRegions";
-import { ExportXlsxButton } from "../primitives";
+import { ExportXlsxButton } from "../ExportXlsxButton";
 import { useUiStore } from "../../../state/uiStore";
 import { RestoreError } from "../../../data/backup";
 import { toActionError } from "../../../state/actionError";

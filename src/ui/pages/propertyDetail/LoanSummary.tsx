@@ -1,5 +1,6 @@
 import { FigureRow, type Figure } from "../../components/FigureRow";
-import { Money, Panel, TableWrap } from "../../components/primitives";
+import { Money } from "../../components/figures";
+import { Panel, TableWrap } from "../../components/layout";
 import type { LoanOutlook } from "../../model/propertyDetail";
 import { useT } from "../../hooks/useT";
 import { DrawdownSection } from "./DrawdownSection";

@@ -1,5 +1,6 @@
 import { DisclosureButton } from "../../components/Disclosure";
-import { ExportXlsxButton, Panel } from "../../components/primitives";
+import { ExportXlsxButton } from "../../components/ExportXlsxButton";
+import { Panel } from "../../components/layout";
 import { exportTableXlsx } from "../../exportXlsx";
 import type { PropertyDetailBodyView } from "../../model/propertyDetailView";
 import { useT } from "../../hooks/useT";

@@ -6,7 +6,7 @@ import { useId, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { fmtDate } from "../../lib/format";
 import { useT } from "../hooks/useT";
-import { Panel } from "./primitives";
+import { Panel } from "./layout";
 import "../styles/data-check.css";
 
 export type DataCheckKind = "attention" | "defaults";

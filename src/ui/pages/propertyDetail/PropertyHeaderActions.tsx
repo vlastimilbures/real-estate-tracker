@@ -1,5 +1,5 @@
 import { Pencil, Power, PowerOff } from "lucide-react";
-import { Button } from "../../components/primitives";
+import { Button } from "../../components/Button";
 import { useT } from "../../hooks/useT";
 
 /** The top bar's Edit property, and Deactivate or Activate. Below a 1100 px window only

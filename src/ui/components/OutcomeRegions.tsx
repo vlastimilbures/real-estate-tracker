@@ -12,7 +12,8 @@ import type { ActionError } from "../../state/actionError";
 import type { Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { useFirstShow } from "../hooks/useFirstShow";
-import { Button, ErrorBanner } from "./primitives";
+import { Button } from "./Button";
+import { ErrorBanner } from "./layout";
 import { IssueTable } from "./RestoreConfirm";
 import { backupFailureText } from "./restoreFailure";
 

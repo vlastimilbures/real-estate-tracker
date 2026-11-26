@@ -1,7 +1,9 @@
 // Dense year-by-year grid, shared by the Projections screen and Property detail.
 // Renders SeriesRow[] (already lensed Nominal/Real). Money compact (no "Kč" suffix).
 import { MetricLabel } from "./MetricLabel";
-import { Money, Pct, TableWrap } from "./primitives";
+import { Money } from "./figures";
+import { TableWrap } from "./layout";
+import { Pct } from "./rates";
 import { fmtDscr } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import { purchasedValue } from "../../engine";

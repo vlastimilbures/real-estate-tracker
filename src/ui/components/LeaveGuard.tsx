@@ -1,7 +1,7 @@
 import { useUiStore } from "../../state/uiStore";
 import { useT } from "../hooks/useT";
 import { Modal } from "./Modal";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 
 /**
  * Asks before a navigation drops unsaved form edits. The store holds the navigation back

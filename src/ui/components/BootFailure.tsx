@@ -14,7 +14,7 @@ import { useUiStore, type Notice } from "../../state/uiStore";
 import { READ_FAILURES } from "../../state/diagnostics";
 import { APP_NAME, type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 import { describeWriteError } from "../model/writeError";
 import { IssueTable, RestoreConfirm } from "./RestoreConfirm";
 import { backupFailure, backupFailureText } from "./restoreFailure";

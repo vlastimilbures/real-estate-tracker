@@ -6,7 +6,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ExportXlsxButton } from "../primitives";
+import { ExportXlsxButton } from "../ExportXlsxButton";
 import type { SaveOutcome } from "../../../platform/saveFileTypes";
 import { deferred, type Deferred } from "../../../__tests__/support/deferred";
 import { en } from "../../../i18n/en";

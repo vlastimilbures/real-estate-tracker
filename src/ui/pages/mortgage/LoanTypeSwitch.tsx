@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useUiStore } from "../../../state/uiStore";
 import { useT } from "../../hooks/useT";
-import { Button, SegmentedToggle } from "../../components/primitives";
+import { Button, SegmentedToggle } from "../../components/Button";
 import type { LoanType } from "../../model/mortgageForm";
 
 /** Standard | Development switch for the mortgage form, plus the successor-block note

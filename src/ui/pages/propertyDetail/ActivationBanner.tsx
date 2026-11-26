@@ -1,4 +1,5 @@
-import { Badge, Panel } from "../../components/primitives";
+import { Panel } from "../../components/layout";
+import { Badge } from "../../components/status";
 import { ConfirmRow } from "../../components/ConfirmRow";
 import type { MutationResult } from "../../../state/portfolioStore";
 import { useT } from "../../hooks/useT";

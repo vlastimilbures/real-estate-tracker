@@ -1,7 +1,8 @@
 import { Plus, Building2, Upload } from "lucide-react";
 import { useUiStore } from "../../state/uiStore";
 import { PageFrame } from "../components/PageFrame";
-import { Panel, Button, EmptyState } from "../components/primitives";
+import { Button } from "../components/Button";
+import { Panel, EmptyState } from "../components/layout";
 import { PropertyFormModal } from "../components/PropertyFormModal";
 import { SampleBanner } from "../components/SampleBanner";
 import { ConfirmRow } from "../components/ConfirmRow";

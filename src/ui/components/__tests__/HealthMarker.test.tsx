@@ -5,7 +5,7 @@
 // screen-reader text plus a tooltip (compact form).
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
-import { HealthMarker } from "../primitives";
+import { HealthMarker } from "../status";
 import { BAND_SHAPE, type Band } from "../../model/health";
 
 const BANDS: Band[] = ["good", "warn", "bad", "neutral"];

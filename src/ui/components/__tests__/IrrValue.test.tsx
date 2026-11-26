@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { D } from "../../../lib/money";
 import { en } from "../../../i18n/en";
-import { IrrValue } from "../primitives";
+import { IrrValue } from "../rates";
 
 describe("IrrValue (UX-079)", () => {
   it("shows the rate as a percentage", () => {

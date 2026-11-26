@@ -3,7 +3,7 @@
 // more than text fields (the mortgage form) renders RecordFormView with its own parts.
 import { Fragment, type ReactNode } from "react";
 import type { FieldSpec, FormSpec } from "../model/formParse";
-import { Button } from "./primitives";
+import { Button } from "./Button";
 import { DateInput } from "./DateInput";
 import { Field, TextInput } from "./fields";
 import { useT } from "../hooks/useT";

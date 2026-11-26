@@ -1,6 +1,6 @@
 // The Import panel: why Import is unavailable, the preview's summary, and Import with
 // its overwrite confirm.
-import { Panel, ErrorBanner } from "../components/primitives";
+import { Panel, ErrorBanner } from "../components/layout";
 import { useT } from "../hooks/useT";
 import { describeWriteError } from "../model/writeError";
 import type { sessionView } from "../model/importSession";
