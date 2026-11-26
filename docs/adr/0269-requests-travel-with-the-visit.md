@@ -30,9 +30,9 @@ request also changed what counted as "leaving the page".
 1. **One request field, tagged by page.** The three flags and their `clear…` actions are
    replaced by `request`: `{ page: "properties" }`, `{ page: "guide", term }` or
    `{ page: "property", target }`, each with an `id`, or null. Only the navigation that
-   carries it sets it; every other navigation sets it to null. `route` stays the plain page
-   name, and `selectedPropertyId` the open property, so the shell and the menu are
-   unchanged.
+   carries it sets it; every other navigation that moves (to another page, property or
+   Settings tab) sets it to null. `route` stays the plain page name, and
+   `selectedPropertyId` the open property, so the shell and the menu are unchanged.
 2. **A request ends with its visit.** Leaving the page drops it, handled or not; a later
    visit starts without one. This is the one change users can see: a request its page
    never handled no longer fires on a later visit.
@@ -42,7 +42,8 @@ request also changed what counted as "leaving the page".
    render.
 4. **The leave guard compares the location by value.** A navigation moves when the page,
    the open property or the Settings tab changes, or when it carries a request. Going to
-   the page already shown, with no request, never asks; a request on the page already
+   the page already shown, with no request, never asks and keeps the visit's request, so
+   a form the request opened stays open with its edits; a request on the page already
    shown asks, as a new location would. `guardedAction` keeps holding a closure (ADR 0142).
 
 ## Consequences
