@@ -67,6 +67,24 @@ async function restoreFromScreen() {
 }
 
 describe("restore from the startup error screen (ROW_INVALID)", () => {
+  it("a failed pick says why; the next pick forgets it and asks to confirm", async () => {
+    vi.mocked(invoke).mockImplementationOnce(() =>
+      Promise.reject("Operation not permitted (os error 1)"),
+    );
+    render(<BootFailure />);
+    await userEvent.click(button(en.boot.restoreBackup));
+    // The failure under the screen's text, not the confirm step's own warning.
+    const errors = () =>
+      Array.from(
+        screen.getByRole("alert").querySelectorAll(".error-text"),
+      ).filter((el) => !el.closest(".restore-confirm"));
+    expect(errors()).toHaveLength(1);
+    expect(logFailure.mock.calls[0]?.[0]).toBe("RESTORE");
+    await userEvent.click(button(en.boot.restoreBackup));
+    expect(errors()).toHaveLength(0);
+    expect(button(en.backup.restoreNow)).toBeDefined();
+  });
+
   it("offers Restore a backup… and the next step, not Try again", () => {
     render(<BootFailure />);
     expect(screen.getByRole("alert").textContent).toContain(

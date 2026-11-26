@@ -316,6 +316,34 @@ describe("Show data folder (ADR 0175, #151 item 7)", () => {
     expect(logFailure).not.toHaveBeenCalled();
   });
 
+  it("a failed Show data folder is forgotten when the next one works", async () => {
+    revealDataDir.mockRejectedValueOnce(new Error("open exited with 1"));
+    renderPanel();
+    const show = screen.getByRole("button", { name: en.boot.showDataFolder });
+    await userEvent.click(show);
+    expect(screen.getByRole("alert").textContent).toContain(
+      en.boot.revealFailed,
+    );
+    await userEvent.click(show);
+    expect(revealDataDir).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("a failed pick is forgotten when the next pick works, which asks to confirm", async () => {
+    vi.mocked(invoke).mockRejectedValueOnce(
+      "Operation not permitted (os error 1)",
+    );
+    await pick(await backupText());
+    expect(screen.getByRole("alert")).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("button", { name: en.backup.chooseFile }),
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: en.backup.restoreNow }),
+    ).toBeDefined();
+  });
+
   it("a failure is logged under REVEAL and says where the folder is", async () => {
     const error = new Error("open exited with 1");
     revealDataDir.mockRejectedValueOnce(error);
