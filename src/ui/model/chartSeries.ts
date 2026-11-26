@@ -23,7 +23,7 @@ export const SERIES = {
 } as const;
 
 /** The committed-debt line's dash: drawn debt + the tranches not drawn yet (ADR 0169). */
-export const COMMITTED_DASH = "6 3";
+const COMMITTED_DASH = "6 3";
 
 /** The value chart's line names: each page names them from its own namespace. */
 interface ValueSeriesNames {
