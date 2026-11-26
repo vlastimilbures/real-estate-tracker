@@ -320,6 +320,7 @@ jobs:
       # "menu_built: skipped" when its macOS code was compiled out: only the first passes.
       - name: Built menu matches tests/menu_built.txt
         run: |
+          set -o pipefail # GitHub runs `bash -e` without it: the pipe would exit with tee's status
           log="$RUNNER_TEMP/menu_built.log"
           cargo test --manifest-path src-tauri/Cargo.toml --test menu_built | tee "$log"
           if ! grep -qE '^menu_built: [0-9]+ lines match$' "$log"; then
