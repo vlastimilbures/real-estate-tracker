@@ -1,7 +1,7 @@
-// One record form's state: the draft, whether it holds unsaved edits (the leave
-// guard), and the Save that parses it and shows a refusal or a failed save. The draft is
-// the text fields plus, for a form with `lists` (the mortgage form), its row lists. The
-// markup is RecordFormView's (../components/forms).
+// One record form's state: the draft, whether it holds unsaved edits (the leave guard),
+// and the Save that parses it and shows a refusal or a failed save. The draft is the text
+// fields plus, for a form with `lists` (the mortgage form), its row lists. The markup is
+// RecordFormView's (../components/forms).
 import {
   collectValues,
   formRules,

@@ -78,7 +78,7 @@ function refixGap(
     current.startDate,
     current.fixationYears * 12 + 1,
   );
-  // A payment due on the next block's start stays with this one (ADR 0021).
+  // A payment due on the next block's start stays with this one (ADR 0027).
   return next.startDate.getTime() >= firstFloating.getTime()
     ? { fixationEnd, until: next.startDate }
     : undefined;

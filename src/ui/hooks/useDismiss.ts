@@ -1,6 +1,6 @@
-// Closing a layer on Escape or a press outside it: the one implementation. Which
-// layer hears an Escape first is today's order, kept as named options; folding them into
-// one stack order would change what one Escape closes (a tip that is only pinned closes
+// Closing a layer on Escape or a press outside it: the one implementation. Which layer
+// hears an Escape first is today's order, kept as named options; folding them into one
+// stack order would change what one Escape closes (a tip that is only pinned closes
 // together with its dialog), so that is left to a decision of its own.
 import {
   useCallback,

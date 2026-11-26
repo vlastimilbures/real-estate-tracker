@@ -163,11 +163,10 @@ export function useAssumptionsForm(active: boolean) {
   // Bumped on a failed save so the error summary takes focus once it renders.
   const [summaryFocus, setSummaryFocus] = useState(0);
 
-  // On failure a broken rule marks its field, or is listed in the error summary
-  // when it names no field shown here (ADR 0141), until the next edit; any other failure
-  // shows in the PageFrame banner, put there by bannerUnlessInput (ADR 0261). The page
-  // owns focus after a save (ADR 0248 §4). The success toast shows only when the write
-  // landed.
+  // On failure a broken rule marks its field, or is listed in the error summary when it
+  // names no field shown here (ADR 0141), until the next edit; any other failure shows in
+  // the PageFrame banner, put there by bannerUnlessInput (ADR 0261). The page owns focus
+  // after a save (ADR 0248 §4). The success toast shows only when the write landed.
   const {
     busy: saving,
     errors,

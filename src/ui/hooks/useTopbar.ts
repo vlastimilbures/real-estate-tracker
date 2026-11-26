@@ -1,6 +1,6 @@
-// The sticky top bar, measured in one place: the --topbar-h a section jump lands
-// under (scroll-margin-top), the band the section nav watches (ADR 0158), and the edge an
-// info tip stays below (ADR 0217).
+// The sticky top bar, measured in one place: the --topbar-h a section jump lands under
+// (scroll-margin-top), the band the section nav watches (ADR 0158), and the edge an info
+// tip stays below (ADR 0217).
 import { useEffect, useState, type RefObject } from "react";
 
 const TOPBAR = ".topbar";
