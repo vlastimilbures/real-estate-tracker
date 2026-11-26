@@ -53,7 +53,7 @@ export function propertyToRow(p: Property, extra: PropertyExtras): PropertyRow {
     purchase_price: p.purchasePrice.toString(),
     appreciation_override_pa: dtext(p.appreciationOverridePa),
     rent_index_override_pa: dtext(p.rentIndexOverridePa),
-    active: p.active === false ? 0 : 1,
+    active: p.active ? 1 : 0,
     own_cash: dtext(p.funding?.ownCash),
     transaction_costs: dtext(p.funding?.transactionCosts),
     initial_works: dtext(p.funding?.initialWorks),

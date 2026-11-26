@@ -24,9 +24,10 @@ import type {
 import { monthsToYears } from "./units";
 
 /** Whether a property counts in portfolio totals, projections and KPIs: `active` unless
- *  deactivated. The mapper always writes a boolean; an absent flag means active. */
+ *  deactivated. Always a boolean: the mapper reads a legacy NULL as active, and a restore
+ *  of an older backup fills 1 (#480). */
 export function isActive(property: Property): boolean {
-  return property.active ?? true;
+  return property.active;
 }
 
 /** The properties that count (`isActive`), in portfolio order. */

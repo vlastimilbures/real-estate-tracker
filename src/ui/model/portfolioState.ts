@@ -14,7 +14,7 @@ export type PortfolioState =
 export function portfolioState(portfolio: Portfolio): PortfolioState {
   const { properties } = portfolio;
   if (properties.length === 0) return { kind: "empty" };
-  if (properties.every((p) => p.active === false))
+  if (properties.every((p) => !p.active))
     return { kind: "allInactive", count: properties.length };
   return { kind: "ready" };
 }

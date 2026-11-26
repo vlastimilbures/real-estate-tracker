@@ -327,7 +327,7 @@ export function dashboardDataCheck(
 ): { attention: DataCheckItem[]; defaults: DataCheckItem[] } {
   // Inactive properties are left out, as from the Dashboard's totals.
   const items = dataCheckItems(
-    portfolio.properties.filter((p) => p.active !== false),
+    portfolio.properties.filter((p) => p.active),
     portfolio,
     asOf,
     baseDate,

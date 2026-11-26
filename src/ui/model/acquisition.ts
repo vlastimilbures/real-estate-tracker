@@ -69,7 +69,7 @@ export function acquisitionView(
 export function cashInvestedTotal(
   properties: readonly Property[],
 ): Decimal | null {
-  const active = properties.filter((p) => p.active !== false);
+  const active = properties.filter((p) => p.active);
   if (active.length === 0) return null;
   let total = ZERO;
   for (const p of active) {
