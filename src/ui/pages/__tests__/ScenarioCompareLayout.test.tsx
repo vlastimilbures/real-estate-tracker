@@ -5,34 +5,21 @@
 // table with a pinned metric column.
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import {
-  applyScenario,
-  cpiIndex,
-  portfolioProjection,
-  realProjection,
-} from "../../../engine";
-import { portfolioKpis } from "../../../engine/__tests__/support/seams";
-import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
 import { SMALL_CHART_HEIGHT } from "../../components/charts";
+import {
+  compareResult,
+  mockScenarioComparison,
+} from "../../__tests__/support/compareResult";
 
-function result(id: string, name: string): CompareResult {
-  const assn = applyScenario(assumptions, {});
-  const projection = portfolioProjection(portfolio, assn);
-  return {
-    id,
-    name,
-    projection,
-    realProjection: realProjection(projection, cpiIndex(assn)),
-    kpis: portfolioKpis(portfolio, assn),
-  };
-}
-
-const results: CompareResult[] = [result("base", "Base"), result("a", "A")];
-vi.mock("../../../state/useEngine", () => ({
-  useScenarioComparison: () => results,
-}));
+const results: CompareResult[] = [
+  compareResult("base", "Base"),
+  compareResult("a", "A"),
+];
+vi.mock("../../../state/useEngine", () =>
+  mockScenarioComparison(() => results),
+);
 
 const { CompareView } = await import("../ScenarioCompare");
 

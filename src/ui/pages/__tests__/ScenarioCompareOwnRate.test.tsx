@@ -6,19 +6,15 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ExcelJS from "exceljs";
-import {
-  applyScenario,
-  cpiIndex,
-  portfolioProjection,
-  rate,
-  realProjection,
-  type Scenario,
-} from "../../../engine";
-import { portfolioKpis } from "../../../engine/__tests__/support/seams";
-import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
+import { rate, type Scenario } from "../../../engine";
+import { portfolio } from "../../../engine/__tests__/support/seed";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { en } from "../../../i18n/en";
 import type { CompareResult } from "../../model/compare";
+import {
+  compareResult,
+  mockScenarioComparison,
+} from "../../__tests__/support/compareResult";
 
 const base: Scenario = { id: "base", name: "Base", overrides: {} };
 const low: Scenario = {
@@ -27,22 +23,10 @@ const low: Scenario = {
   overrides: { appreciationPa: rate("0") },
 };
 
-function result(s: Scenario): CompareResult {
-  const assn = applyScenario(assumptions, s.overrides);
-  const projection = portfolioProjection(portfolio, assn);
-  return {
-    id: s.id,
-    name: s.name,
-    projection,
-    realProjection: realProjection(projection, cpiIndex(assn)),
-    kpis: portfolioKpis(portfolio, assn),
-  };
-}
-
 let results: CompareResult[] = [];
-vi.mock("../../../state/useEngine", () => ({
-  useScenarioComparison: () => results,
-}));
+vi.mock("../../../state/useEngine", () =>
+  mockScenarioComparison(() => results),
+);
 const save = vi.hoisted(() => vi.fn());
 vi.mock("../../../platform/saveFile", () => ({ saveFile: save }));
 
@@ -53,7 +37,10 @@ const own = { ...first!, appreciationOverridePa: rate("0.01") };
 const line = en.scenarios.levelNotApplied("Low growth", own.name);
 
 beforeEach(() => {
-  results = [result(base), result(low)];
+  results = [
+    compareResult(base.id, base.name, base.overrides),
+    compareResult(low.id, low.name, low.overrides),
+  ];
   save.mockReset();
   save.mockResolvedValue({ kind: "saved", filename: "x.xlsx" });
   act(() => {
@@ -88,7 +75,7 @@ describe("Compare own-rate note (ADR 0190)", () => {
   });
 
   it("a scenario left out of the comparison gets no line", () => {
-    results = [result(base)];
+    results = [compareResult(base.id, base.name, base.overrides)];
     const { container } = render(<CompareView selected={[base, low]} />);
     expect(
       screen.getByText(en.scenarios.notCompared("Low growth")),
@@ -98,7 +85,11 @@ describe("Compare own-rate note (ADR 0190)", () => {
 
   it("two scenarios with the same name each keep their line", () => {
     const twin = { ...low, id: "low-2" };
-    results = [result(base), result(low), result(twin)];
+    results = [
+      compareResult(base.id, base.name, base.overrides),
+      compareResult(low.id, low.name, low.overrides),
+      compareResult(twin.id, twin.name, twin.overrides),
+    ];
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<CompareView selected={[base, low, twin]} />);
     expect(screen.getAllByText(line)).toHaveLength(2);

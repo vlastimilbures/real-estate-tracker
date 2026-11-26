@@ -5,36 +5,16 @@
 // the shock starts.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
-import {
-  applyScenario,
-  cpiIndex,
-  portfolioProjection,
-  rate,
-  realProjection,
-} from "../../../engine";
-import { portfolioKpis } from "../../../engine/__tests__/support/seams";
+import { rate } from "../../../engine";
 import type { Scenario, ScenarioOverrides } from "../../../engine";
 import { assumptions, portfolio } from "../../../engine/__tests__/support/seed";
 import { useUiStore } from "../../../state/uiStore";
 import { usePortfolioStore } from "../../../state/portfolioStore";
 import { en } from "../../../i18n/en";
-import type { CompareResult } from "../../model/compare";
-
-function result(
-  id: string,
-  name: string,
-  overrides: ScenarioOverrides = {},
-): CompareResult {
-  const assn = applyScenario(assumptions, overrides);
-  const projection = portfolioProjection(portfolio, assn);
-  return {
-    id,
-    name,
-    projection,
-    realProjection: realProjection(projection, cpiIndex(assn)),
-    kpis: portfolioKpis(portfolio, assn),
-  };
-}
+import {
+  compareResult,
+  mockScenarioComparison,
+} from "../../__tests__/support/compareResult";
 
 const shock: ScenarioOverrides = {
   rateShock: { deltaPa: rate("0.02"), durationYears: 3 },
@@ -44,11 +24,14 @@ const rates: Scenario = {
   name: "Rates +2pp",
   overrides: shock,
 };
-const results = [result("base", "Base"), result("rates", "Rates +2pp", shock)];
+const results = [
+  compareResult("base", "Base"),
+  compareResult("rates", "Rates +2pp", shock),
+];
 
-vi.mock("../../../state/useEngine", () => ({
-  useScenarioComparison: () => results,
-}));
+vi.mock("../../../state/useEngine", () =>
+  mockScenarioComparison(() => results),
+);
 vi.mock("../../model/rateShockReach", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../model/rateShockReach")>();
