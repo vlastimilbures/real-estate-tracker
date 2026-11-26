@@ -143,7 +143,7 @@ export async function writeSafetyBackup(
     // Reading the current data is part of the safety backup (ADR 0147).
     const safetyBackup = await exportToJson(sql, now);
     const json = JSON.stringify(safetyBackup, null, 2);
-    // Verified temp file + rename in `<app config>/backups` (src-tauri/src/files.rs).
+    // Verified temp file + rename in `<app config>/backups` (src-tauri/src/commands/backup.rs).
     await writeAppBackup(filename, json);
   } catch (e) {
     throw new SafetyBackupError(e);

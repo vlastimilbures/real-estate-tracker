@@ -1,5 +1,5 @@
 // Backup file orchestration against a fake of the app's file commands
-// (src-tauri/src/files.rs): the pre-restore safety backup (DR-019, D-52), the restore
+// (src-tauri/src/commands/backup.rs): the pre-restore safety backup (DR-019, D-52), the restore
 // pick (DR-138) and the export outcome (DR-026). The fake mirrors the Rust contract;
 // the temp + rename write and its read-back are tested in src-tauri/tests/files.rs.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";

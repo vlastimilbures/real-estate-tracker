@@ -14,10 +14,11 @@ use sqlx::{
     Column, Connection, Executor, Pool, Row, Sqlite, SqliteConnection, TypeInfo, Value, ValueRef,
 };
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 use tauri_plugin_sql::{DbInstances, DbPool};
 
 use crate::error::AppError;
+use crate::paths::{backups_dir, valid_label};
 
 /// One parameterised statement, as the JS `Sql` seam sends it.
 #[derive(Debug, Deserialize)]
@@ -207,13 +208,6 @@ pub async fn backup_to(pool: &Pool<Sqlite>, dest: &Path) -> Result<(), AppError>
     Ok(())
 }
 
-/// Only `[A-Za-z0-9-]` — the label becomes a file name.
-fn valid_label(label: &str) -> bool {
-    !label.is_empty()
-        && label.len() <= 100
-        && label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
-}
-
 async fn pool_for(instances: &DbInstances, db: &str) -> Result<Pool<Sqlite>, AppError> {
     let guard = instances.0.read().await;
     match guard.get(db) {
@@ -255,26 +249,14 @@ pub async fn db_backup(
     if !valid_label(&label) {
         return Err(AppError::InvalidLabel(label));
     }
-    let dir: PathBuf = app
-        .path()
-        .app_config_dir()
-        .map_err(AppError::other)?
-        .join("backups");
+    let dir: PathBuf = backups_dir(&app)?;
     std::fs::create_dir_all(&dir).map_err(|e| AppError::BackupFailed(e.to_string()))?;
     let dest = dir.join(format!("{label}.sqlite"));
     let pool = pool_for(&instances, &db).await?;
     backup_to(&pool, &dest).await?;
     // `VACUUM INTO` creates the copy with the default mode; keep it private (DR-157).
-    crate::files::restrict_file(&dest)?;
+    crate::private_fs::restrict_file(&dest)?;
     Ok(dest.display().to_string())
-}
-
-/// Append one structured error line to the local log (P5a step 5). The caller sends a
-/// code and non-financial context only; both are length-capped here.
-#[tauri::command]
-pub fn log_error(code: String, context: String) {
-    let cap = |s: &str, n: usize| s.chars().take(n).collect::<String>();
-    log::error!(target: "app", "{} {}", cap(&code, 80), cap(&context, 500));
 }
 
 #[cfg(test)]

@@ -1,10 +1,11 @@
-//! P8 (D-64): the file helpers behind src/files.rs, against temporary folders. Never
+//! P8 (D-64): the file helpers (fs_atomic, private_fs, paths, commands), against temporary folders. Never
 //! touches the user's files.
 
-use app_lib::files::{
-    atomic_write, atomic_write_private, percent_decode, restrict_app_dir, restrict_dir,
-    reveal_args, valid_backup_name, write_new_private,
-};
+use app_lib::commands::dialogs::percent_decode;
+use app_lib::commands::reveal::reveal_args;
+use app_lib::fs_atomic::{atomic_write, atomic_write_private, write_new_private};
+use app_lib::paths::valid_backup_name;
+use app_lib::private_fs::{restrict_app_dir, restrict_dir};
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
