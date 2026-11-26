@@ -322,15 +322,19 @@ How a component gets the dictionary, the lens and the stores (#492, owner decisi
 2026-11-26):
 
 1. **Dictionary.** A component calls `useT()`; `t` is never a component prop. A plain
-   text-building function may take `t` (`startupText(t, e)`, `mortgageColumns(t)`). The one
-   exception is the start-up failure screens in `BootFailure.tsx`, which may render before
-   the stores work.
-2. **Lens.** The page reads `mode` from the UI store once, and a child that needs it takes
-   it as a prop. There is no `useMode()` hook.
-3. **Stores.** The shared components in `src/ui/components` are presentational: data and
-   callbacks come in as props. `ExportXlsxButton` is the one deliberate exception (it raises
-   the toast and the failure notice). Pages and `src/ui/hooks` read the stores with
-   selectors and write through store actions.
+   text-building function may take `t` (`startupText(t, e)`, `mortgageColumns(t)`).
+2. **Lens.** The component that owns the lens toggle (`PageFrame`'s header) reads and sets
+   `mode`; a page reads `mode` from the UI store once, and a child that needs it takes it
+   as a prop. There is no `useMode()` hook.
+3. **Stores.**
+   - Display components (primitives, charts, tables, cells, inputs) take data and
+     callbacks as props and do not read the stores.
+   - A component that owns an app-wide interaction may read the stores with selectors and
+     writes only through store actions: the shell and layout, error boundaries, app-wide
+     dialogs and banners, navigation links, form modals and the export button.
+   - A new component is a display component unless it owns such an interaction.
+   - Pages and `src/ui/hooks` read the stores with selectors and write through store
+     actions.
 
 ## Where a result is shown
 
