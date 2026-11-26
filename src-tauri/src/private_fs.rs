@@ -1,4 +1,4 @@
-//! The app's own files and folders are readable by the user only (DR-157): 0600 files in
+//! The app's own files and folders are readable by the user only (ADR 0080): 0600 files in
 //! 0700 folders.
 
 use std::fs;
@@ -7,11 +7,11 @@ use std::path::Path;
 use crate::error::AppError;
 use crate::paths::BACKUPS_DIR;
 
-/// Mode of the app's own files and folders (DR-157): user only.
+/// Mode of the app's own files and folders (ADR 0080): user only.
 pub const PRIVATE_FILE: u32 = 0o600;
 const PRIVATE_DIR: u32 = 0o700;
 
-/// Make the app's folder private (DR-157): the folder and its `backups/` become 0700 and
+/// Make the app's folder private (ADR 0080): the folder and its `backups/` become 0700 and
 /// every regular file in them 0600 (database, its -wal/-shm, backups, window state).
 /// Symlinks are skipped. A folder that does not exist yet is left alone. Run at
 /// start-up, so files created before this version (or by plugins) are covered too.
@@ -41,7 +41,7 @@ pub fn restrict_dir(folder: &Path) -> Result<(), AppError> {
     Ok(())
 }
 
-/// Make one of the app's files private (0600, DR-157).
+/// Make one of the app's files private (0600, ADR 0080).
 pub fn restrict_file(path: &Path) -> Result<(), AppError> {
     set_mode(path, PRIVATE_FILE)
 }
