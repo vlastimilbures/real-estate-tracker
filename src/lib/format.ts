@@ -4,7 +4,16 @@
 // is a Czech real-estate tracker: "Kč", dd.mm.yyyy dates) → space thousands separator,
 // comma decimal separator, space before the unit.
 import { D, Decimal, type Numeric } from "./money";
-import { CZK } from "./currency";
+
+/** The display currency. Amounts are always CZK: the engine, the database and the parity
+ *  targets are in CZK and are never converted, so there is no currency picker
+ *  (ADR 0058). */
+export const CZK = {
+  /** Suffix appended to whole amounts. */
+  symbol: "Kč",
+  /** Axis/hero label for millions. */
+  millionsLabel: "M Kč",
+} as const;
 
 const MINUS = "−"; // real minus sign, not a hyphen
 const NBSP = "\u00A0";
@@ -36,6 +45,11 @@ function fmtFixed(value: Numeric, dp: number): { neg: boolean; body: string } {
   return { neg, body };
 }
 
+/** `text` with the minus sign in front when `neg`. */
+function signed(neg: boolean, text: string): string {
+  return neg ? `${MINUS}${text}` : text;
+}
+
 // Display-only number helpers. They live here, not in lib/money, so the engine (which may
 // import only lib/money and lib/rules, ADR 0244) cannot reach a float conversion
 // (CLAUDE.md §5).
@@ -45,7 +59,8 @@ export function roundCzk(value: Numeric): Decimal {
   return D(value).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
 }
 
-/** Convert a Decimal to a plain number at the display boundary only. */
+/** Convert a Decimal to a plain number at the display boundary only. The one route from
+ *  Decimal to number: the chart rows, the spreadsheet cells and the export all use it. */
 export function toNumber(value: Numeric): number {
   return D(value).toNumber();
 }
@@ -67,8 +82,13 @@ export function fmtCzk(value: Numeric, opts: MoneyOpts = {}): string {
     decimals,
   );
   const withUnit = suffix ? `${body} ${CZK.symbol}` : body;
-  if (!neg) return withUnit;
-  return parens ? `(${withUnit})` : `${MINUS}${withUnit}`;
+  return neg && parens ? `(${withUnit})` : signed(neg, withUnit);
+}
+
+/** A whole number, space-grouped, with a leading minus: 28730000 → "28 730 000". */
+export function fmtInt(value: Numeric): string {
+  const { neg, body } = fmtFixed(roundCzk(value), 0);
+  return signed(neg, body);
 }
 
 /** A stored number as written (ADR 0180 §2): grouped thousands, a comma decimal and every
@@ -77,15 +97,14 @@ export function fmtNumber(value: Numeric): string {
   const d = D(value);
   if (!d.isFinite()) return d.toString(); // "NaN" / "Infinity", never a render crash
   const { neg, body } = fmtFixed(d, d.decimalPlaces());
-  return neg ? `${MINUS}${body}` : body;
+  return signed(neg, body);
 }
 
 /** `M Kč` — millions with `dp` decimals, for hero tiles and chart axes. */
 export function fmtCzkM(value: Numeric, dp = 1): string {
   const millions = D(value).div(1_000_000);
   const { neg, body } = fmtFixed(millions, dp);
-  const withUnit = `${body} ${CZK.millionsLabel}`;
-  return neg ? `${MINUS}${withUnit}` : withUnit;
+  return signed(neg, `${body} ${CZK.millionsLabel}`);
 }
 
 /** A CZK axis-unit choice for a chart, driven by the max absolute value in its data. */
@@ -96,6 +115,32 @@ export interface CzkAxisUnit {
   label: string;
   /** Compact suffix appended to each tick label, e.g. "M" / "tis." / "" (plain Kč). */
   shortLabel: string;
+}
+
+/** The axis units by the largest value they take, largest first (Kč below 1 000). */
+const AXIS_UNITS = [
+  { from: 10_000_000, divisor: 1_000_000, dp: 0 },
+  { from: 1_000_000, divisor: 1_000_000, dp: 1 },
+  { from: 10_000, divisor: 1_000, dp: 0 },
+  { from: 1_000, divisor: 1_000, dp: 1 },
+] as const;
+const PLAIN_KC = { from: 0, divisor: 1, dp: 0 } as const;
+
+/** A unit's labels: M Kč, the language's thousands word, or plain Kč. */
+function axisUnit(
+  { divisor, dp }: { divisor: number; dp: number },
+  thousands: string,
+): CzkAxisUnit {
+  if (divisor === 1_000_000)
+    return { divisor, dp, label: CZK.millionsLabel, shortLabel: "M" };
+  if (divisor === 1_000)
+    return {
+      divisor,
+      dp,
+      label: `${thousands} ${CZK.symbol}`,
+      shortLabel: thousands,
+    };
+  return { divisor, dp, label: CZK.symbol, shortLabel: "" };
 }
 
 /**
@@ -114,42 +159,16 @@ export function pickCzkAxisUnit(
     const a = Math.abs(v);
     if (a > maxAbs) maxAbs = a;
   }
-  if (maxAbs === 0 || maxAbs >= 10_000_000)
-    return {
-      divisor: 1_000_000,
-      dp: 0,
-      label: CZK.millionsLabel,
-      shortLabel: "M",
-    };
-  if (maxAbs >= 1_000_000)
-    return {
-      divisor: 1_000_000,
-      dp: 1,
-      label: CZK.millionsLabel,
-      shortLabel: "M",
-    };
-  if (maxAbs >= 10_000)
-    return {
-      divisor: 1_000,
-      dp: 0,
-      label: `${thousands} ${CZK.symbol}`,
-      shortLabel: thousands,
-    };
-  if (maxAbs >= 1_000)
-    return {
-      divisor: 1_000,
-      dp: 1,
-      label: `${thousands} ${CZK.symbol}`,
-      shortLabel: thousands,
-    };
-  return { divisor: 1, dp: 0, label: CZK.symbol, shortLabel: "" };
+  if (maxAbs === 0) return axisUnit(AXIS_UNITS[0], thousands);
+  const pick = AXIS_UNITS.find((u) => maxAbs >= u.from) ?? PLAIN_KC;
+  return axisUnit(pick, thousands);
 }
 
 /** Format a value for a chart axis using a pre-picked unit (no unit suffix — that's the subtitle). */
 export function fmtCzkAxisValue(value: Numeric, unit: CzkAxisUnit): string {
   const scaled = D(value).div(unit.divisor);
   const { neg, body } = fmtFixed(scaled, unit.dp);
-  return neg ? `${MINUS}${body}` : body;
+  return signed(neg, body);
 }
 
 /** The text with every space non-breaking, so an amount and its unit stay together
@@ -169,14 +188,13 @@ export function fmtCzkAxisTick(value: Numeric, unit: CzkAxisUnit): string {
 /** `0.0%` — ratio (0.331) → "33,1 %". */
 export function fmtPct(value: Numeric, dp = 1): string {
   const { neg, body } = fmtFixed(D(value).times(100), dp);
-  const withUnit = `${body} %`;
-  return neg ? `${MINUS}${withUnit}` : withUnit;
+  return signed(neg, `${body} %`);
 }
 
 /** Percentage points, bare — ratio (0.02) → "2,0"; the caller adds the localised unit. */
 export function fmtPp(value: Numeric, dp = 1): string {
   const { neg, body } = fmtFixed(D(value).times(100), dp);
-  return neg ? `${MINUS}${body}` : body;
+  return signed(neg, body);
 }
 
 /** A difference with "+" on a gain, by any formatter above. The sign follows the printed
@@ -194,7 +212,7 @@ export function fmtSigned(
 /** `0.00x` — multiple → "4,85x". */
 export function fmtMultiple(value: Numeric, dp = 2): string {
   const { neg, body } = fmtFixed(value, dp);
-  return neg ? `${MINUS}${body}x` : `${body}x`;
+  return signed(neg, `${body}x`);
 }
 
 /** DSCR display cap (SPEC, ADR 0035): above 99× a tiny debt service would show an absurd
@@ -212,19 +230,17 @@ export function fmtDscr(value: Numeric): string {
 
 /** A value shown with `fmtCzk`: whole units. */
 export function cellMoney(value: Numeric): number {
-  return roundCzk(value).toNumber();
+  return toNumber(roundCzk(value));
 }
 
 /** A value shown with `fmtPct(value, dp)`: the fraction, to `dp + 2` decimals. */
 export function cellPct(value: Numeric, dp = 1): number {
-  return D(value)
-    .toDecimalPlaces(dp + 2)
-    .toNumber();
+  return toNumber(D(value).toDecimalPlaces(dp + 2));
 }
 
 /** A value shown with `fmtMultiple(value, dp)`. */
 export function cellMultiple(value: Numeric, dp = 2): number {
-  return D(value).toDecimalPlaces(dp).toNumber();
+  return toNumber(D(value).toDecimalPlaces(dp));
 }
 
 /** `dd.mm.yyyy` from a UTC Date; a year below 1000 is padded (ADR 0178). */

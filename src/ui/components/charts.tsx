@@ -24,6 +24,7 @@ import {
 } from "react";
 import { Table2 } from "lucide-react";
 import {
+  CZK,
   fmtCzk,
   fmtCzkAxisTick,
   fmtPct,
@@ -42,7 +43,6 @@ import {
 } from "../model/chartData";
 import { yearLabel } from "../model/projection";
 import type { ResetMarker } from "../model/financing";
-import { CZK } from "../../lib/currency";
 import { Button } from "./Button";
 import { Money } from "./figures";
 import { TableWrap } from "./layout";

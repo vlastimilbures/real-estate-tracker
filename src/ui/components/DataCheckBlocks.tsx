@@ -50,7 +50,7 @@ export function DataCheckShell({
 }
 
 /** The counts, on their own line under the panel head (ADR 0223 §1). */
-export function DataCheckCounts({
+function DataCheckCounts({
   attention,
   defaults,
 }: {
@@ -86,7 +86,7 @@ export function DataCheckCounts({
 }
 
 /** Nothing to report: one quiet line (ADR 0223 §4). */
-export function DataCheckClear() {
+function DataCheckClear() {
   const d = useT().dataCheck;
   return (
     <p className="dc-clear">

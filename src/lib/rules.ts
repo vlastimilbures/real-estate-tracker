@@ -59,7 +59,7 @@ export const atOrBelowGrowthFloor = (d: Decimal): boolean =>
   d.lessThanOrEqualTo(GROWTH_FLOOR);
 
 /** At most one decimal place: the size's precision (ADR 0236 §1). */
-export const oneDecimal = (v: number): boolean => Number(v.toFixed(1)) === v;
+const oneDecimal = (v: number): boolean => Number(v.toFixed(1)) === v;
 
 /** The same rule on entered text with a `.` decimal point, counted by value: trailing
  *  zeros do not count, so the 54.50 a two-decimal spreadsheet column exports is one
@@ -72,7 +72,7 @@ export function oneDecimalText(text: string): boolean {
 /** Above this many times a field's form maximum a stored value is not plausible data but
  *  a broken file: restore refuses it, where up to it restore only asks (ADR 0148). It also
  *  keeps a hand-edited horizon or term from making every projection loop for ever. */
-export const HARD_LIMIT_FACTOR = 10;
+const HARD_LIMIT_FACTOR = 10;
 
 /** A bounded field and where it is stored. */
 export type BoundedField = keyof typeof INT_RANGES;

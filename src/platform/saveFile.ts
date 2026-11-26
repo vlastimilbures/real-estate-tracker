@@ -1,7 +1,7 @@
 // The one way the app hands a generated file to the user: the app's `save_file` command
 // in the app, a browser blob download only outside Tauri (dev/E2E). Rust opens the save
 // dialog, writes a temp file renamed into place and reads it back
-// (src-tauri/src/files.rs, ADR 0064), so `saved` means the file on disk is right; a
+// (src-tauri/src/commands/dialogs.rs, ADR 0064), so `saved` means the file on disk is right; a
 // cancelled dialog is `cancelled` (the user's own choice, no message).
 import { call } from "./commands";
 import { isTauri } from "../lib/tauri";

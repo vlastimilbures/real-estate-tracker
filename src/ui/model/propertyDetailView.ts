@@ -175,7 +175,7 @@ export function propertyBodyView(
   // A future as-of reads the projection year the charts plot; real terms are in base-date
   // prices.
   const series = projectionSeries(out.projection, mode, assumptions);
-  const basis = asOfView(baseDate, out.asOf, view.isToday);
+  const basis = asOfView({ baseDate, asOf: out.asOf }, view.isToday);
   const chartRows = toChartRows(series);
   return {
     tiles: propertyTilesForAsOf(

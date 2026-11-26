@@ -28,7 +28,7 @@ import type { XlsxColumn } from "./xlsxExport";
 import { nonZeroColumns } from "./columns";
 import { interestSavedShown, type InterestSavedShown } from "./financing";
 import { ZERO, type Decimal } from "../../lib/money";
-import { fmtCzk, fmtDate, fmtPct, EMPTY } from "../../lib/format";
+import { EMPTY, fmtCzk, fmtDate, fmtPct, toNumber } from "../../lib/format";
 import type { Dictionary } from "../../i18n";
 
 /** One loan warning on Property detail. */
@@ -183,11 +183,10 @@ export function loanWarningText(
 }
 
 /** A block's row status in the Loan outlook (ADR 0117). */
-export type LoanOutlookStatus =
-  FixationReset["status"] | "nextReset" | "floating";
+type LoanOutlookStatus = FixationReset["status"] | "nextReset" | "floating";
 
 /** One loan block in the Loan outlook's reset table (ADR 0117). */
-export interface LoanOutlookRow {
+interface LoanOutlookRow {
   blockId: string;
   start: string;
   /** "—" for a floating (0-year) block. */
@@ -310,7 +309,7 @@ function drawdownView(
   return {
     blockId: dd.blockId,
     share,
-    percent: Math.round(share.toNumber() * 100),
+    percent: Math.round(toNumber(share) * 100),
     full,
     progress: full
       ? d.drawdownFull(fmtCzk(dd.total))

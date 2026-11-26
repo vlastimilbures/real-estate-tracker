@@ -8,39 +8,21 @@
 use app_lib::db::{run_atomic, Statement};
 use serde_json::Value;
 use sqlx::{Executor, Pool, Row, Sqlite};
-use std::path::PathBuf;
+
+mod common;
+use common::{count, TempDir};
 
 const FIXTURE: &str = include_str!("fixtures/migrations.json");
 
-fn temp_path(name: &str) -> PathBuf {
-    let path = std::env::temp_dir().join(format!(
-        "ret-migrations-{}-{}.sqlite",
-        name,
-        std::process::id()
-    ));
-    let _ = std::fs::remove_file(&path);
-    path
+async fn open(name: &str) -> (TempDir, Pool<Sqlite>) {
+    let dir = TempDir::new(&format!("migrations-{name}"));
+    let pool = common::plugin_pool(&dir).await;
+    (dir, pool)
 }
 
-async fn open(name: &str) -> (PathBuf, Pool<Sqlite>) {
-    let path = temp_path(name);
-    let pool = Pool::<Sqlite>::connect(&format!("sqlite:{}?mode=rwc", path.display()))
-        .await
-        .unwrap();
-    (path, pool)
-}
-
-async fn cleanup(path: PathBuf, pool: Pool<Sqlite>) {
+async fn cleanup(dir: TempDir, pool: Pool<Sqlite>) {
     pool.close().await;
-    let _ = std::fs::remove_file(path);
-}
-
-async fn count(pool: &Pool<Sqlite>, table: &str) -> i64 {
-    sqlx::query(&format!("SELECT COUNT(*) FROM {table}"))
-        .fetch_one(pool)
-        .await
-        .unwrap()
-        .get(0)
+    drop(dir);
 }
 
 /// Synthetic rows that the version 8 baseline accepts (the values of `fill()` in

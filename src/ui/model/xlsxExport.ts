@@ -9,14 +9,15 @@
 import type { Worksheet } from "exceljs";
 import type { Decimal } from "../../lib/money";
 import {
+  CZK,
   cellMoney,
   cellMultiple,
   cellPct,
   fmtCzk,
   fmtMultiple,
   fmtPct,
+  toNumber,
 } from "../../lib/format";
-import { CZK } from "../../lib/currency";
 
 /** What `exportTableXlsx` takes: one sheet. */
 export interface TableExport<R> {
@@ -140,7 +141,7 @@ function numberFor(kind: CellKind, v: Decimal | number): number {
     case "multiple":
       return cellMultiple(v, 2);
     default:
-      return typeof v === "number" ? v : v.toNumber();
+      return typeof v === "number" ? v : toNumber(v);
   }
 }
 

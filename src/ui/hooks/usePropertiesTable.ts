@@ -31,7 +31,10 @@ export function usePropertiesTable(): PropertiesTableData {
 
   // The Today basis of the date, and each row read by it.
   const { assumptions, portfolio, snapshot } = engine;
-  const basis = asOfView(assumptions.baseDate, view.date, view.isToday);
+  const basis = asOfView(
+    { baseDate: assumptions.baseDate, asOf: view.date },
+    view.isToday,
+  );
   const rows = projections
     ? propertiesTableRows(
         propertyRowsForAsOf(
@@ -56,13 +59,12 @@ export function usePropertiesTable(): PropertiesTableData {
     ),
     subtitle:
       rows.length > 0
-        ? propertiesSubtitle(
-            t,
-            rows.length,
-            snapshot.asOf,
+        ? propertiesSubtitle(t, {
+            count: rows.length,
+            asOf: snapshot.asOf,
             basis,
-            assumptions.baseDate,
-          )
+            baseDate: assumptions.baseDate,
+          })
         : undefined,
   };
 }

@@ -8,7 +8,7 @@ import {
   type FieldKind,
 } from "./formParse";
 import { INT_RANGES, type IntRange } from "../../lib/rules";
-import { CZK } from "../../lib/currency";
+import { CZK } from "../../lib/format";
 import { propertyKey } from "../../lib/propertyKey";
 import type { AcquisitionFunding } from "../../engine";
 import type { PropertyEdit } from "../../state/portfolioStore";

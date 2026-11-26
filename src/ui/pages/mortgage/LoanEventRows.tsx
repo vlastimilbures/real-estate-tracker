@@ -10,8 +10,7 @@ import {
   type RecastRow,
   type RowOf,
 } from "../../model/loanEventRows";
-import { CZK } from "../../../lib/currency";
-import { fmtDate } from "../../../lib/format";
+import { CZK, fmtDate } from "../../../lib/format";
 import { Button } from "../../components/Button";
 import { RowAction, RowActions } from "../../components/RowActions";
 import { Plus, Trash2 } from "lucide-react";

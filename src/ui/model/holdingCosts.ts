@@ -3,7 +3,7 @@
 // the record it saves. Presentation only.
 import type { CostDefaults, HoldingCost } from "../../engine";
 import type { Dictionary } from "../../i18n";
-import { CZK } from "../../lib/currency";
+import { CZK } from "../../lib/format";
 import type { Decimal } from "../../lib/money";
 import { moneyDraft, percentDraft, type KindValue } from "./formParse";
 

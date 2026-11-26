@@ -20,7 +20,7 @@ import { loanWarningText } from "./propertyDetail";
 
 /** One property's place in a grouped line: the chip that links to its fix. A portfolio
  *  row has no property (`propertyId` and `name` null). */
-export interface DataCheckChip {
+interface DataCheckChip {
   propertyId: string | null;
   name: string | null;
   /** This property's part of the problem (an age, a date), or null when the line says

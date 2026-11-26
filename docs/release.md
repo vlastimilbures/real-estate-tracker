@@ -121,7 +121,7 @@ is not provided** (backlog): FileVault protects the disk as a whole.
 - The webview gets only the permissions in `src-tauri/capabilities/default.json`: listening
   for native-menu events, the SQL plugin's load/execute/select, and the app's own commands.
   There is no fs, dialog, shell, http, opener or updater permission; file dialogs and file
-  writes happen in Rust (`src-tauri/src/files.rs`).
+  writes happen in Rust (`src-tauri/src/fs_atomic.rs` and `src-tauri/src/commands/`).
 - A strict CSP (`tauri.conf.json` → `app.security.csp`) allows only the app's own scripts and
   styles and IPC; there are no remote origins. A navigation guard (`src-tauri/src/nav.rs`)
   refuses any navigation away from the app.

@@ -1,4 +1,4 @@
-// The backup files Rust reads and writes for Backup & Restore (src-tauri/src/files.rs):
+// The backup files Rust reads and writes for Backup & Restore (src-tauri/src/commands/):
 // the restore pick through the open dialog, and the pre-restore safety backup.
 import { call } from "./commands";
 

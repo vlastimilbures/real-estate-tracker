@@ -5,13 +5,19 @@ use tauri::{Emitter, Manager};
 use tauri::{RunEvent, WindowEvent};
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
+pub mod commands;
 pub mod crash;
 pub mod db;
 pub mod error;
-pub mod files;
+pub mod error_log;
+pub mod fs_atomic;
 pub mod menu;
 pub mod nav;
+pub mod paths;
 pub mod perf;
+pub mod private_fs;
+
+use commands::{backup, dialogs, reveal};
 
 include!("command_list.rs");
 
@@ -79,7 +85,7 @@ pub fn run() {
             // a 0700 folder). Covers files from older versions; never fatal.
             match app.path().app_config_dir() {
                 Ok(dir) => {
-                    if let Err(e) = files::restrict_app_dir(&dir) {
+                    if let Err(e) = private_fs::restrict_app_dir(&dir) {
                         log::warn!("could not make the app folder private: {e}");
                     }
                 }
@@ -89,7 +95,7 @@ pub fn run() {
             // by now; a file it rotates in later is made private at the next start.
             match app.path().app_log_dir() {
                 Ok(dir) => {
-                    if let Err(e) = files::restrict_dir(&dir) {
+                    if let Err(e) = private_fs::restrict_dir(&dir) {
                         log::warn!("could not make the log folder private: {e}");
                     }
                 }
