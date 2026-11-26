@@ -7,7 +7,9 @@
 use app_lib::db::{run_atomic, select_snapshot, Statement};
 use serde_json::Value;
 use sqlx::{Executor, Pool, Row, Sqlite};
-use std::path::PathBuf;
+
+mod common;
+use common::TempDir;
 
 const CONTRACT: &str = include_str!("../../src/data/__tests__/fixtures/sql-contract.json");
 
@@ -28,15 +30,9 @@ fn statements(v: &Value) -> Vec<Statement> {
         .unwrap_or_default()
 }
 
-async fn fresh(c: &Value, kind: &str, i: usize, setup: &Value) -> (PathBuf, Pool<Sqlite>) {
-    let path = std::env::temp_dir().join(format!(
-        "ret-dbcontract-{kind}-{i}-{}.sqlite",
-        std::process::id()
-    ));
-    let _ = std::fs::remove_file(&path);
-    let pool = Pool::<Sqlite>::connect(&format!("sqlite:{}?mode=rwc", path.display()))
-        .await
-        .unwrap();
+async fn fresh(c: &Value, kind: &str, i: usize, setup: &Value) -> (TempDir, Pool<Sqlite>) {
+    let dir = TempDir::new(&format!("dbcontract-{kind}-{i}"));
+    let pool = common::plugin_pool(&dir).await;
     for q in c["schema"].as_array().unwrap() {
         pool.execute(q.as_str().unwrap()).await.unwrap();
     }
@@ -44,12 +40,12 @@ async fn fresh(c: &Value, kind: &str, i: usize, setup: &Value) -> (PathBuf, Pool
     if !setup.is_empty() {
         run_atomic(&pool, &setup).await.unwrap();
     }
-    (path, pool)
+    (dir, pool)
 }
 
-async fn cleanup(path: PathBuf, pool: Pool<Sqlite>) {
+async fn cleanup(dir: TempDir, pool: Pool<Sqlite>) {
     pool.close().await;
-    let _ = std::fs::remove_file(path);
+    drop(dir);
 }
 
 #[tokio::test]

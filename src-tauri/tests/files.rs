@@ -10,11 +10,11 @@ use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
 
-fn temp_dir(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("ret-files-{}-{}", name, std::process::id()));
-    let _ = fs::remove_dir_all(&dir);
-    fs::create_dir_all(&dir).unwrap();
-    dir
+mod common;
+use common::TempDir;
+
+fn temp_dir(name: &str) -> TempDir {
+    TempDir::new(&format!("files-{name}"))
 }
 
 fn entries(dir: &PathBuf) -> Vec<String> {
@@ -97,7 +97,8 @@ fn atomic_write_skips_a_file_planted_at_the_temp_name() {
 #[test]
 fn atomic_write_does_not_follow_a_symlink_at_the_temp_name() {
     let dir = temp_dir("planted-link");
-    let outside = temp_dir("planted-link-outside").join("target.txt");
+    let outside_dir = temp_dir("planted-link-outside");
+    let outside = outside_dir.join("target.txt");
     fs::write(&outside, "keep me").unwrap();
     std::os::unix::fs::symlink(&outside, first_temp_name(&dir, "p.csv")).unwrap();
     atomic_write(&dir.join("p.csv"), b"mine").unwrap();
@@ -230,7 +231,8 @@ fn restrict_app_dir_makes_folders_0700_and_files_0600() {
     set_mode(&backups, 0o755);
     set_mode(&dir, 0o755);
     // A symlink is left alone (its target may be outside the folder).
-    let outside = temp_dir("restrict-outside").join("shared.txt");
+    let outside_dir = temp_dir("restrict-outside");
+    let outside = outside_dir.join("shared.txt");
     fs::write(&outside, "x").unwrap();
     set_mode(&outside, 0o644);
     std::os::unix::fs::symlink(&outside, dir.join("link")).unwrap();
@@ -248,7 +250,8 @@ fn restrict_app_dir_makes_folders_0700_and_files_0600() {
 
 #[test]
 fn restrict_app_dir_ignores_a_missing_folder() {
-    let dir = temp_dir("restrict-missing").join("not-yet");
+    let dir_dir = temp_dir("restrict-missing");
+    let dir = dir_dir.join("not-yet");
     restrict_app_dir(&dir).unwrap();
     assert!(!dir.exists());
 }
@@ -278,7 +281,8 @@ fn restrict_dir_makes_one_folder_0700_and_its_files_0600() {
 
 #[test]
 fn restrict_dir_ignores_a_missing_folder() {
-    let dir = temp_dir("restrict-dir-missing").join("not-yet");
+    let dir_dir = temp_dir("restrict-dir-missing");
+    let dir = dir_dir.join("not-yet");
     restrict_dir(&dir).unwrap();
     assert!(!dir.exists());
 }
@@ -302,7 +306,10 @@ fn reveal_selects_the_database_when_it_exists() {
 #[test]
 fn reveal_opens_the_folder_without_a_database() {
     let dir = temp_dir("reveal-empty");
-    assert_eq!(reveal_args(&dir).unwrap(), vec![dir.into_os_string()]);
+    assert_eq!(
+        reveal_args(&dir).unwrap(),
+        vec![dir.as_os_str().to_os_string()]
+    );
 }
 
 #[test]
@@ -310,13 +317,13 @@ fn reveal_keeps_a_path_with_spaces_as_one_argument() {
     let dir = temp_dir("reveal space; $(x)");
     let args = reveal_args(&dir).unwrap();
     assert_eq!(args.len(), 1);
-    assert_eq!(PathBuf::from(&args[0]), dir);
+    assert_eq!(PathBuf::from(&args[0]), *dir);
 }
 
 #[test]
 fn reveal_refuses_a_missing_folder() {
     let dir = temp_dir("reveal-gone");
-    fs::remove_dir_all(&dir).unwrap();
+    fs::remove_dir_all(dir.path()).unwrap();
     assert!(reveal_args(&dir).is_err());
 }
 
@@ -324,5 +331,8 @@ fn reveal_refuses_a_missing_folder() {
 fn reveal_opens_the_folder_when_the_database_name_is_a_folder() {
     let dir = temp_dir("reveal-dirdb");
     fs::create_dir(dir.join("portfolio.db")).unwrap();
-    assert_eq!(reveal_args(&dir).unwrap(), vec![dir.into_os_string()]);
+    assert_eq!(
+        reveal_args(&dir).unwrap(),
+        vec![dir.as_os_str().to_os_string()]
+    );
 }

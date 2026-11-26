@@ -5,6 +5,8 @@
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode};
 use sqlx::{Connection, Row, SqliteConnection};
 
+mod common;
+
 fn version_parts(v: &str) -> (u32, u32, u32) {
     let mut it = v.split('.').map(|p| p.parse::<u32>().unwrap());
     (
@@ -16,9 +18,8 @@ fn version_parts(v: &str) -> (u32, u32, u32) {
 
 #[tokio::test]
 async fn bundled_sqlite_is_patched_and_runs_a_wal_transaction() {
-    let path =
-        std::env::temp_dir().join(format!("ret-sqlite-version-{}.sqlite", std::process::id()));
-    let _ = std::fs::remove_file(&path);
+    let dir = common::TempDir::new("sqlite-version");
+    let path = dir.join("db.sqlite");
     let opts = SqliteConnectOptions::new()
         .filename(&path)
         .create_if_missing(true)
