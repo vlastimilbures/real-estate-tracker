@@ -42,7 +42,7 @@ export function LoanTypeSwitch({
           {d.successorNote}{" "}
           <button
             type="button"
-            className="link-btn"
+            className="link-button underlined"
             onClick={() => openGuide("fixation")}
           >
             {d.successorLearnMore}
