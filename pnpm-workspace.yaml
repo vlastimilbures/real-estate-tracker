@@ -33,3 +33,7 @@ overrides:
   # GHSA-q8mj-m7cp-5q26. GHSA-4mjr-xmp4-gh2g and GHSA-x5fp-wj9c-mxmx need 6.16.0; the
   # lockfile resolves 6.17.1.
   qs@6: ^6.15.2
+  # GHSA-g3hv-75wg-m249 (Dependabot alert 47), under @stryker-mutator/core, which pins
+  # minimatch ~10.2.4 in its latest release 10.1.1. The patched line is 11.0.1; the
+  # other minimatch 3, 5 and 10 consumers stay on their own ranges.
+  "@stryker-mutator/core>minimatch": ^11.0.1
