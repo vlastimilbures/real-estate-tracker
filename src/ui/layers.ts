@@ -3,7 +3,12 @@
 // state in src/ui (#491): a layer pushes itself while it is on the page and pops itself
 // when it leaves (useDismiss).
 
-const stack: symbol[] = [];
+interface Entry {
+  /** A modal dialog (aria-modal): the native menu's items wait while one is open (#600). */
+  modal: boolean;
+}
+
+const stack: Entry[] = [];
 
 /** One open layer. */
 export interface Layer {
@@ -13,9 +18,9 @@ export interface Layer {
   pop(): void;
 }
 
-/** Puts a new layer on top. */
-export function pushLayer(): Layer {
-  const self = Symbol("layer");
+/** Puts a new layer on top; `modal` for a modal dialog, not for a dropdown's list. */
+export function pushLayer({ modal = false }: { modal?: boolean } = {}): Layer {
+  const self: Entry = { modal };
   stack.push(self);
   return {
     isTop: () => stack.at(-1) === self,
@@ -29,3 +34,7 @@ export function pushLayer(): Layer {
 /** True while a dialog or a dropdown's list is open: it owns Escape (ADR 0157, ADR 0173).
  *  The date popover and the tips are not layers (useDismiss's `escape` orders). */
 export const anyOpen = (): boolean => stack.length > 0;
+
+/** True while a modal dialog is open (Modal: About, the leave guard, the forms, the
+ *  confirmations); a dropdown's list does not count (#600). */
+export const modalOpen = (): boolean => stack.some((l) => l.modal);

@@ -45,6 +45,8 @@ export interface DismissOptions {
   stops?: (() => boolean) | undefined;
   /** Which press outside closes it; none: a press outside does not. */
   outside?: OutsidePress | undefined;
+  /** For `top`: a modal dialog, so the native menu waits while it is open (#600). */
+  modal?: boolean | undefined;
 }
 
 /**
@@ -55,7 +57,14 @@ export interface DismissOptions {
  */
 export function useDismiss(
   onDismiss: (cause: DismissCause) => void,
-  { open = true, inside, escape, stops, outside }: DismissOptions,
+  {
+    open = true,
+    inside,
+    escape,
+    stops,
+    outside,
+    modal = false,
+  }: DismissOptions,
 ): () => boolean {
   const latest = useRef({ onDismiss, inside, stops });
   // Refreshed after each render (not during it); layout effects run before any event can
@@ -67,7 +76,7 @@ export function useDismiss(
 
   useEffect(() => {
     if (!open) return;
-    const own = escape === "top" ? pushLayer() : null;
+    const own = escape === "top" ? pushLayer({ modal }) : null;
     layer.current = own;
     const onKey = (e: Event) => {
       if (!isEscape(e as KeyboardEvent) || (own && !own.isTop())) return;
@@ -98,7 +107,7 @@ export function useDismiss(
       own?.pop();
       layer.current = null;
     };
-  }, [open, escape, outside]);
+  }, [open, escape, outside, modal]);
 
   return useCallback(() => layer.current?.isTop() ?? false, []);
 }

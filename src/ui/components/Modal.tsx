@@ -45,7 +45,11 @@ export function Modal({
   const dismiss = () => {
     if (!dirty && !busy) onClose();
   };
-  const dialogRef = useModalA11y(dismiss, { trap: true, restoreFocus: true });
+  const dialogRef = useModalA11y(dismiss, {
+    trap: true,
+    restoreFocus: true,
+    modal: true,
+  });
   const content = (
     <>
       <div
