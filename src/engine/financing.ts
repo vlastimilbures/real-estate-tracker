@@ -1,6 +1,6 @@
-// Financing exposure (ADR 0103, #31); the upcoming events built on it are in
-// ./upcomingEvents. Read off the same schedules the projection uses, so every balance
-// matches the amortization table:
+// Financing exposure (ADR 0103); the upcoming events built on it are in ./upcomingEvents.
+// Read off the same schedules the projection uses, so every balance matches the
+// amortization table:
 //   • fixation end = blockEndDate; its payment is still fixed (ADR 0021), so the balance
 //     at fixation end is the end balance of grid month fixationYears*12 − paymentOffset;
 //   • a loan is a property's block chain (ADR 0027), its payoff the schedule's last

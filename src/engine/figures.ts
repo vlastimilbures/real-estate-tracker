@@ -1,9 +1,9 @@
-// The formulas the current snapshot (./metrics) and the projection (./projections)
-// share, written once so snapshot(baseDate + N y) and projection year N cannot drift
-// apart (#478). Each keeps the order of decimal operations both used before. Gross rent
-// stays with each caller: the snapshot reads the lease in force × 12, the projection
-// the rent plan of the year. The monthly flow the screens show of either is here too
-// (#481). This module imports no other engine module but types.
+// The formulas the current snapshot (./metrics) and the projection (./projections) share,
+// written once so snapshot(baseDate + N y) and projection year N cannot drift apart. Each
+// keeps the order of decimal operations both used before. Gross rent stays with each
+// caller: the snapshot reads the lease in force × 12, the projection the rent plan of the
+// year. The monthly flow the screens show of either is here too.
+// This module imports no other engine module but types.
 import { ONE, ZERO, type Decimal } from "../lib/money";
 import type { CostDefaults, HoldingCost, PortfolioSnapshot } from "./types";
 
@@ -24,7 +24,7 @@ export const COST_RATE_KEYS = [
 ] as const satisfies CostKeys;
 
 /** Every holding-cost field, money then rates. `effectiveCosts` returns a full
- *  `CostDefaults` record from it, so a cost field left out fails `tsc` (#478). */
+ *  `CostDefaults` record from it, so a cost field left out fails `tsc`. */
 export const COST_KEYS = [...COST_MONEY_KEYS, ...COST_RATE_KEYS] as const;
 
 /** LTV = debt ÷ value; null when debt is owed on no value, 0 when neither (ADR 0133). */

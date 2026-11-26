@@ -1,6 +1,6 @@
-// One engine run's shared inputs (#480): the validated inputs and the loan schedules
-// built from them, passed together through the projection and KPI pass instead of the
-// (portfolio, assumptions, schedules) triple.
+// One engine run's shared inputs: the validated inputs and the loan schedules built from
+// them, passed together through the projection and KPI pass instead of the (portfolio,
+// assumptions, schedules) triple.
 import type { PropertySchedule } from "./schedule";
 import type { ValidInputs } from "./validate";
 

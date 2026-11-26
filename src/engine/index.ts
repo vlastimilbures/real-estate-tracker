@@ -2,7 +2,7 @@
 // (enforced by ESLint no-restricted-imports). Pure: no React/Tauri/DB imports anywhere
 // under src/engine. Everything not listed here is internal to the engine; engine
 // tests may import internal modules directly. The test seams (exports only tests use)
-// live in __tests__/support/seams.ts, not here (#480).
+// live in __tests__/support/seams.ts, not here.
 
 // Types (inputs, outputs, brands)
 export * from "./types";
@@ -35,7 +35,7 @@ export type { InstalmentCode } from "./loanTerm";
 export { amortizationHealth, maturityMismatch } from "./loanChecks";
 export { selectBlock } from "./loan/blockChain";
 export {
-  /** The IRR search range the "no IRR" note names (#441). */
+  /** The IRR search range the "no IRR" note names. */
   IRR_BRACKET_LOW,
   IRR_BRACKET_MAX,
 } from "./irrConstants";

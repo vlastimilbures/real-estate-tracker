@@ -6,7 +6,7 @@ import { D } from "../lib/money";
 export const IRR_BRACKET_LOW = D(-0.9);
 export const IRR_BRACKET_HIGH = D(1);
 /** The widest bracket's upper bound, +1000 %: with no root up to it the IRR has none
- *  (ADR 0079). The "no IRR" note names it (#441). */
+ *  (ADR 0079). The "no IRR" note names it. */
 export const IRR_BRACKET_MAX = D(10);
 /** Upper bounds tried in turn when [LOW, HIGH] brackets no root, up to IRR_BRACKET_MAX
  *  (ADR 0079). */

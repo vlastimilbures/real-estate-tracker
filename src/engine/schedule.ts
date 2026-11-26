@@ -1,5 +1,5 @@
 // Monthly amortization schedules (SPEC §4.4): the engine's loan API. The code lives
-// in `loan/*` (#474); this module re-exports its public symbols.
+// in `loan/*`; this module re-exports its public symbols.
 
 export { openingBalance, openingDebt } from "./loan/opening";
 export {

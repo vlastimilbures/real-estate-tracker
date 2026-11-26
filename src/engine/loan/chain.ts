@@ -54,13 +54,12 @@ export function buildSchedule(
 }
 
 /**
- * Due date of a block's last payment in its own base schedule, after its prepayments
- * and recasts: the maturity in force (ADR 0116). Events dated after `next`'s start are
- * dropped, as in the chain. An instalment above the annuity can end it before the
- * entered term.
- * It builds the block's own schedule on purpose (#477): the chain's rows cannot give
- * this date, since a successor replaces them from the month it draws in, and its one
- * caller, `blocksReachedByShock`, builds no chain schedule to share.
+ * Due date of a block's last payment in its own base schedule, after its prepayments and
+ * recasts: the maturity in force (ADR 0116). Events dated after `next`'s start are
+ * dropped, as in the chain. An instalment above the annuity can end it before the entered
+ * term. It builds the block's own schedule on purpose: the chain's rows cannot give this
+ * date, since a successor replaces them from the month it draws in, and its one caller,
+ * `blocksReachedByShock`, builds no chain schedule to share.
  */
 export function effectiveMaturity(
   block: MortgageBlock,

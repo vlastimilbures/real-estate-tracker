@@ -1,6 +1,6 @@
-// The engine's year/month conversions (#477): the one place an annual rate becomes a
-// monthly one and years become months (or months years). Each is the plain `* 12` or
-// `/ 12` it replaced, so no number moves.
+// The engine's year/month conversions: the one place an annual rate becomes a monthly one
+// and years become months (or months years). Each is the plain `* 12` or `/ 12` it
+// replaced, so no number moves.
 import type { Decimal } from "../lib/money";
 
 export const MONTHS_PER_YEAR = 12;

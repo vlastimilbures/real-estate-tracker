@@ -1,7 +1,7 @@
-// The shared lookups of the engine's inputs (#480): a property's rows, the lease and
-// valuation in force at a date, the value growth starts from, the holding-cost basis,
-// and which properties count. The snapshot, projection, acquisition and upcoming-events
-// modules read them here instead of from the snapshot module.
+// The shared lookups of the engine's inputs: a property's rows, the lease and valuation
+// in force at a date, the value growth starts from, the holding-cost basis, and which
+// properties count. The snapshot, projection, acquisition and upcoming-events modules
+// read them here instead of from the snapshot module.
 import type { Decimal } from "../lib/money";
 import {
   inForceOrUpcoming,
@@ -25,7 +25,7 @@ import { monthsToYears } from "./units";
 
 /** Whether a property counts in portfolio totals, projections and KPIs: `active` unless
  *  deactivated. Always a boolean: the mapper reads a legacy NULL as active, and a restore
- *  of an older backup fills 1 (#480). */
+ *  of an older backup fills 1. */
 export function isActive(property: Property): boolean {
   return property.active;
 }

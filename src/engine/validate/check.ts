@@ -1,5 +1,5 @@
-// The checks every validator shares (#479): the error builders and reporters, the
-// field tests, the sign-rule tables and the amount check.
+// The checks every validator shares: the error builders and reporters, the field tests,
+// the sign-rule tables and the amount check.
 import { ZERO, type Decimal } from "../../lib/money";
 import { atOrBelowGrowthFloor, outsideUnitRate } from "../../lib/rules";
 import { EngineInputError } from "../errors";
@@ -51,7 +51,7 @@ export function assumptionError(
   return { code, entity: "assumptions", field };
 }
 
-/** The reporter of one row: every problem becomes `rowError` on it (#479). */
+/** The reporter of one row: every problem becomes `rowError` on it. */
 export function rowReporter<E extends RowEntity>(
   entity: E,
   id: string,
@@ -113,9 +113,9 @@ export type SignRule<R, K extends keyof R> = readonly [
   code: ValidationCode,
 ];
 
-/** Sign and range rules over a row, in table order: each rule is one pass over its
- *  field, so a row with several bad fields reports rule by rule (#479). `prefix` goes
- *  before each field name. */
+/** Sign and range rules over a row, in table order: each rule is one pass over its field,
+ *  so a row with several bad fields reports rule by rule. `prefix` goes before each field
+ *  name. */
 export function checkSigns<
   R,
   K extends keyof R & string,

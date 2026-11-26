@@ -37,7 +37,7 @@ export interface PortfolioOutputs {
  * Schedules, snapshot at `asOf`, projection and KPIs in one pass: equal to
  * `propertySchedules` → `portfolioSnapshot` → `portfolioProjection` → `portfolioKpis`,
  * plus the financing exposure at `asOf` from the same schedules (ADR 0103). Pass
- * `schedules` (from `propertySchedules` on the same inputs) to reuse them (#469).
+ * `schedules` (from `propertySchedules` on the same inputs) to reuse them.
  */
 export function portfolioOutputs(
   portfolio: Portfolio,

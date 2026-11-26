@@ -34,7 +34,7 @@ import type {
   PortfolioSnapshot,
 } from "./types";
 
-// LTV and yields live with the other shared formulas (./figures, #478).
+// LTV and yields live with the other shared formulas (./figures).
 export { yieldOf };
 /** @internal re-exported for the tests that read it here (ltv-zero-value.test.ts) */
 export { ltvOf };
@@ -116,7 +116,7 @@ function snapshotIncome(
  * One property's snapshot at `asOf`. Pass its `schedule` (the rows from
  * `propertySchedules` on the same inputs) to reuse it; an omitted one is built here.
  */
-// eslint-disable-next-line max-params -- public API with app and test callers (#480)
+// eslint-disable-next-line max-params -- public API with app and test callers
 export function propertySnapshot(
   property: Property,
   portfolio: Portfolio,

@@ -57,7 +57,7 @@ export function irrResult(cashflows: Decimal[]): IrrResult {
   }
   // A bracket end whose NPV passes the tolerance test `bisect` applies is the root. The
   // sign of a product cannot tell: 0 × x is ±0 and Decimal(+0).isPositive() is true
-  // (ADR 0121, #185).
+  // (ADR 0121).
   const nlo = npv(IRR_BRACKET_LOW);
   if (atRoot(nlo)) return { rate: IRR_BRACKET_LOW, reason: null };
   for (const hi of [IRR_BRACKET_HIGH, ...IRR_BRACKET_EXTENSIONS]) {
@@ -78,7 +78,7 @@ function atRoot(n: Decimal): boolean {
 /**
  * Roots of the NPV seen across `IRR_SCAN_GRID`: each sign change between neighbouring
  * points, and each run of points at a root (crossing or touching 0), counted once. A
- * root on a grid point is a root: with another one the IRR is not unique (#185).
+ * root on a grid point is a root: with another one the IRR is not unique.
  */
 function npvRootsOnGrid(npv: (rate: Decimal) => Decimal): number {
   let roots = 0;
@@ -318,7 +318,7 @@ export function projectionAndKpis(
 /**
  * The portfolio projection and its KPIs on an engine run (validated inputs and their
  * schedules): the one run sequence behind `projectionAndKpis` and `portfolioOutputs`, so
- * each schedule is built once and the projection is not rebuilt for the KPIs (#291).
+ * each schedule is built once and the projection is not rebuilt for the KPIs.
  */
 export function runPortfolio(run: EngineRun): {
   projection: PortfolioYear[];
@@ -359,7 +359,7 @@ function kpisFrom(
   const equityN = at(proj, N).equity;
   // The owner's flow each year: the projection's cash to owner, netCF_t −
   // cashOutsideNetCf_t (ADR 0161). The nominal and real cumulative cash flow and both
-  // IRR vectors derive from it (#117); index 0 is not read (year 0 is the opening equity).
+  // IRR vectors derive from it; index 0 is not read (year 0 is the opening equity).
   const flows = proj.map((y) => y.cashToOwner);
   const nominalVector = leveredCashFlows(
     proj,
