@@ -9,7 +9,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MortgagesPanel } from "../PropertyEntityPanels";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { isoDate, money, type MortgageBlock } from "../../../engine";
 import type { Sql } from "../../../data/sql";
@@ -68,7 +68,7 @@ describe("prepayment and recast rows (ADR 0116)", () => {
     await userEvent.click(
       screen.getByRole("button", { name: d.eventAddPrepayment }),
     );
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
     const r = row(1);
     await userEvent.type(within(r).getByLabelText(d.eventDate), "17.01.2031");
     await userEvent.type(within(r).getByLabelText(d.eventAmount), "500000");

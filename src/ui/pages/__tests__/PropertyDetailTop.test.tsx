@@ -79,14 +79,12 @@ describe("breadcrumb (ADR 0215 §1)", () => {
   it("with unsaved edits it asks first, as every way off the page does", () => {
     render(<PropertyDetail />);
     act(() =>
-      useUiStore.setState({ unsavedChanges: true, pendingLeave: null }),
+      useUiStore.setState({ unsavedSources: ["test"], pendingLeave: null }),
     );
     fireEvent.click(screen.getByRole("link", { name: en.nav.properties }));
     expect(useUiStore.getState().route).toBe("property");
     expect(useUiStore.getState().pendingLeave).not.toBeNull();
-    act(() =>
-      useUiStore.setState({ unsavedChanges: false, pendingLeave: null }),
-    );
+    act(() => useUiStore.setState({ unsavedSources: [], pendingLeave: null }));
   });
 });
 

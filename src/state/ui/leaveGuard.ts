@@ -3,12 +3,10 @@
 import type { SliceCtx, UiState } from "./types";
 
 export interface LeaveGuardSlice {
-  /** Some open form holds unsaved edits: `unsavedSources` is not empty. */
-  unsavedChanges: boolean;
   /** The open forms holding unsaved edits, one key per form, so a clean form never
    *  clears another form's flag. */
   unsavedSources: readonly string[];
-  /** A navigation held back by `unsavedChanges`, waiting for Discard / Keep editing. */
+  /** A navigation held back by unsaved edits, waiting for Discard / Keep editing. */
   pendingLeave: (() => void) | null;
   /** The form whose edits `pendingLeave` drops, when it came from `guardedAction`; null
    *  for a navigation, which drops every form's edits. */
@@ -24,6 +22,10 @@ export interface LeaveGuardSlice {
   cancelLeave: () => void;
 }
 
+/** Some open form holds unsaved edits. */
+export const hasUnsavedChanges = (s: Pick<LeaveGuardSlice, "unsavedSources">) =>
+  s.unsavedSources.length > 0;
+
 /** Navigation that leaves the current screen or Settings tab: held back while a form
  *  has unsaved edits; staying where you are never asks. */
 export function guarded(
@@ -35,21 +37,20 @@ export function guarded(
   const moves = (Object.keys(target) as (keyof UiState)[]).some(
     (k) => s[k] !== target[k],
   );
-  if (s.unsavedChanges && moves)
+  if (hasUnsavedChanges(s) && moves)
     set({ pendingLeave: () => set(target), pendingSource: null });
   else set(target);
 }
 
 export function leaveGuardSlice({ set, get }: SliceCtx): LeaveGuardSlice {
   return {
-    unsavedChanges: false,
     unsavedSources: [],
     pendingLeave: null,
     pendingSource: null,
     setUnsavedChanges: (source, unsaved) => {
       const others = get().unsavedSources.filter((k) => k !== source);
       const unsavedSources = unsaved ? [...others, source] : others;
-      set({ unsavedSources, unsavedChanges: unsavedSources.length > 0 });
+      set({ unsavedSources });
     },
     guardedAction: (source, fn) => {
       if (get().unsavedSources.includes(source))
@@ -62,7 +63,6 @@ export function leaveGuardSlice({ set, get }: SliceCtx): LeaveGuardSlice {
       // theirs (ADR 0142). A navigation leaves them all.
       const kept = source ? unsavedSources.filter((k) => k !== source) : [];
       set({
-        unsavedChanges: kept.length > 0,
         unsavedSources: kept,
         pendingLeave: null,
         pendingSource: null,

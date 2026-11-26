@@ -13,6 +13,9 @@ export type { OutcomeAction, Notice, Failure } from "./ui/feedback";
  *  @internal test seam: tests reach it through the state facade (ADR 0072). */
 export { TOAST_MS } from "./ui/feedback";
 export { MAX_COMPARE } from "./ui/compare";
+/** Some open form holds unsaved edits: derived from the sources, never stored.
+ *  @internal test seam: the guard reads it inside the store (ADR 0072). */
+export { hasUnsavedChanges } from "./ui/leaveGuard";
 
 /** Load the saved language's dictionary before the first render (src/main.tsx).
  *  If it fails, show English for this session; the saved choice is kept. */

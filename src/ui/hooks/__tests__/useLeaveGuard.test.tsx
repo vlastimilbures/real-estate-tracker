@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useLeaveGuard } from "../useLeaveGuard";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 
 const sources = () => useUiStore.getState().unsavedSources;
 
@@ -18,7 +18,7 @@ describe("useLeaveGuard (#489)", () => {
     expect(sources()).toEqual([]);
     hook.rerender({ dirty: true });
     expect(sources()).toEqual(["a"]);
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
     hook.rerender({ dirty: false });
     expect(sources()).toEqual([]);
   });

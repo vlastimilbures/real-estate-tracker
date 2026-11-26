@@ -9,7 +9,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MortgagesPanel } from "../PropertyEntityPanels";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import { type MortgageBlock } from "../../../engine";
 import { portfolio } from "../../../engine/__tests__/support/seed";
@@ -148,7 +148,7 @@ describe("mortgage loan type (ADR 0098)", () => {
     await userEvent.click(screen.getByRole("button", { name: d.addTranche }));
     await userEvent.click(typeButton(d.loanTypeStandard));
     expect(screen.queryByText(d.loanTypeClearWarning)).toBeNull();
-    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(false);
   });
 
   it("switching an empty Development form back to Standard needs no confirm", async () => {

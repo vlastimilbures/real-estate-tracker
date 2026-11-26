@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { SettingsPage } from "../Settings";
 import { renderWithPortfolio } from "../../../__tests__/support/world";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import { getDict } from "../../../i18n";
 import type { Assumptions } from "../../../engine";
 import type { MutationResult } from "../../../state/portfolioStore";
@@ -84,7 +84,7 @@ describe("Assumptions save row (ADR 0095)", () => {
     expect(screen.getByText(en.common.unsavedChanges)).toBeTruthy();
     expect((saveButton() as HTMLButtonElement).disabled).toBe(false);
     expect((discardButton() as HTMLButtonElement).disabled).toBe(false);
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
   });
 
   it("Discard changes restores the saved values and clears the unsaved state", async () => {
@@ -94,7 +94,7 @@ describe("Assumptions save row (ADR 0095)", () => {
     await userEvent.click(discardButton());
     expect(input(en.assumptions.inflation).value).toBe(before);
     expect(screen.getByText(en.common.allChangesSaved)).toBeTruthy();
-    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(false);
     expect(save).not.toHaveBeenCalled();
   });
 

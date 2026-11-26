@@ -8,7 +8,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RecordForm } from "../forms";
 import { LeaveGuard } from "../LeaveGuard";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import type { WriteError } from "../../../state/writeError";
 
 beforeEach(() =>
@@ -36,7 +36,7 @@ function Form({
   );
 }
 
-const unsaved = () => useUiStore.getState().unsavedChanges;
+const unsaved = () => hasUnsavedChanges(useUiStore.getState());
 
 async function retype(label: string, value: string) {
   const input = screen.getByLabelText(label);

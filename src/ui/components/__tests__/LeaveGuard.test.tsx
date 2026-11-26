@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { SettingsPage } from "../../pages/Settings";
 import { LeaveGuard } from "../LeaveGuard";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import { portfolio, assumptions } from "../../../engine/__tests__/support/seed";
 
 beforeEach(() => {
@@ -76,13 +76,13 @@ describe("unsaved Assumptions guard (UX-030)", () => {
       }),
     );
     expect(useUiStore.getState().settingsTab).toBe("backup");
-    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(false);
     // Back on the tab the saved values show: the discarded draft is gone (ADR 0221 §3).
     act(() => useUiStore.getState().setSettingsTab("assumptions"));
     expect(
       (screen.getByLabelText(/^Inflation/) as HTMLInputElement).value,
     ).not.toBe("3");
-    expect(useUiStore.getState().unsavedChanges).toBe(false);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(false);
   });
 
   it("after a successful save the form leaves without asking", async () => {

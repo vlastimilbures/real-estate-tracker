@@ -9,7 +9,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PropertyDetail } from "../PropertyDetail";
 import { usePortfolioStore } from "../../../state/portfolioStore";
-import { useUiStore } from "../../../state/uiStore";
+import { hasUnsavedChanges, useUiStore } from "../../../state/uiStore";
 import {
   portfolio,
   assumptions,
@@ -157,7 +157,7 @@ describe("Property detail section nav (ADR 0107)", () => {
       records.querySelector<HTMLInputElement>(".record-form input")!;
     await userEvent.clear(input);
     await userEvent.type(input, "1");
-    expect(useUiStore.getState().unsavedChanges).toBe(true);
+    expect(hasUnsavedChanges(useUiStore.getState())).toBe(true);
     await userEvent.click(link(pd.sectionHolding));
     expect(useUiStore.getState().pendingLeave).toBeNull();
     expect(useUiStore.getState().route).toBe("property");

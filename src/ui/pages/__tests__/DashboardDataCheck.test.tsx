@@ -238,7 +238,6 @@ function showDashboard(
       dashboardPropertyIds: ids,
       asOf,
       propertyTarget: null,
-      unsavedChanges: false,
       unsavedSources: [],
       pendingLeave: null,
     });
