@@ -3,31 +3,23 @@
 import { useState, useRef, useCallback } from "react";
 import { Panel, Button, Badge, TableWrap } from "../components/primitives";
 import { HelpText } from "../components/HelpText";
-import type { CsvParseResult, CsvImportProblem } from "../../state/csv";
+import type { CsvImportProblem } from "../../state/csv";
 import { logFailure } from "../../state/diagnostics";
 import { saveFailureDetail, saveFile } from "../../state/platform";
-import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
 import { Disclosure } from "../components/Disclosure";
 import { RowAction, RowActions } from "../components/RowActions";
 import { FileDown } from "lucide-react";
-import { fmtCzk } from "../../lib/format";
-import { DATE_FLOOR, isoDay } from "../../lib/day";
-import type { CsvErrorCode, CsvRowError, ImportItem } from "../../state/csv";
+import type { CsvRowError, ImportItem } from "../../state/csv";
 import {
   changeText,
   groupByFile,
   itemLabel,
   itemNotes,
-  storedEventText,
 } from "../model/importPreview";
-import { inputRuleText } from "../model/inputRule";
+import { csvErrorText, importProblemText } from "../model/importMessages";
+import type { FileState } from "../model/importSession";
 import "../styles/import.css";
-
-export interface FileState<T> {
-  name: string;
-  result: CsvParseResult<T>;
-}
 
 function saveCsv(filename: string, content: string) {
   return saveFile({
@@ -36,66 +28,6 @@ function saveCsv(filename: string, content: string) {
     mime: "text/csv",
     filter: { name: "CSV", extensions: ["csv"] },
   });
-}
-
-/** Render a pure-layer csv error code as a translated message. */
-function csvErrorText(t: Dictionary, e: CsvErrorCode): string {
-  const p = t.importPage;
-  switch (e.code) {
-    case "required":
-      return p.errRequired;
-    case "invalidDate":
-      return p.errInvalidDate(e.value);
-    case "invalidNumber":
-      return p.errInvalidNumber(e.value);
-    case "invalidInteger":
-      return p.errInvalidInteger(e.value);
-    case "invalidBoolean":
-      return p.errInvalidBoolean(e.value);
-    case "instalmentRequired":
-      return p.errInstalmentRequired;
-    case "impossibleDate":
-      return p.errImpossibleDate(e.value);
-    case "earlyDate":
-      // CSV dates are yyyy-mm-dd, so the floor is named that way too.
-      return p.errEarlyDate(e.value, isoDay(DATE_FLOOR));
-    case "decimalComma":
-      return p.errDecimalComma(e.value);
-    case "negativeAmount":
-      return p.errNegativeAmount(e.value);
-    case "rateOutOfRange":
-      return p.errRateOutOfRange(e.value);
-    case "notPositive":
-      return p.errNotPositive(e.value);
-    case "outOfRange": {
-      const n = (v: number) => fmtCzk(v, { suffix: false });
-      // The forms' range message (ADR 0259); the table already names the cell.
-      return t.forms.intRange(n(e.min), n(e.max));
-    }
-    case "duplicateKey":
-      return p.errDuplicateKey(e.firstRow);
-    case "malformedRow":
-      return p.errMalformedRow(e.expected, e.found);
-    case "badQuotes":
-      return p.errBadQuotes;
-    case "duplicateHeader":
-      return p.errDuplicateHeader(e.name);
-    case "notUtf8":
-      return p.errNotUtf8;
-    case "semicolonDelimiter":
-      return p.errSemicolon;
-    case "fileTooLarge":
-      return p.errFileTooLarge(e.limitBytes / (1024 * 1024));
-    case "tooManyRows":
-      return p.errTooManyRows(e.limit);
-    default: {
-      // The size's error (ADR 0236 §1), the one code left: the assignment stops compiling
-      // if another code reaches here, so the switch stays exhaustive.
-      const size: Extract<CsvErrorCode, { code: "sizeRange" }> = e;
-      const n = (v: number) => fmtCzk(v, { suffix: false });
-      return t.forms.sizeRange(n(size.min), n(size.max));
-    }
-  }
 }
 
 /** A file's errors; the region names its file type (ADR 0225 §1). */
@@ -159,14 +91,7 @@ export function RefusedTable({ problems }: { problems: CsvImportProblem[] }) {
               <td>{e.row}</td>
               <td className="left">{e.field ? <code>{e.field}</code> : "—"}</td>
               <td className="left cell-message tone-negative">
-                {e.problem.code === "unknownProperty"
-                  ? p.errUnknownProperty(e.problem.value)
-                  : e.problem.code === "storedEvent"
-                    ? storedEventText(t, e.problem)
-                    : e.problem.code === "inputRule"
-                      ? inputRuleText(t, e.problem.rule)
-                      : // A merged value out of range (ADR 0257 §2): the parse step's text.
-                        csvErrorText(t, e.problem)}
+                {importProblemText(t, e.problem)}
               </td>
             </tr>
           ))}
