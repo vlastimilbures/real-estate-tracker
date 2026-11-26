@@ -4,7 +4,7 @@
 // expired fixation with no follow-on block.
 import { describe, it, expect } from "vitest";
 import { loanWarnings, loanWarningText } from "../propertyDetail";
-import { impliedMaturity, isoDate, rate } from "../../../engine";
+import { impliedMaturity, isoDate, rate, mortgageBlock } from "../../../engine";
 import type {
   LoanEventIssue,
   LoanEventOutcome,
@@ -21,7 +21,7 @@ const baseDate = isoDate("2026-06-07");
 const reset = rate("0.045");
 
 function block(overrides: Partial<MortgageBlock> = {}): MortgageBlock {
-  return {
+  return mortgageBlock({
     id: "m1",
     propertyId: "p1",
     startDate: isoDate("2021-01-17"),
@@ -30,7 +30,7 @@ function block(overrides: Partial<MortgageBlock> = {}): MortgageBlock {
     interestRatePa: rate("0.0169"),
     monthlyInstalment: money("6721.8"),
     ...overrides,
-  } as MortgageBlock;
+  });
 }
 
 describe("loanWarnings", () => {

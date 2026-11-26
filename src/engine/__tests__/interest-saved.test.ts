@@ -14,6 +14,7 @@ import type {
 } from "../types";
 import { annuityPayment } from "./reference/mortgageReference";
 import { assumptions, portfolio } from "./support/seed";
+import { mortgageBlock } from "../loanBlock";
 
 const seedJavorova = portfolio.mortgages.find(
   (m) => m.propertyId === "javorova",
@@ -102,7 +103,7 @@ describe("ADR 0116: interest saved by prepayments", () => {
   });
 
   it("leaves a successor's own interest alone", () => {
-    const refi = {
+    const refi = mortgageBlock({
       id: "refi",
       propertyId: javorova.propertyId,
       startDate: isoDate("2036-01-17"),
@@ -110,7 +111,7 @@ describe("ADR 0116: interest saved by prepayments", () => {
       fixationYears: 5,
       interestRatePa: rate("0.039"),
       monthlyInstalment: money(9800),
-    } as MortgageBlock;
+    });
     const b = { ...javorova, prepayments: [prepay("2031-01-17", 500000)] };
     const plain = propertySchedule([javorova, refi], assumptions);
     const withIt = propertySchedule([b, refi], assumptions);
@@ -147,7 +148,7 @@ describe("ADR 0116: interest saved by prepayments", () => {
 
 describe("ADR 0130: interest saved needs an applied prepayment", () => {
   const refi = (start: string): MortgageBlock =>
-    ({
+    mortgageBlock({
       id: "refi",
       propertyId: javorova.propertyId,
       startDate: isoDate(start),
@@ -155,7 +156,7 @@ describe("ADR 0130: interest saved needs an applied prepayment", () => {
       fixationYears: 5,
       interestRatePa: rate("0.039"),
       monthlyInstalment: money(9800),
-    }) as MortgageBlock;
+    });
 
   it("is null when a successor replaced every prepayment", () => {
     const blocks = [

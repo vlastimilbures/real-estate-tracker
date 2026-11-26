@@ -38,6 +38,7 @@ import { mixedCashOutside, mixedWithRefi } from "./support/synthetic";
 import { withEvents } from "./support/events";
 import { money } from "../brands";
 import { currentBalance } from "./support/closedForm";
+import { mortgageBlock } from "../loanBlock";
 
 // Fields added after the golden master was recorded: D-22's (pinned in
 // year-periods.test.ts), DR-092's `drawn` / `draws` (pinned in draws.test.ts against
@@ -181,7 +182,7 @@ const shocks: Record<string, ScenarioOverrides> = {
 };
 
 const base = (b: Partial<MortgageBlock>): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "x",
     propertyId: "javorova",
     startDate: isoDate("2021-01-31"),
@@ -190,7 +191,7 @@ const base = (b: Partial<MortgageBlock>): MortgageBlock =>
     interestRatePa: rate("0.029"),
     monthlyInstalment: money("15000"),
     ...b,
-  }) as MortgageBlock;
+  });
 
 /** Loans that hit every branch of the schedule loops. */
 const edgeLoans: Record<string, MortgageBlock> = {

@@ -1,7 +1,7 @@
 // The store checks engine input rules before writing (UX-047).
 import { beforeEach, describe, expect, it } from "vitest";
 import { usePortfolioStore } from "../portfolioStore";
-import { isoDate, rate } from "../../engine";
+import { isoDate, rate, mortgageBlock } from "../../engine";
 import type { MortgageBlock } from "../../engine";
 import { money } from "../../engine";
 import { openSeeded } from "./support/openSeeded";
@@ -13,7 +13,7 @@ describe("portfolioStore checks engine input rules before writing (UX-047)", () 
   });
 
   const plain = (over: Partial<MortgageBlock> = {}): MortgageBlock =>
-    ({
+    mortgageBlock({
       id: "m-check",
       propertyId: pf().properties[0].id,
       startDate: isoDate("2030-01-01"),
@@ -22,7 +22,7 @@ describe("portfolioStore checks engine input rules before writing (UX-047)", () 
       interestRatePa: rate("0.05"),
       monthlyInstalment: money("20000"),
       ...over,
-    }) as MortgageBlock;
+    });
 
   it("an instalment below the monthly interest is refused, nothing written", async () => {
     const before = pf().mortgages.length;
@@ -143,17 +143,19 @@ describe("development-loan rules at save time (UX-047, was mortgageFieldErrors)"
 
   it("a draw on the loan start date is refused on the draws field (D-42)", async () => {
     const start = isoDate("2030-01-01");
-    const r = await usePortfolioStore.getState().addMortgageBlock({
-      id: "m-draw",
-      propertyId: pf().properties[0].id,
-      startDate: start,
-      initialPrincipal: money("1000000"),
-      fixationYears: 5,
-      loanTermYears: 30,
-      interestRatePa: rate("0.05"),
-      monthlyInstalment: money("6000"),
-      draws: [{ date: start, amount: money("500000") }],
-    } as MortgageBlock);
+    const r = await usePortfolioStore.getState().addMortgageBlock(
+      mortgageBlock({
+        id: "m-draw",
+        propertyId: pf().properties[0].id,
+        startDate: start,
+        initialPrincipal: money("1000000"),
+        fixationYears: 5,
+        loanTermYears: 30,
+        interestRatePa: rate("0.05"),
+        monthlyInstalment: money("6000"),
+        draws: [{ date: start, amount: money("500000") }],
+      }),
+    );
     expect(r).toMatchObject({
       ok: false,
       error: {
@@ -165,17 +167,19 @@ describe("development-loan rules at save time (UX-047, was mortgageFieldErrors)"
 
   it("a draw after the loan's last-but-one payment date is refused (DR-074, ADR 0129)", async () => {
     const start = isoDate("2030-01-01");
-    const r = await usePortfolioStore.getState().addMortgageBlock({
-      id: "m-draw-late",
-      propertyId: pf().properties[0].id,
-      startDate: start,
-      initialPrincipal: money("1000000"),
-      fixationYears: 5,
-      loanTermYears: 30,
-      interestRatePa: rate("0.05"),
-      monthlyInstalment: money("6000"),
-      draws: [{ date: isoDate("2060-01-01"), amount: money("500000") }],
-    } as MortgageBlock);
+    const r = await usePortfolioStore.getState().addMortgageBlock(
+      mortgageBlock({
+        id: "m-draw-late",
+        propertyId: pf().properties[0].id,
+        startDate: start,
+        initialPrincipal: money("1000000"),
+        fixationYears: 5,
+        loanTermYears: 30,
+        interestRatePa: rate("0.05"),
+        monthlyInstalment: money("6000"),
+        draws: [{ date: isoDate("2060-01-01"), amount: money("500000") }],
+      }),
+    );
     expect(r).toMatchObject({
       ok: false,
       error: {

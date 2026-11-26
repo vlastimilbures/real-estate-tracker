@@ -13,6 +13,7 @@ import { buildSchedule, openingBalance } from "../schedule";
 import type { AmortizationRow, MortgageBlock } from "../types";
 import { assumptions } from "./support/seed";
 import { annuityPayment, annuityPeriods } from "./reference/mortgageReference";
+import { mortgageBlock } from "../loanBlock";
 
 const AGREED = 15000;
 
@@ -152,10 +153,10 @@ describe("ADR 0120: a tranche whose interest exceeds the agreed instalment", () 
   // A 2,000,000 Kč tranche on q: interest ≈ 16,231.52 Kč on ≈ 3.98 M Kč, above the
   // agreed 15,000 Kč.
   const big = (): MortgageBlock =>
-    ({
+    mortgageBlock({
       ...loan("2027-01-15", 30),
       draws: [{ date: isoDate("2027-01-15"), amount: money(2000000) }],
-    }) as MortgageBlock;
+    });
 
   // ADR 0137 (#225): q pays at least its interest. Before, it paid the agreed
   // 15,000 Kč and the ≈ 1,231.52 Kč shortfall was neither paid nor added to the balance.

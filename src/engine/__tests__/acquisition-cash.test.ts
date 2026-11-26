@@ -16,12 +16,13 @@ import { ZERO, type Decimal } from "../../lib/money";
 import type { Assumptions, MortgageBlock, Portfolio, Property } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { RATIO, expectKc, near } from "./support/tolerance";
+import { mortgageBlock } from "../loanBlock";
 
 const N = assumptions.horizonYears;
 const PRINCIPAL = 3_000_000;
 
 const loan = (patch: Partial<MortgageBlock> = {}): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "m-owned",
     propertyId: "owned",
     startDate: isoDate("2027-01-31"), // baseDate 2026-06-07 → projection year 1
@@ -30,7 +31,7 @@ const loan = (patch: Partial<MortgageBlock> = {}): MortgageBlock =>
     interestRatePa: rate("0.045"),
     monthlyInstalment: money("17000"),
     ...patch,
-  }) as MortgageBlock;
+  });
 
 /** The seed plus one property owned since 2020, with its own blocks. */
 function withOwned(

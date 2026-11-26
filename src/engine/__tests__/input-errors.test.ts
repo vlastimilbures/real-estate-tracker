@@ -23,9 +23,10 @@ import type { MortgageBlock, MortgageBlockFields, Portfolio } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock } from "./support/mixed";
 import { money } from "../brands";
+import { mortgageBlock } from "../loanBlock";
 
 const loan = (b: Partial<MortgageBlockFields>): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "m-x",
     propertyId: "javorova",
     startDate: isoDate("2021-01-17"),
@@ -34,7 +35,7 @@ const loan = (b: Partial<MortgageBlockFields>): MortgageBlock =>
     interestRatePa: rate("0.0169"),
     monthlyInstalment: money("6721.8"),
     ...b,
-  }) as MortgageBlock;
+  });
 
 const dev = (b: Partial<MortgageBlockFields>): MortgageBlock =>
   loan({ ...devBlock, id: "m-x", propertyId: "javorova", ...b });

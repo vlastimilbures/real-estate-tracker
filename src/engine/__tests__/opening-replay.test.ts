@@ -9,9 +9,10 @@ import { buildSchedule, openingBalance } from "../schedule";
 import type { MortgageBlock } from "../types";
 import { assumptions as A0 } from "./support/seed";
 import { referenceBalanceAt } from "./reference/mortgageReference";
+import { mortgageBlock } from "../loanBlock";
 
 const block = (b: Partial<MortgageBlock>): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "x",
     propertyId: "javorova",
     startDate: isoDate("2021-01-17"),
@@ -21,7 +22,7 @@ const block = (b: Partial<MortgageBlock>): MortgageBlock =>
     monthlyInstalment: money("10000"),
     loanTermYears: 20,
     ...b,
-  }) as MortgageBlock;
+  });
 
 const sumPrincipal = (b: MortgageBlock) =>
   buildSchedule(b, A0).reduce((s, r) => s.plus(r.principal), D(0));

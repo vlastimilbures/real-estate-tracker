@@ -6,7 +6,14 @@ import { usePortfolioStore } from "../portfolioStore";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
 import { migrate } from "../../data/migrations";
 import { seedIfEmpty } from "../../data/seed";
-import { edate, isoDate, money, rate, type MortgageBlock } from "../../engine";
+import {
+  edate,
+  isoDate,
+  money,
+  rate,
+  type MortgageBlock,
+  mortgageBlock,
+} from "../../engine";
 import type { Sql } from "../../data/sql";
 
 async function openSeeded(): Promise<Sql> {
@@ -21,7 +28,7 @@ const pf = () => store().portfolio!;
 
 /** A 30-year development loan from 2030-01-01: payment 358 is due 2059-11-01. */
 const devLoan = (draw: string): MortgageBlock =>
-  ({
+  mortgageBlock({
     id: "m-late",
     propertyId: pf().properties[0].id,
     startDate: isoDate("2030-01-01"),
@@ -34,7 +41,7 @@ const devLoan = (draw: string): MortgageBlock =>
       { date: isoDate("2031-01-01"), amount: money("100000") },
       { date: isoDate(draw), amount: money("500000") },
     ],
-  }) as MortgageBlock;
+  });
 
 /** The block that already exists on the first property (the seed's). */
 const seedBlock = () =>

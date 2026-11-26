@@ -21,13 +21,14 @@ import {
   type RefRow,
 } from "./mortgageReference";
 import { RESET } from "./seedLoans";
+import { mortgageBlock } from "../../loanBlock";
 
 export const TIGHT = 1e-6; // Kč
 /** The reference always runs this long, so a row the engine trims or misses shows. */
 export const REF_MONTHS = 720;
 
 export function toBlock(l: RefLoan, id = "x", propertyId = "p"): MortgageBlock {
-  return {
+  return mortgageBlock({
     id,
     propertyId,
     startDate: isoDate(l.start),
@@ -52,7 +53,7 @@ export function toBlock(l: RefLoan, id = "x", propertyId = "p"): MortgageBlock {
         ? { date: isoDate(r.date), maturity: isoDate(r.maturity) }
         : { date: isoDate(r.date), instalment: money(String(r.instalment)) },
     ),
-  } as MortgageBlock;
+  });
 }
 
 export const REF: Omit<RefOptions, "baseDate" | "months"> = {

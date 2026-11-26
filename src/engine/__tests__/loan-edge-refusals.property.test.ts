@@ -20,6 +20,7 @@ import { both, maxDev, TIGHT } from "./reference/eventHarness";
 import { fcRuns } from "./support/fcRuns";
 import { loan } from "./support/loan";
 import { assumptions, portfolio } from "./support/seed";
+import { mortgageBlock } from "../loanBlock";
 
 // Fixed seed ⇒ reproducible in CI; nightly runs 2000 with a date seed (`fcRuns`).
 const { runs: RUNS, timeout: TIMEOUT } = fcRuns(20261116, 100);
@@ -59,7 +60,7 @@ const lateTrancheLoan = fc
     const span =
       400 + (edate(start, T - 3).getTime() - start.getTime()) / 864e5;
     const baseDate = addDays(start, (baseShift % span) - 400);
-    const block = {
+    const block = mortgageBlock({
       id: "m-dev",
       propertyId: "javorova",
       startDate: start,
@@ -69,7 +70,7 @@ const lateTrancheLoan = fc
       monthlyInstalment: money("0"),
       loanTermYears: termYears,
       draws: [{ date, amount: money("500000") }],
-    } as MortgageBlock;
+    });
     return { block, baseDate };
   })
   .filter(({ block }) => block.draws![0]!.date > block.startDate);

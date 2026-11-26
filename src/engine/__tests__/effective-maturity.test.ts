@@ -8,6 +8,7 @@ import { effectiveMaturity } from "../schedule";
 import type { MortgageBlock } from "../types";
 import { assumptions, portfolio } from "./support/seed";
 import { devBlock } from "./support/mixed";
+import { mortgageBlock } from "../loanBlock";
 
 const seedJavorova = portfolio.mortgages.find(
   (m) => m.propertyId === "javorova",
@@ -21,13 +22,13 @@ describe("ADR 0116: effective maturity", () => {
     expect(day(effectiveMaturity(javorova, assumptions))).toBe(
       day(edate(javorova.startDate, termMonths(javorova))),
     );
-    const dev = { ...devBlock, id: "m-dev" } as MortgageBlock;
+    const dev = mortgageBlock({ ...devBlock, id: "m-dev" });
     expect(day(effectiveMaturity(dev, assumptions))).toBe("2056-03-01");
   });
 
   it("is the schedule's payoff when the instalment beats the entered term", () => {
     // 30-year term, but 12,000 Kč a month repays 1M at 3 % in 94 payments.
-    const fast = {
+    const fast = mortgageBlock({
       id: "fast",
       propertyId: "p",
       startDate: isoDate("2020-01-10"),
@@ -36,12 +37,12 @@ describe("ADR 0116: effective maturity", () => {
       interestRatePa: rate("0.03"),
       monthlyInstalment: money(12000),
       loanTermYears: 30,
-    } as MortgageBlock;
+    });
     expect(day(effectiveMaturity(fast, assumptions))).toBe("2027-11-10");
   });
 
   it("moves to the shortened term (ADR 0179 example: 2046-04-17)", () => {
-    const b = {
+    const b = mortgageBlock({
       ...javorova,
       prepayments: [
         {
@@ -50,22 +51,22 @@ describe("ADR 0116: effective maturity", () => {
           effect: "shortenTerm" as const,
         },
       ],
-    } as MortgageBlock;
+    });
     expect(day(effectiveMaturity(b, assumptions))).toBe("2046-04-17");
   });
 
   it("follows a maturity recast", () => {
-    const b = {
+    const b = mortgageBlock({
       ...javorova,
       recasts: [
         { date: isoDate("2031-01-17"), maturity: isoDate("2045-01-17") },
       ],
-    } as MortgageBlock;
+    });
     expect(day(effectiveMaturity(b, assumptions))).toBe("2045-01-17");
   });
 
   it("ends at a prepayment that repays the loan", () => {
-    const b = {
+    const b = mortgageBlock({
       ...javorova,
       prepayments: [
         {
@@ -74,12 +75,12 @@ describe("ADR 0116: effective maturity", () => {
           effect: "lowerInstalment" as const,
         },
       ],
-    } as MortgageBlock;
+    });
     expect(day(effectiveMaturity(b, assumptions))).toBe("2028-02-17");
   });
 
   it("ignores events dated after the successor's start", () => {
-    const b = {
+    const b = mortgageBlock({
       ...javorova,
       prepayments: [
         {
@@ -88,8 +89,8 @@ describe("ADR 0116: effective maturity", () => {
           effect: "lowerInstalment" as const,
         },
       ],
-    } as MortgageBlock;
-    const next = {
+    });
+    const next = mortgageBlock({
       id: "refi",
       propertyId: javorova.propertyId,
       startDate: isoDate("2033-01-17"),
@@ -97,7 +98,7 @@ describe("ADR 0116: effective maturity", () => {
       fixationYears: 5,
       interestRatePa: rate("0.039"),
       monthlyInstalment: money(9800),
-    } as MortgageBlock;
+    });
     expect(day(effectiveMaturity(b, assumptions, next))).toBe(
       day(edate(javorova.startDate, termMonths(javorova))),
     );

@@ -1,8 +1,8 @@
 // The row actions (valuations, leases, mortgage blocks, holding costs) on the happy path.
 import { beforeEach, describe, expect, it } from "vitest";
 import { usePortfolioStore } from "../portfolioStore";
-import { isoDate, rate } from "../../engine";
-import type { IsoDate, MortgageBlock } from "../../engine";
+import { isoDate, rate, mortgageBlock } from "../../engine";
+import type { IsoDate } from "../../engine";
 import { money } from "../../engine";
 import { openSeeded } from "./support/openSeeded";
 
@@ -123,11 +123,13 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
     ];
     const completionDate = isoDate("2028-10-10");
 
-    const blocked = await usePortfolioStore.getState().saveMortgageBlock({
-      ...existing,
-      draws,
-      completionDate,
-    } as unknown as MortgageBlock); // deliberately invalid (no term)
+    const blocked = await usePortfolioStore.getState().saveMortgageBlock(
+      mortgageBlock({
+        ...existing,
+        draws,
+        completionDate,
+      }),
+    ); // deliberately invalid (no term)
     expect(blocked.ok).toBe(false);
     if (blocked.ok) throw new Error("expected failure");
     // UX-047: the engine rule, on the loan-term field (was an English-only message).
@@ -159,11 +161,13 @@ describe("portfolioStore mutations — happy path (all actions)", () => {
   it("a broken input rule is only returned: the banner stays empty (#125)", async () => {
     // ADR 0141: the form that submitted the write shows the refusal itself.
     const existing = pf().mortgages[0];
-    const blocked = await usePortfolioStore.getState().saveMortgageBlock({
-      ...existing,
-      draws: [{ date: isoDate("2026-09-01"), amount: money("2300000") }],
-      completionDate: isoDate("2028-10-10"),
-    } as unknown as MortgageBlock); // deliberately invalid (no term)
+    const blocked = await usePortfolioStore.getState().saveMortgageBlock(
+      mortgageBlock({
+        ...existing,
+        draws: [{ date: isoDate("2026-09-01"), amount: money("2300000") }],
+        completionDate: isoDate("2028-10-10"),
+      }),
+    ); // deliberately invalid (no term)
     expect(blocked.ok).toBe(false);
     expect(blocked.ok ? null : blocked.error.kind).toBe("input");
     expect(usePortfolioStore.getState().error).toBeNull();

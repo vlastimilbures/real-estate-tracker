@@ -18,6 +18,7 @@ import type {
 } from "../types";
 import { BASE_DATE, assumptions, portfolio } from "./support/seed";
 import { RATIO, near as nearNum } from "./support/tolerance";
+import { mortgageBlock } from "../loanBlock";
 
 /** The seed with Javorova prepaying 500,000 Kč (+ fee) on its 2031-01-17 refix. */
 function prepaid(
@@ -28,7 +29,7 @@ function prepaid(
     ...p,
     mortgages: p.mortgages.map((m): MortgageBlock =>
       m.propertyId === "javorova"
-        ? ({
+        ? mortgageBlock({
             ...m,
             prepayments: [
               {
@@ -38,7 +39,7 @@ function prepaid(
                 fee: money(2000),
               },
             ],
-          } as MortgageBlock)
+          })
         : m,
     ),
   };
