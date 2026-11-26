@@ -22,12 +22,6 @@
       "Function 'kpiRowSpecs'": 132
     }
   },
-  "src/ui/model/dataCheck.ts": {
-    "complexity": {
-      "Function 'findingFix'": 14,
-      "Function 'findingText'": 22
-    }
-  },
   "src/ui/model/financing.ts": {
     "lines": {
       "Function 'financingTimeline'": 101
