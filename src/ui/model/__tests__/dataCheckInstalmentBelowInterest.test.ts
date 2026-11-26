@@ -50,9 +50,10 @@ const withBlocks = (...blocks: MortgageBlock[]): Portfolio => ({
 });
 function attention(p: Portfolio, asOf: Date = BASE_DATE) {
   const dubova = p.properties.find((x) => x.id === "dubova")!;
-  return propertyDataCheck(dubova, p, asOf, BASE_DATE).attention.filter(
-    (f) => f.kind === "instalmentBelowInterest",
-  );
+  return propertyDataCheck(dubova, p, {
+    asOf,
+    baseDate: BASE_DATE,
+  }).attention.filter((f) => f.kind === "instalmentBelowInterest");
 }
 /** A finding as plain values, for comparing. */
 const plain = (f: DataFinding) =>
@@ -146,7 +147,11 @@ describe("the Data check lists a stored loan below its first interest (ADR 0264)
 
   it("adds one to the Dashboard's review count", () => {
     const count = (p: Portfolio) =>
-      dashboardDataCheck(p, BASE_DATE, BASE_DATE, 30).attention.length;
+      dashboardDataCheck(p, {
+        asOf: BASE_DATE,
+        baseDate: BASE_DATE,
+        horizonYears: 30,
+      }).attention.length;
     expect(count(withBlocks(below))).toBe(count(portfolio) + 1);
   });
 });

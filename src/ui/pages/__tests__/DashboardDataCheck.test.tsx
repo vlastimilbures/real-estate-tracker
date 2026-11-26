@@ -32,7 +32,7 @@ function renderPanel(
   const onFix = vi.fn();
   render(
     <DataCheckPanel
-      check={dashboardDataCheck(p, asOf, baseDate, horizonYears)}
+      check={dashboardDataCheck(p, { asOf, baseDate, horizonYears })}
       asOf={asOf}
       resetRate={assumptions.postFixationResetRatePa}
       onFix={onFix}

@@ -29,7 +29,7 @@ const LANGS = ["en", "cs", "ru"] as const;
 const resetRate = assumptions.postFixationResetRatePa;
 
 const checkOf = (p: Portfolio, asOf: Date) =>
-  dashboardDataCheck(p, asOf, BASE_DATE, 30);
+  dashboardDataCheck(p, { asOf, baseDate: BASE_DATE, horizonYears: 30 });
 
 describe("the Data check's words", () => {
   const cases: [string, Portfolio, Date][] = [

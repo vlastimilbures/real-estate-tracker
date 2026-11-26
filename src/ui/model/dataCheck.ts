@@ -122,14 +122,20 @@ export function reviewPill(
     : undefined;
 }
 
+/** The dates a Data check reads: the as-of date and the projection's base date. One
+ *  object, so the two cannot be swapped. */
+interface CheckDates {
+  asOf: Date;
+  baseDate: Date;
+}
+
 /** The property's findings at `asOf`; before its purchase date only the own-cash one.
  *  `baseDate` = the projection start, for what the projection assumes about an ended
  *  lease and whether it derives the down payment. */
 export function propertyDataCheck(
   property: Property,
   portfolio: Portfolio,
-  asOf: Date,
-  baseDate: Date,
+  { asOf, baseDate }: CheckDates,
 ): DataCheck {
   const own = <T extends { propertyId: string }>(rows: T[]) =>
     rows.filter((r) => r.propertyId === property.id);
@@ -286,12 +292,11 @@ function defaultsOf(
 export function dataCheckItems(
   properties: Property[],
   portfolio: Portfolio,
-  asOf: Date,
-  baseDate: Date,
+  dates: CheckDates,
 ): { attention: DataCheckItem[]; defaults: DataCheckItem[] } {
   const checks = properties.map((p) => ({
     p,
-    check: propertyDataCheck(p, portfolio, asOf, baseDate),
+    check: propertyDataCheck(p, portfolio, dates),
   }));
   const rows = (group: keyof DataCheck) =>
     checks.flatMap(({ p, check }) =>
@@ -308,20 +313,17 @@ export function dataCheckItems(
  *  the portfolio's own rows first in "needs attention" (ADR 0148). */
 export function dashboardDataCheck(
   portfolio: Portfolio,
-  asOf: Date,
-  baseDate: Date,
-  horizonYears: number,
+  { horizonYears, ...dates }: CheckDates & { horizonYears: number },
 ): { attention: DataCheckItem[]; defaults: DataCheckItem[] } {
   // Inactive properties are left out, as from the Dashboard's totals.
   const items = dataCheckItems(
     portfolio.properties.filter((p) => p.active),
     portfolio,
-    asOf,
-    baseDate,
+    dates,
   );
   return {
     attention: [
-      ...portfolioDataCheck({ horizonYears, baseDate }),
+      ...portfolioDataCheck({ horizonYears, baseDate: dates.baseDate }),
       ...items.attention,
     ],
     defaults: items.defaults,
