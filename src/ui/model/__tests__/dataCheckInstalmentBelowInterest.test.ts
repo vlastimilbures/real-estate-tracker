@@ -17,6 +17,8 @@ import {
   portfolio,
 } from "../../../engine/__tests__/support/seed";
 import { en } from "../../../i18n/en";
+import { cs } from "../../../i18n/cs";
+import { ru } from "../../../i18n/ru";
 import { fmtCzk } from "../../../lib/format";
 import {
   dashboardDataCheck,
@@ -103,7 +105,7 @@ describe("the Data check lists a stored loan below its first interest (ADR 0264)
     const [f] = attention(withBlocks(below));
     expect(findingFix(f!)).toBe("financing");
     expect(findingText(en, f!, resetRate)).toBe(
-      `Loan from 12.03.2027: the instalment ${fmtCzk(money("1000"))} is below the first month's interest ${fmtCzk(money("12500"))}. The figures leave the unpaid interest out until the next rate reset. Raise the instalment, or remove the term, to save this loan again.`,
+      `Mortgage from 12.03.2027: the instalment ${fmtCzk(money("1000"))} does not cover the first month's interest ${fmtCzk(money("12500"))}. The figures leave the unpaid interest out until the next rate reset. Raise the instalment to save this loan again.`,
     );
     // Its own line, as the sentence holds the loan's values.
     const [g] = dataCheckGroups(
@@ -113,6 +115,28 @@ describe("the Data check lists a stored loan below its first interest (ADR 0264)
     );
     expect(g!.headline).toBe(findingText(en, f!, resetRate));
     expect(g!.chips[0]!.detail).toBeNull();
+  });
+
+  it("words a 0 % loan with a 0 Kč instalment by its own code", () => {
+    const zero: MortgageBlock = {
+      ...below,
+      interestRatePa: rate("0"),
+      monthlyInstalment: money("0"),
+    };
+    const [f] = attention(withBlocks(zero));
+    expect(f).toMatchObject({ code: "ZERO_RATE_ZERO_INSTALMENT" });
+    expect(findingFix(f!)).toBe("financing");
+    expect(findingText(en, f!, resetRate)).toBe(
+      "Mortgage from 12.03.2027: an interest-free loan with a term needs an instalment above 0 Kč. Raise the instalment to save this loan again.",
+    );
+    expect(findingText(cs, f!, resetRate)).toBe(
+      cs.dataCheck.zeroRateZeroInstalment("12.03.2027"),
+    );
+    expect(findingText(ru, f!, resetRate)).toBe(
+      ru.dataCheck.zeroRateZeroInstalment("12.03.2027"),
+    );
+    const [g] = attention(withBlocks(below));
+    expect(g).toMatchObject({ code: "INSTALMENT_BELOW_INTEREST" });
   });
 
   it("adds one to the Dashboard's review count", () => {

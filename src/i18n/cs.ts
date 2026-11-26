@@ -457,7 +457,9 @@ export const cs: Dictionary = {
     leaseOverlap: (first, second) =>
       `Nájmy od ${first} a od ${second} se překrývají. Nájmy jednoho bytu se překrývat nemohou: nastavte dřívějšímu nájmu datum konce před začátkem pozdějšího.`,
     instalmentBelowInterest: (date, instalment, interest) =>
-      `Úvěr od ${date}: splátka ${instalment} je nižší než úrok za první měsíc ${interest}. Čísla až do příští změny sazby nezahrnují nezaplacený úrok. Zvyšte splátku, nebo odstraňte dobu splatnosti, aby šlo úvěr znovu uložit.`,
+      `Hypotéka od ${date}: splátka ${instalment} nepokrývá úrok za první měsíc ${interest}. Čísla až do příští změny sazby nezahrnují nezaplacený úrok. Zvyšte splátku, aby bylo možné úvěr znovu uložit.`,
+    zeroRateZeroInstalment: (date) =>
+      `Hypotéka od ${date}: bezúročný úvěr s dobou splatnosti potřebuje splátku vyšší než 0 Kč. Zvyšte splátku, aby bylo možné úvěr znovu uložit.`,
   },
 
   properties: {

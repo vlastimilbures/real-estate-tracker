@@ -21,6 +21,12 @@ export function firstMonthInterest(block: MortgageBlock): Decimal {
   return block.initialPrincipal.times(monthlyRate(block.interestRatePa));
 }
 
+/** The two ways an entered instalment fails to repay a loan. */
+export type InstalmentCode = Extract<
+  ValidationCode,
+  "INSTALMENT_BELOW_INTEREST" | "ZERO_RATE_ZERO_INSTALMENT"
+>;
+
 /**
  * Why the entered instalment cannot repay the loan (D-17, DR-014), or undefined when it
  * can: at 0 % it must be positive; otherwise it must exceed the first month's interest.
@@ -28,7 +34,7 @@ export function firstMonthInterest(block: MortgageBlock): Decimal {
  */
 export function instalmentProblem(
   block: MortgageBlock,
-): { code: ValidationCode; field: "monthlyInstalment" } | undefined {
+): { code: InstalmentCode; field: "monthlyInstalment" } | undefined {
   const field = "monthlyInstalment";
   if (block.interestRatePa.isZero()) {
     return block.monthlyInstalment.greaterThan(ZERO)

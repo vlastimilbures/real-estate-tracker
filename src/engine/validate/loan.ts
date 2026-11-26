@@ -6,6 +6,7 @@ import {
   dueDate,
   firstMonthInterest,
   instalmentProblem,
+  type InstalmentCode,
 } from "../loanTerm";
 import { isDevLoan } from "../loanBlock";
 import { isAfter, isOnOrBefore } from "../dates";
@@ -168,7 +169,7 @@ const INSTALMENT_INPUTS: ReadonlySet<string | undefined> = new Set([
  */
 export function instalmentBelowInterest(
   b: MortgageBlock,
-): { code: ValidationCode; firstInterest: Decimal } | undefined {
+): { code: InstalmentCode; firstInterest: Decimal } | undefined {
   if (b.loanTermYears == null || isDevLoan(b)) return undefined;
   if (blockIssues(b).some(([, field]) => INSTALMENT_INPUTS.has(field)))
     return undefined;

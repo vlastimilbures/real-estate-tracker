@@ -236,7 +236,7 @@ engine without the form, and remove it when the last part lands.
   a loan without a term already was, with the same message on the instalment (ADR 0264,
   #597). A loan like that saved before still loads, restores and projects as before; the
   Data check lists it under "Needs attention", and it can be saved again once its
-  instalment is raised or its term removed. No figure changes.
+  instalment is raised. No figure changes.
 
 ### Fixed
 

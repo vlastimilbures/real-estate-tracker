@@ -21,6 +21,7 @@ import type {
   Portfolio,
   Property,
   Rate,
+  ValidationCode,
 } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import type { Decimal } from "../../lib/money";
@@ -93,9 +94,14 @@ export type DataFinding =
   | { kind: "leaseOverlap"; first: IsoDate; second: IsoDate }
   /** A stored plain loan with a term whose instalment is at or below its first month's
    *  interest (ADR 0264): a database from before the rule keeps it, and its figures
-   *  leave the unpaid interest out until the next rate reset. */
+   *  leave the unpaid interest out until the next rate reset. `code` is the rule it
+   *  breaks: ZERO_RATE_ZERO_INSTALMENT for a 0 % loan with a 0 Kč instalment. */
   | {
       kind: "instalmentBelowInterest";
+      code: Extract<
+        ValidationCode,
+        "INSTALMENT_BELOW_INTEREST" | "ZERO_RATE_ZERO_INSTALMENT"
+      >;
       loanStart: IsoDate;
       instalment: Money;
       interest: Decimal;
@@ -240,6 +246,7 @@ function instalmentFindings(mortgages: MortgageBlock[]): DataFinding[] {
       ? [
           {
             kind: "instalmentBelowInterest" as const,
+            code: found.code,
             loanStart: b.startDate,
             instalment: b.monthlyInstalment,
             interest: found.firstInterest,
@@ -498,11 +505,13 @@ const FINDING_TEXT: {
     t.dataCheck.leaseOverlap(fmtDate(f.first), fmtDate(f.second)),
   fixationEnded: (t, f, resetRate) => loanWarningText(t, f, resetRate),
   instalmentBelowInterest: (t, f) =>
-    t.dataCheck.instalmentBelowInterest(
-      fmtDate(f.loanStart),
-      fmtCzk(f.instalment),
-      fmtCzk(f.interest),
-    ),
+    f.code === "ZERO_RATE_ZERO_INSTALMENT"
+      ? t.dataCheck.zeroRateZeroInstalment(fmtDate(f.loanStart))
+      : t.dataCheck.instalmentBelowInterest(
+          fmtDate(f.loanStart),
+          fmtCzk(f.instalment),
+          fmtCzk(f.interest),
+        ),
   growthDefault: ({ dataCheck: d }, f) =>
     f.appreciation && f.rentIndexation
       ? d.growthBoth

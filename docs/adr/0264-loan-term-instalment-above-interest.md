@@ -358,3 +358,19 @@ The draft's six open questions, answered by the owner:
    be repaid") stays; no new key.
 6. **`dataCheck.instalmentBelowInterest`:** the en text is approved verbatim; cs and ru with
    the same meaning go in the PR for review.
+
+Addendum (owner, 2026-11-26, on PR #613): the wording of decision 6 is corrected, and a
+second key is added. The "or remove the term" advice is dropped as wrong: a loan without a
+term is refused by D-17 on the same test. "Is below" becomes "does not cover", as the rule
+also refuses an equal instalment and the amounts are rounded, and the sentence opens with
+"Mortgage from", as the neighbouring `dataCheck` keys do. A stored 0 % loan with a term and
+a 0 Kč instalment gets its own sentence, `dataCheck.zeroRateZeroInstalment`, chosen by the
+finding's code (`ZERO_RATE_ZERO_INSTALMENT`). The approved en texts:
+
+- `dataCheck.instalmentBelowInterest`: "Mortgage from {date}: the instalment {instalment}
+  does not cover the first month's interest {interest}. The figures leave the unpaid
+  interest out until the next rate reset. Raise the instalment to save this loan again."
+- `dataCheck.zeroRateZeroInstalment`: "Mortgage from {date}: an interest-free loan with a
+  term needs an instalment above 0 Kč. Raise the instalment to save this loan again."
+
+The cs and ru texts of both keys are approved as in the dictionaries.

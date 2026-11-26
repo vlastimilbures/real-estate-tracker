@@ -522,7 +522,10 @@ export const en = {
       instalment: string,
       interest: string,
     ) =>
-      `Loan from ${date}: the instalment ${instalment} is below the first month's interest ${interest}. The figures leave the unpaid interest out until the next rate reset. Raise the instalment, or remove the term, to save this loan again.`,
+      `Mortgage from ${date}: the instalment ${instalment} does not cover the first month's interest ${interest}. The figures leave the unpaid interest out until the next rate reset. Raise the instalment to save this loan again.`,
+    // ADR 0264: the same for a 0 % loan with a term and a 0 Kč instalment.
+    zeroRateZeroInstalment: (date: string) =>
+      `Mortgage from ${date}: an interest-free loan with a term needs an instalment above 0 Kč. Raise the instalment to save this loan again.`,
   },
 
   properties: {
