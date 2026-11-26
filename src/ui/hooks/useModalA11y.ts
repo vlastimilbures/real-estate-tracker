@@ -5,10 +5,13 @@ import { useDismiss } from "./useDismiss";
 /**
  * Modal accessibility wiring: Escape-to-close plus moving focus into the dialog on
  * open (so keyboard users start inside it, not on the page behind). Attach the returned
- * ref to the dialog element; the caller still sets `role="dialog"`/`aria-modal`.
+ * ref to the dialog element; the caller still sets `role="dialog"`/`aria-modal`, and passes
+ * `modal` with `aria-modal` (#600).
  *
  * Options (UX-029), off by default so popovers keep their lighter behaviour:
  * - `trap`: Tab / Shift+Tab wrap inside the dialog instead of walking into the page.
+ * - `modal`: a modal dialog on the layer stack: the native menu's items wait while it is
+ *   open (#600). A dropdown's list is a layer, not modal.
  * - `restoreFocus`: on close, focus returns to the element that had it on open, unless
  *   focus has already moved on (a click outside a popover keeps its target focused). When
  *   that element has left the page, focus goes to the first reachable focusable element
@@ -23,11 +26,11 @@ import { useDismiss } from "./useDismiss";
  */
 export function useModalA11y(
   onClose: () => void,
-  { trap = false, restoreFocus = false } = {},
+  { trap = false, restoreFocus = false, modal = false } = {},
 ) {
   const ref = useRef<HTMLDivElement>(null);
   // Declared before the focus effect, so the layer is on the stack before focus moves in.
-  const isTop = useDismiss(() => onClose(), { escape: "top" });
+  const isTop = useDismiss(() => onClose(), { escape: "top", modal });
 
   useEffect(() => {
     const opener =

@@ -3,6 +3,7 @@ import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore } from "../../state/uiStore";
 import { onMenuEvent, setMenuLabels } from "../../state/platform";
 import { isTauri } from "../../lib/tauri";
+import { modalOpen } from "../layers";
 import { menuLabels, menuRoute } from "../model/menu";
 import { useT } from "./useT";
 
@@ -19,10 +20,10 @@ export function useNativeMenu(): void {
 
   useEffect(() => {
     if (!isTauri()) return;
-    const dialogOpen = () =>
-      document.querySelector('[aria-modal="true"]') !== null;
+    // A modal dialog is open: from the layer stack, where a dropdown's list does not
+    // count (#600).
     const held = () =>
-      dialogOpen() || usePortfolioStore.getState().status.kind !== "ready";
+      modalOpen() || usePortfolioStore.getState().status.kind !== "ready";
     const offs = [
       onMenuEvent("menu://about", () => {
         if (!held()) useUiStore.getState().openAbout();
