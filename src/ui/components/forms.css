@@ -325,19 +325,14 @@
   padding-left: var(--s5);
 }
 
-/* A text button that reads as an underlined link (the error summary's field links, the
-   form-note "learn more"). WCAG 2.5.8: at least 24px tall. */
-.link-btn {
+/* A text button (`.link-button`, table.css) that is always underlined: the error
+   summary's field links, the form-note "learn more", the not-owned funding link
+   (ADR 0266). WCAG 2.5.8: at least 24px tall. */
+.link-button.underlined {
   min-height: 24px;
-  font: inherit;
-  color: inherit;
   text-decoration: underline;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
 }
-.error-summary .link-btn {
+.error-summary .link-button {
   color: var(--negative);
 }
 

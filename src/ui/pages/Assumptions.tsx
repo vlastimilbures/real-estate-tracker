@@ -121,7 +121,7 @@ export function AssumptionsPanel({
                 <li key={spec.name}>
                   <button
                     type="button"
-                    className="link-btn"
+                    className="link-button underlined"
                     onClick={() =>
                       document.getElementById(fieldId(spec.name))?.focus()
                     }
