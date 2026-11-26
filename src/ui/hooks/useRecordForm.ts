@@ -1,7 +1,7 @@
-// One record form's state (#490): the draft, whether it holds unsaved edits (the leave
-// guard), and the Save that parses it and shows a refusal or a failed save. The draft is
-// the text fields plus, for a form with `lists` (the mortgage form), its row lists. The
-// markup is RecordFormView's (../components/forms).
+// One record form's state: the draft, whether it holds unsaved edits (the leave guard),
+// and the Save that parses it and shows a refusal or a failed save. The draft is the text
+// fields plus, for a form with `lists` (the mortgage form), its row lists. The markup is
+// RecordFormView's (../components/forms).
 import {
   collectValues,
   formRules,
@@ -31,7 +31,7 @@ export interface RecordFormOptions<S extends readonly FormSpec[], L = NoLists> {
   lists?: { initial: L; model: FormLists<L> } | undefined;
   /** May be async; while it runs the form is busy, so a mutation can't be double-fired.
    *  Resolve to a WriteError to keep the form open with the failure shown: on the field
-   *  it names if shown, else above the buttons (UX-047, ADR 0243). */
+   *  it names if shown, else above the buttons (ADR 0243). */
   onSubmit: (
     values: ParsedValues<S>,
   ) => void | WriteError | Promise<void | WriteError>;
@@ -150,7 +150,7 @@ export function useRecordForm<const S extends readonly FormSpec[], L = NoLists>(
     unsaved: form.unsaved,
     patch,
     editList,
-    // A throwing onSubmit (sync or async) is shown like a returned failure (DR-090).
+    // A throwing onSubmit (sync or async) is shown like a returned failure.
     submit: () => form.submit(check),
   };
 }

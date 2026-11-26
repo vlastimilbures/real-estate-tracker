@@ -1,5 +1,5 @@
-// The levered IRR and the reason it has no value (UX-079, DR-158, ADR 0079): "no unique
-// IRR" or "no IRR in range" instead of a blank. `lensKpis` picks it for the lens.
+// The levered IRR and the reason it has no value (ADR 0079): "no unique IRR" or "no IRR
+// in range" instead of a blank. `lensKpis` picks it for the lens.
 import type { Decimal } from "../../lib/money";
 import {
   IRR_BRACKET_LOW,

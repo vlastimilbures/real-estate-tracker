@@ -1,4 +1,4 @@
-// The Dashboard's view (#485): everything the page derives from the engine's output, the
+// The Dashboard's view: everything the page derives from the engine's output, the
 // lens, the as-of date and the filter, so the page only renders. Pure.
 import type { PortfolioKPIs, PortfolioSnapshot } from "../../engine";
 import type { EngineOutput } from "../../state/engineModel";

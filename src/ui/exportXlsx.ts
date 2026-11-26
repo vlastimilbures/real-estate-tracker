@@ -1,5 +1,5 @@
 // Hands a built Excel workbook to the user (the save dialog in the app). The IO half of
-// the export; ui/model/xlsxExport.ts builds the bytes and stays pure (DR-066).
+// the export; ui/model/xlsxExport.ts builds the bytes and stays pure.
 import { saveFile, type SaveOutcome } from "../state/platform";
 import {
   buildWorkbook,

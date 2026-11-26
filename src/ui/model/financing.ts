@@ -1,4 +1,4 @@
-// The Dashboard "Financing & upcoming" panel (ADR 0103, #31). Pure shaping of the engine's
+// The Dashboard "Financing & upcoming" panel (ADR 0103). Pure shaping of the engine's
 // financing exposure: the next reset across the portfolio, debt resetting in the chosen
 // window, total interest of the lens, interest saved by prepayments (ADR 0116) and the
 // fixation timeline of the window (ADR 0204). Balances and interest saved stay nominal in
@@ -339,7 +339,7 @@ export function financingLabels(
   };
 }
 
-/** The whole panel for the chosen window (#485): its figures, the timeline, the labels of
+/** The whole panel for the chosen window: its figures, the timeline, the labels of
  *  the lens, whether the window toggle shows, and the note under the timeline. In the
  *  real lens, with rows, the note also says the debt at reset is nominal (ADR 0214 §3). */
 export function financingView(

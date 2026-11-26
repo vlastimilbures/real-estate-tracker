@@ -83,11 +83,11 @@ export interface CrashLevel {
 }
 
 // Shock levels in percentage points; labels are built from them in the UI language at
-// render (UX-034).
+// render.
 export const RATE_LEVELS_PP = [2, 4, 6];
 export const INFLATION_LEVELS_PP = [3, 6, 9];
 /** A crash level of `pct`, labelled with the fall in the app's percent format
- *  ("−10,0 %", #441, ADR 0250). */
+ *  ("−10,0 %", ADR 0250). */
 const crashLevel = (pct: string): CrashLevel => ({
   label: fmtPct(D(pct).neg()),
   pct,

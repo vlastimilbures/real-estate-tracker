@@ -1,4 +1,4 @@
-// Moving focus when a control leaves or a view switches (#491): which elements Tab reaches,
+// Moving focus when a control leaves or a view switches: which elements Tab reaches,
 // whether focus is lost, and the section jump. Every "is focus lost" test in src/ui is
 // `focusLost`.
 

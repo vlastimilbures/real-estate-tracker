@@ -1,4 +1,4 @@
-// Render timing for a page (P9): marks `${name}:render` when the page renders and, once
+// Render timing for a page: marks `${name}:render` when the page renders and, once
 // the render that shows `output` has committed, measures `${name}-render`. The first
 // such commit in the app's lifetime also marks `${name}-rendered` (the cold-start end).
 import { useEffect } from "react";

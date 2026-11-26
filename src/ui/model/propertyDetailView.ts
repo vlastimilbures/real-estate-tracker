@@ -1,4 +1,4 @@
-// Property detail's view (#484): everything the page derives from the engine's output, the
+// Property detail's view: everything the page derives from the engine's output, the
 // property and the lens, so the page only renders. Pure.
 import type {
   AmortizationRow,
@@ -55,7 +55,7 @@ type PropertyDetailOut = PropertyEngineOutput;
 
 /** The parts of the page that exist only with the engine's figures. */
 export interface PropertyDetailBodyView {
-  /** The tiles under the lens, by the Dashboard's as-of rule (DR-054, D-62). */
+  /** The tiles under the lens, by the Dashboard's as-of rule (ADR 0019). */
   tiles: PropertySnapshot;
   basis: AsOfBasis;
   chartRows: ChartRow[];
@@ -77,7 +77,7 @@ export interface PropertyDetailBodyView {
 }
 
 export interface PropertyDetailView {
-  /** Null while the stored data breaks an engine rule (DR-146). */
+  /** Null while the stored data breaks an engine rule. */
   body: PropertyDetailBodyView | null;
   subtitle: string;
   /** The loan warnings under the blocks they describe (ADR 0107, 0157). */
@@ -100,7 +100,7 @@ export interface PropertyDetailInput {
   t: Dictionary;
 }
 
-/** The engine's result split: its figures, or the rule the stored data breaks (DR-146);
+/** The engine's result split: its figures, or the rule the stored data breaks;
  *  both null for an unknown property. */
 export function splitResult(result: PropertyResult): {
   out: PropertyDetailOut | null;
@@ -256,7 +256,7 @@ export function propertyDetailView(
   const { out, property, portfolio, assumptions, mortgages, view, t } = input;
   const body = out ? propertyBodyView(out, input) : null;
   const checked = out && property.active ? out : null;
-  // Every block from the one in force onward (UX-054).
+  // Every block from the one in force onward.
   const warnings = checked
     ? loanWarnings(mortgages, assumptions.baseDate, checked.eventOutcomes)
     : [];

@@ -1,7 +1,7 @@
-// One form's draft and its save (#490): the draft, the values it opened with (or last
-// saved), whether it holds unsaved edits (the leave guard, UX-073, ADR 0262 §2), and the
-// Save's busy flag, errors and messages (useFormSubmit). The record forms (useRecordForm)
-// and the property dialog build on it.
+// One form's draft and its save: the draft, the values it opened with (or last saved),
+// whether it holds unsaved edits (the leave guard, ADR 0262 §2), and the Save's busy
+// flag, errors and messages (useFormSubmit). The record forms (useRecordForm) and the
+// property dialog build on it.
 import { useCallback, useId, useState } from "react";
 import type { WriteError } from "../../state/writeError";
 import {

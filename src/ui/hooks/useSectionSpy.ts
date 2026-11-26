@@ -4,9 +4,10 @@ import { useTopbarHeight } from "./useTopbar";
 
 /**
  * The element id, of `ids` (in page order), whose section is in view (ADR 0107): the
- * first one inside a band from under the topbar to the middle of the window, or the
- * last one once the page is scrolled to the bottom. `select` marks a section at once,
- * for a nav click. Without IntersectionObserver it stays on the first (or selected) id.
+ * first one inside a band from under the topbar to the middle of the window, or the last
+ * one once the page is scrolled to the bottom. The returned setter marks a section at
+ * once, for a nav click. Without IntersectionObserver it stays on the first (or selected)
+ * id.
  */
 export function useSectionSpy(ids: readonly string[]) {
   const [current, setCurrent] = useState<string | null>(null);

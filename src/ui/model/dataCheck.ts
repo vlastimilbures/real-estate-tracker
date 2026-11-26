@@ -1,4 +1,4 @@
-// Pure model for the Data check (ADR 0118, #35): the inputs behind a property's numbers
+// Pure model for the Data check (ADR 0118): the inputs behind a property's numbers
 // that are stale, missing or left at a portfolio default, at an explicit as-of date. It
 // calls the engine's own selectors, so a finding appears exactly when the engine falls back.
 import {
@@ -80,7 +80,7 @@ export type DataFinding =
   | { kind: "fundingUnknown"; future: boolean }
   /** A stored bounded value outside the range the forms accept (ADR 0148), or finer than
    *  they accept — not a whole number (ADR 0180 §2), or a size with two or more decimals
-   *  (ADR 0236 §3): a legacy database keeps it, and a restore asks about it.
+   *  (ADR 0236 §3): a stored database may hold it, and a restore asks about it.
    *  `loanStart` names the mortgage. */
   | {
       kind: "outOfRange";
@@ -224,8 +224,8 @@ function rangeFindings(
   );
 }
 
-/** Stored leases that overlap (ADR 0163): the forms and the CSV import no longer write
- *  them, but a database from before the rule keeps them. One finding per pair. */
+/** Stored leases that overlap (ADR 0163): the forms and the CSV import refuse them, but
+ *  a database written before the rule may still hold them. One finding per pair. */
 function leaseOverlapFindings(leases: Lease[]): DataFinding[] {
   return overlappingLeases(leases).map(([a, b]) => ({
     kind: "leaseOverlap",
@@ -272,7 +272,7 @@ export function portfolioDataCheck(assumptions: {
   return findings.map((finding) => ({ propertyId: null, name: null, finding }));
 }
 
-/** No own cash recorded (#178): a record with only costs, works or a note counts too. */
+/** No own cash recorded: a record with only costs, works or a note counts too. */
 function fundingOf(property: Property, baseDate: Date): DataFinding[] {
   if (property.funding?.ownCash !== undefined) return [];
   const future = property.purchaseDate.getTime() > baseDate.getTime();

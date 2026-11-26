@@ -1,5 +1,5 @@
 // The text of an engine input rule (`t.inputRules`). A rule that names a limit the code
-// defines takes it as an argument (#441), so every caller reads the text here. Pure.
+// defines takes it as an argument, so every caller reads the text here. Pure.
 import type { ValidationCode } from "../../engine";
 import type { Dictionary } from "../../i18n";
 import { fmtNumber } from "../../lib/format";

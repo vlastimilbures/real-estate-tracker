@@ -1,10 +1,10 @@
 // The open dialogs and popovers that own Escape, top-most last (ADR 0157): Escape and the
 // Tab trap act on the top one only, so one Escape closes one layer. The one module-level
-// state in src/ui (#491): a layer pushes itself while it is on the page and pops itself
+// state in src/ui: a layer pushes itself while it is on the page and pops itself
 // when it leaves (useDismiss).
 
 interface Entry {
-  /** A modal dialog (aria-modal): the native menu's items wait while one is open (#600). */
+  /** A modal dialog (aria-modal): the native menu's items wait while one is open. */
   modal: boolean;
 }
 
@@ -36,5 +36,5 @@ export function pushLayer({ modal = false }: { modal?: boolean } = {}): Layer {
 export const anyOpen = (): boolean => stack.length > 0;
 
 /** True while a modal dialog is open (Modal: About, the leave guard, the forms, the
- *  confirmations); a dropdown's list does not count (#600). */
+ *  confirmations); a dropdown's list does not count. */
 export const modalOpen = (): boolean => stack.some((l) => l.modal);

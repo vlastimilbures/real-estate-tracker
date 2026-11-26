@@ -1,4 +1,4 @@
-// A disclosure's open state (ADR 0203, #490): its own, or its caller's.
+// A disclosure's open state (ADR 0203): its own, or its caller's.
 import { useId, useState } from "react";
 
 export interface OpenState {

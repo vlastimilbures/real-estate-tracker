@@ -1,6 +1,6 @@
-// Which loans a scenario rate shock reaches, for the Scenarios page (ADR 0100, #47).
+// Which loans a scenario rate shock reaches, for the Scenarios page (ADR 0100).
 // The engine decides it (`blocksReachedByShock`, on the chain and fixation end `rateAt`
-// uses, #481); this module only shapes and words it.
+// uses); this module only shapes and words it.
 import {
   blocksReachedByShock,
   EngineInputError,

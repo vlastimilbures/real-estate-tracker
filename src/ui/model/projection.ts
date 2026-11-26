@@ -1,7 +1,7 @@
 // Pure presentation model for projections: selects the Nominal/Real lens and exposes
-// per-year rows. Real terms come from the engine (CPI index, D-23); ratios like LTV are
-// lens-invariant. Returns Decimals so the grid formats at full precision; charts convert
-// at their edge.
+// per-year rows. Real terms come from the engine (CPI index, ADR 0023); ratios like LTV
+// are lens-invariant. Returns Decimals so the grid formats at full precision; charts
+// convert at their edge.
 import { Decimal } from "../../lib/money";
 import { cpiIndex, edate, purchasedValue, realProjection } from "../../engine";
 import type { Assumptions, ProjectionYear } from "../../engine";
@@ -40,7 +40,7 @@ export type SeriesRow = Pick<
   | "prepaymentFees"
 >;
 
-/** "Y5 · 2031": projection year t with its calendar year (D-22, UX-032). The prefix is
+/** "Y5 · 2031": projection year t with its calendar year (ADR 0022). The prefix is
  *  the UI language's one-letter abbreviation for "year". */
 export function yearLabel(
   t: Pick<Dictionary, "projGrid">,
@@ -124,8 +124,8 @@ export function purchasesColumn(rows: SeriesRow[], g: Dictionary["projGrid"]) {
 
 /**
  * Excel column map mirroring ProjectionGrid's columns, order and headers in the UI
- * language (UX-062). Each column's kind rounds and formats its cells as the grid shows
- * them (D-10); opening-row (year ≤ 0) flow cells are blanked like the "—" on screen.
+ * language. Each column's kind rounds and formats its cells as the grid shows them
+ * (ADR 0010); opening-row (year ≤ 0) flow cells are blanked like the "—" on screen.
  */
 export function projectionColumns(
   t: Pick<Dictionary, "projGrid" | "monthsShort">,

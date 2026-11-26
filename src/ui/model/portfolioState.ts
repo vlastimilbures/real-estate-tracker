@@ -1,5 +1,5 @@
 // Pure model: whether a loaded portfolio has anything for the portfolio pages to show
-// (ADR 0155, #127). Dashboard, Projections and Scenarios share this one definition, so
+// (ADR 0155). Dashboard, Projections and Scenarios share this one definition, so
 // "no property yet" and "every property deactivated" read the same on each page.
 import type { Portfolio } from "../../engine";
 

@@ -30,12 +30,12 @@ interface PropertyField {
   suffix?: string;
   inputMode: "text" | "numeric" | "decimal";
   placeholder?: string;
-  /** Marked through Field (CSS marker + aria-required, UX-072). */
+  /** Marked through Field (CSS marker + aria-required). */
   required?: boolean;
 }
 
 /**
- * The dialog's text and date fields in its order, declared once (#490): the modal renders
+ * The dialog's text and date fields in its order, declared once: the modal renders
  * them, the parsed ones (with a `kind`) are their own specs, and their names are the
  * form state's keys. Name, address and type are plain text; garage and the funding note
  * are not text fields.
@@ -69,7 +69,7 @@ export function propertyFields(t: Dictionary) {
       section: "identity",
       kind: "size", // one decimal place (ADR 0236 §1)
       optional: true,
-      range: INT_RANGES.sizeM2, // ADR 0075 (DR-078)
+      range: INT_RANGES.sizeM2, // ADR 0075
       inputMode: "decimal",
     },
     {

@@ -1,6 +1,6 @@
-// Activate and Deactivate on Property detail (#484). The two keep their own outcome rules:
+// Activate and Deactivate on Property detail. The two keep their own outcome rules:
 // a failed Activate shows its reason in the inactive banner, a failed Deactivate stays in
-// its confirm row, which shows the reason and focuses Cancel (UX-050, ADR 0248, 0261 §2).
+// its confirm row, which shows the reason and focuses Cancel (ADR 0248, 0261 §2).
 import { useState } from "react";
 import {
   usePortfolioStore,
@@ -31,7 +31,7 @@ export function usePropertyActivation(id: string | null) {
   }
 
   /** Returns the result to the confirm row: on failure the confirm stays open and says
-   *  why (UX-050). */
+   *  why. */
   async function deactivate(): Promise<MutationResult> {
     // No property shown, nothing to deactivate (unreachable: see above).
     if (id === null) return { ok: true };

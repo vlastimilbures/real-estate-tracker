@@ -1,4 +1,4 @@
-// The app's pages (#483): one row per route. The left bar, the page switch and the page
+// The app's pages: one row per route. The left bar, the page switch and the page
 // boundary's fallback title read this table; a route without a row fails tsc. The native
 // View menu keeps its own list (model/menu.ts): it mirrors src-tauri/src/menu.rs.
 import { lazy, type ComponentType } from "react";
@@ -17,9 +17,9 @@ import type { Dictionary } from "../i18n";
 import { Dashboard } from "./pages/Dashboard";
 import { Properties } from "./pages/Properties";
 
-// Pages away from the start screen load on first visit (P9): their code, and the
-// libraries only they use, stay out of the startup bundle. The fallback is empty; the
-// chunk is a local file, so the gap is a few milliseconds (D-66, DR-009).
+// Pages away from the start screen load on first visit: their code, and the libraries
+// only they use, stay out of the startup bundle. The fallback is empty; the chunk is a
+// local file, so the gap is a few milliseconds (ADR 0066).
 const PropertyDetail = lazy(() =>
   import("./pages/PropertyDetail").then((m) => ({ default: m.PropertyDetail })),
 );

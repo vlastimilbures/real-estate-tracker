@@ -132,7 +132,7 @@ function toDraft(a: Assumptions): Record<string, string> {
 export type AssumptionsForm = ReturnType<typeof useAssumptionsForm>;
 
 /** A failed save that is not an input rule has no place in this form, so it goes to the
- *  banner (ADR 0261, #467 Q2), even when the draft was dropped while it ran. */
+ *  banner (ADR 0261), even when the draft was dropped while it ran. */
 async function bannerUnlessInput(
   save: Promise<MutationResult>,
 ): Promise<MutationResult> {
@@ -163,11 +163,10 @@ export function useAssumptionsForm(active: boolean) {
   // Bumped on a failed save so the error summary takes focus once it renders.
   const [summaryFocus, setSummaryFocus] = useState(0);
 
-  // On failure a broken rule marks its field (UX-047), or is listed in the error summary
-  // when it names no field shown here (ADR 0141), until the next edit; any other failure
-  // shows in the PageFrame banner, put there by bannerUnlessInput (ADR 0261). The page
-  // owns focus after a save (ADR 0248 §4). The success toast shows only when the write
-  // landed.
+  // On failure a broken rule marks its field, or is listed in the error summary when it
+  // names no field shown here (ADR 0141), until the next edit; any other failure shows in
+  // the PageFrame banner, put there by bannerUnlessInput (ADR 0261). The page owns focus
+  // after a save (ADR 0248 §4). The success toast shows only when the write landed.
   const {
     busy: saving,
     errors,
@@ -231,7 +230,7 @@ export function useAssumptionsForm(active: boolean) {
 
   // re-sync when store loads / changes underneath
   const current = draft ?? initial;
-  // Unsaved edits hold back navigation away from this tab (UX-030).
+  // Unsaved edits hold back navigation away from this tab.
   const unsaved = Boolean(initial && current && isDirty(initial, current));
   useLeaveGuard("assumptions", unsaved);
 

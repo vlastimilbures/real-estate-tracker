@@ -1,6 +1,6 @@
-// Closing a layer on Escape or a press outside it: the one implementation (#491). Which
-// layer hears an Escape first is today's order, kept as named options; folding them into
-// one stack order would change what one Escape closes (a tip that is only pinned closes
+// Closing a layer on Escape or a press outside it: the one implementation. Which layer
+// hears an Escape first is today's order, kept as named options; folding them into one
+// stack order would change what one Escape closes (a tip that is only pinned closes
 // together with its dialog), so that is left to a decision of its own.
 import {
   useCallback,
@@ -16,7 +16,7 @@ import { pushLayer, type Layer } from "../layers";
  * - `tip`: before anything else (window, capture): the info tip and a hovered row action's
  *   tooltip (ADR 0199, ADR 0217). `stops` says whether the Escape ends there.
  * - `first`: next (document, capture), and the Escape always ends there: the date popover,
- *   so a dialog behind it stays (DR-148). Not an open layer (`anyOpen`).
+ *   so a dialog behind it stays. Not an open layer (`anyOpen`).
  * - `top`: last (document, bubble), and only while it is the top layer: dialogs and the
  *   dropdown's list (ADR 0157). An open layer while it is on the page.
  * An element's own key handler (`isEscape`) hears it between `first` and `top`.
@@ -45,7 +45,7 @@ export interface DismissOptions {
   stops?: (() => boolean) | undefined;
   /** Which press outside closes it; none: a press outside does not. */
   outside?: OutsidePress | undefined;
-  /** For `top`: a modal dialog, so the native menu waits while it is open (#600). */
+  /** For `top`: a modal dialog, so the native menu waits while it is open. */
   modal?: boolean | undefined;
 }
 

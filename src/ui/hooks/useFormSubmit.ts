@@ -17,7 +17,7 @@ export type FormCheck<V> =
 
 export interface FormSubmitOptions<V> {
   /** The save. Resolves to a WriteError to keep the form open with the failure shown;
-   *  a throw is shown like a returned failure (DR-090, ADR 0241 §3). */
+   *  a throw is shown like a returned failure (ADR 0241 §3). */
   run: (values: V) => void | WriteError | Promise<void | WriteError>;
   /** Split a failed save for this form. */
   mapErrors: (failure: WriteError) => FormFailure;
@@ -31,7 +31,7 @@ export interface FormSubmitOptions<V> {
 }
 
 /**
- * One form's submit state (#489): the busy flag, the field errors and the form-level
+ * One form's submit state: the busy flag, the field errors and the form-level
  * message, and the step that turns a refused check or a failed save into them. The
  * form-level message goes with the next edit and with each Save (ADR 0262 §1).
  *
