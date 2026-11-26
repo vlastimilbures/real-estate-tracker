@@ -1,4 +1,4 @@
-// Typed data-layer errors (P5a). Each code maps to an i18n message (`t.dataErrors`), and
+// Typed data-layer errors. Each code maps to an i18n message (`t.dataErrors`), and
 // `details` carries what the message lists: table names, row ids, property names and
 // rule names — never money amounts, so a DataError is written to the log as it is.
 // Names and ids built from names stay in it (ADR 0147).
@@ -6,7 +6,7 @@
 export type DataErrorCode =
   /** `PRAGMA integrity_check` did not return ok at startup. */
   | "DB_INTEGRITY"
-  /** The database was written by a newer app version (DR-022). */
+  /** The database was written by a newer app version. */
   | "DB_NEWER"
   /** The database is below the version 8 baseline (ADR 0230): refused unchanged. */
   | "DB_TOO_OLD"
@@ -14,12 +14,12 @@ export type DataErrorCode =
   | "MIGRATION_BACKUP_FAILED"
   /** A migration's own statements failed (rolled back). */
   | "MIGRATION_FAILED"
-  /** A stored row has a value its column cannot hold (DR-037), or a required row is
+  /** A stored row has a value its column cannot hold (ADR 0037), or a required row is
    *  missing: the assumptions row id = 1 (ADR 0252). */
   | "ROW_INVALID"
-  /** An update/delete by id matched no row (DR-082). */
+  /** An update/delete by id matched no row. */
   | "ROW_MISSING"
-  /** A saved scenario's overrides JSON is unreadable (DR-037). */
+  /** A saved scenario's overrides JSON is unreadable. */
   | "SCENARIO_INVALID";
 
 /** A stored row the app cannot read, in any table, scenarios included (ADR 0231). The
@@ -64,7 +64,7 @@ export function messageOf(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-/** A write SQLite refused because of a schema constraint (v7, DR-133). Names only the
+/** A write SQLite refused because of a schema constraint. Names only the
  *  table, columns or constraint, never the values. */
 export type ConstraintFailure =
   | { kind: "unique"; table: string; columns: string[] }

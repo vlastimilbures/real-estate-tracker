@@ -1,8 +1,8 @@
-// The restore plan (P5b): check the WHOLE file — version, shape, every row, the engine's
+// The restore plan: check the WHOLE file — version, shape, every row, the engine's
 // input rules — upgrade an older file in memory, and build the statements that replace
-// the data in one transaction (D-14): on any failure nothing is planned and the current
-// data stays (DR-019). A value outside the form bounds only asks (ADR 0148): the database
-// may hold it already. Pure: no IO and no Tauri; backupFiles.ts runs the plan.
+// the data in one transaction (ADR 0014): on any failure nothing is planned and the
+// current data stays. A value outside the form bounds only asks (ADR 0148): the
+// database may hold it already. Pure: no IO and no Tauri; backupFiles.ts runs the plan.
 import type { SqlStatement } from "../sql";
 import { insertStatement } from "../repositories";
 import { DELETE_SAMPLE_MARKERS } from "../appMeta";
@@ -102,7 +102,7 @@ function summarise(backup: BackupFile): BackupSummary {
 type Row = Record<string, unknown>;
 type Tables = Record<BackupTable, Row[]>;
 
-/** Every table present, only known columns, scalar cells (DR-017); then each row
+/** Every table present, only known columns, scalar cells; then each row
  *  brought to the current schema: missing added columns get their default and
  *  scenario overrides are rewritten to the versioned shape (`upgradeLegacyOverrides`).
  *  A scenario's created_at must be non-empty text: the app never reads it, but it orders
@@ -279,7 +279,7 @@ const columnOf = (field: string) =>
     : toColumn(field.replace(/^defaults\./, "default_"));
 
 /** A key cell as restore compares it: a property name by `spellingKey`, trimmed and
- *  case-insensitive (D-55, ADR 0148 §5), deliberately without the NFC step of
+ *  case-insensitive (ADR 0049, ADR 0148 §5), deliberately without the NFC step of
  *  `propertyKey`. A backup the app accepted before must keep restoring, so two stored
  *  names that differ only in Unicode form are not refused here (ADR 0237 Consequences). */
 const keyCell = (table: BackupTable, column: string, v: unknown) =>
@@ -311,7 +311,8 @@ function duplicateKeys(tables: Tables): RestoreIssue[] {
 }
 
 /** Duplicate keys, then the engine's input rules and the whole-number bounds, as at every
- *  other entry point (D-17, D-27, D-37, D-38, D-42, D-54, ADR 0086). */
+ *  other entry point (ADR 0017, ADR 0024, ADR 0027, ADR 0036, ADR 0037, ADR 0038,
+ *  ADR 0086). */
 function ruleIssues(
   tables: Tables,
   portfolio: Portfolio,

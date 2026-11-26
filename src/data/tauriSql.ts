@@ -1,14 +1,15 @@
 // App-runtime `Sql` adapter backed by `@tauri-apps/plugin-sql`. Only imported when
 // running inside Tauri (never by the Node tests, which use the better-sqlite3 adapter).
 // Single statements go through the plugin; transactions, snapshot reads and backups go
-// through the app's own Rust commands (src-tauri/src/db.rs, D-14), which borrow the plugin's pool.
+// through the app's own Rust commands (src-tauri/src/db.rs, ADR 0014), which borrow the
+// plugin's pool.
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
 import type { ExecuteResult, Sql, SqlStatement } from "./sql";
 import { isTauri } from "../lib/tauri";
 
 /** Transaction control. Each `execute` may run on another pooled connection, so these sent
- *  as separate calls would not make the statements between them atomic (H-14). */
+ *  as separate calls would not make the statements between them atomic. */
 const TRANSACTION_CONTROL =
   /^\s*(BEGIN|COMMIT|END|ROLLBACK|SAVEPOINT|RELEASE)\b/i;
 

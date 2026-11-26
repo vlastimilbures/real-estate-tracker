@@ -11,7 +11,7 @@
 // The shape mirrors `@tauri-apps/plugin-sql`'s Database: `execute` for writes/DDL,
 // `select` for reads. Parameters are positional (`?` placeholders).
 //
-// Atomicity (H-14, D-14): the plugin runs each call on any pooled connection, so a
+// Atomicity (ADR 0014): the plugin runs each call on any pooled connection, so a
 // `BEGIN` sent through `execute` is NOT a transaction. Every write of more than one
 // statement goes through `transaction`, which runs the whole list on one connection:
 // all statements commit, or none does.
@@ -36,12 +36,12 @@ export interface Sql {
   /** Run `statements` atomically, in order. Rejects (and keeps nothing) on any error. */
   transaction(statements: SqlStatement[]): Promise<void>;
   /** Run the read-only `statements` as one point-in-time snapshot: one row list per
-   *  statement, in order, all from the same database state (DR-134). Separate `select`
+   *  statement, in order, all from the same database state. Separate `select`
    *  calls can land on different pooled connections between writes. */
   selectSnapshot(
     statements: SqlStatement[],
   ): Promise<Record<string, unknown>[][]>;
   /** Write a verified copy of the database named by `label` ([A-Za-z0-9-] only) and
-   *  return where it went. Used before every migration (P5a). */
+   *  return where it went. Used before every migration. */
   backup(label: string): Promise<string>;
 }

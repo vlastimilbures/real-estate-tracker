@@ -2,7 +2,7 @@
 // through the save dialog, the restore pick, the pre-restore safety backup and the
 // restore itself. No React — the UI page only drives state/toasts off the results below.
 // A restore writes and verifies a safety backup, and only then replaces the data in one
-// transaction (D-14): on any failure the current data stays (DR-019).
+// transaction (ADR 0014): on any failure the current data stays.
 import { invoke } from "@tauri-apps/api/core";
 import type { Sql } from "../sql";
 import { stamp } from "../migrations";
@@ -22,7 +22,7 @@ import {
 
 export type ExportOutcome = SaveOutcome;
 
-/** The backup file could not be written (DR-026). */
+/** The backup file could not be written. */
 export class BackupExportError extends Error {
   /** The underlying failure, for display. */
   readonly detail: string;
@@ -34,7 +34,7 @@ export class BackupExportError extends Error {
   }
 }
 
-/** What `exportBackup` needs from outside the data layer (ADR 0072, DR-167): the one
+/** What `exportBackup` needs from outside the data layer (ADR 0072): the one
  *  clock read of the export, its local calendar day for the file name, and the
  *  file-save function. */
 export interface ExportDeps {
@@ -98,7 +98,7 @@ export interface PickedBackup {
 export async function chooseRestoreFile(
   rules: InputRules,
 ): Promise<PickedBackup | null> {
-  // Rust opens the dialog and refuses an oversized file before reading it (DR-138).
+  // Rust opens the dialog and refuses an oversized file before reading it.
   let picked: { name: string; text: string } | null;
   try {
     picked = await invoke<{ name: string; text: string } | null>(
@@ -130,9 +130,9 @@ export class SafetyBackupError extends Error {
 
 /**
  * Pre-restore snapshot, so a bad restore is still recoverable from the Restore screen
- * (D-52): `<app config>/backups/portfolio-before-restore-<UTC stamp>.json`, next to the
- * database and its pre-migration backups (DR-136). Rust writes a temp file, reads it
- * back and compares the bytes, then renames it into place (ADR 0175). Any failure
+ * (ADR 0052): `<app config>/backups/portfolio-before-restore-<UTC stamp>.json`, next to
+ * the database and its pre-migration backups. Rust writes a temp file, reads it back
+ * and compares the bytes, then renames it into place (ADR 0175). Any failure
  * throws `SafetyBackupError` — without a verified file a restore must not start.
  * `prefix` names the file for other destructive actions. Returns the file name.
  */

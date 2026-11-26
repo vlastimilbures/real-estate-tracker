@@ -1,4 +1,4 @@
-// Local error log (P5a step 5). Appends one structured line per failure to the app's
+// Local error log. Appends one structured line per failure to the app's
 // rotating log file via the `log_error` command (src-tauri/src/db.rs →
 // tauri-plugin-log; macOS: ~/Library/Logs/com.bures.realestate-tracker/app.log).
 // Offline only: nothing leaves the machine.

@@ -1,9 +1,10 @@
-// The app's own state in `app_meta` (#471): every key the app writes there, with its
+// The app's own state in `app_meta`: every key the app writes there, with its
 // readers and writers. App state, so never part of a backup or a restore (ADR 0110).
 import type { Sql, SqlStatement } from "./sql";
 import type { Portfolio } from "../engine";
 
-/** Set once the first-run sample was seeded (D-16): an empty portfolio then stays empty. */
+/** Set once the first-run sample was seeded (ADR 0016): an empty portfolio then stays
+ *  empty. */
 export const SAMPLE_SEEDED = "sample_seeded";
 
 /** The first-run sample portfolio (ADR 0094): its properties as seeded and the `app_meta`
