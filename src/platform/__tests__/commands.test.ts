@@ -48,7 +48,7 @@ export function typeChecks(): void {
   // @ts-expect-error the argument key is camelCase
   void call("open_backup_file", { max_bytes: 1 });
   // @ts-expect-error db_backup needs its label
-  void call("db_backup", { db: "sqlite:portfolio.db" });
+  void call("db_backup", {});
 }
 
 describe("the command contract", () => {

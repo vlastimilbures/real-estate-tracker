@@ -2,7 +2,9 @@
 // on another pooled connection, so `BEGIN` … `COMMIT` sent as separate calls would not be
 // atomic (the H-14 bug shape); multi-step writes go through `transaction` (ADR 0014).
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { openTauriSql } from "../tauriSql";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { DB_URL, openTauriSql } from "../tauriSql";
 
 const db = vi.hoisted(() => ({
   execute: vi.fn(async () => ({ rowsAffected: 1 })),
@@ -56,7 +58,7 @@ describe("tauriSql.execute (ADR 0175)", () => {
 });
 
 // The wire format of the app's own database commands (src-tauri/src/db.rs): the command
-// names, the argument keys and the connection they name.
+// names and the argument keys. Rust runs them on the app's one database.
 describe("tauriSql commands", () => {
   const statements = [
     { query: "DELETE FROM t WHERE id = ?", params: [1] },
@@ -73,10 +75,10 @@ describe("tauriSql commands", () => {
 
   it("sends a transaction to db_transaction, every statement with its params", async () => {
     core.invoke.mockResolvedValue(undefined);
-    const sql = await openTauriSql("sqlite:x.db");
+    const sql = await openTauriSql();
     await sql.transaction(statements);
     expect(core.invoke.mock.calls).toEqual([
-      ["db_transaction", { db: "sqlite:x.db", statements: sent }],
+      ["db_transaction", { statements: sent }],
     ]);
   });
 
@@ -86,7 +88,7 @@ describe("tauriSql commands", () => {
     const sql = await openTauriSql();
     await expect(sql.selectSnapshot(statements)).resolves.toBe(rows);
     expect(core.invoke.mock.calls).toEqual([
-      ["db_select_snapshot", { db: "sqlite:portfolio.db", statements: sent }],
+      ["db_select_snapshot", { statements: sent }],
     ]);
   });
 
@@ -97,7 +99,7 @@ describe("tauriSql commands", () => {
       "portfolio-x.db",
     );
     expect(core.invoke.mock.calls).toEqual([
-      ["db_backup", { db: "sqlite:portfolio.db", label: "before-migration" }],
+      ["db_backup", { label: "before-migration" }],
     ]);
   });
 
@@ -106,5 +108,16 @@ describe("tauriSql commands", () => {
     core.invoke.mockRejectedValue(refused);
     const sql = await openTauriSql();
     await expect(sql.transaction(statements)).rejects.toBe(refused);
+  });
+});
+
+// #473: the webview opens the database on the connection the Rust commands run on.
+describe("the database connection", () => {
+  it("is the one the Rust database commands use", () => {
+    const rust = readFileSync(
+      join(__dirname, "../../../src-tauri/src/paths.rs"),
+      "utf8",
+    );
+    expect(/pub const DB_URL: &str = "([^"]+)";/.exec(rust)?.[1]).toBe(DB_URL);
   });
 });

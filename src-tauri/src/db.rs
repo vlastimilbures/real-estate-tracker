@@ -18,7 +18,7 @@ use tauri::{AppHandle, State};
 use tauri_plugin_sql::{DbInstances, DbPool};
 
 use crate::error::AppError;
-use crate::paths::{backups_dir, valid_label};
+use crate::paths::{backups_dir, valid_label, DB_URL};
 
 /// One parameterised statement, as the JS `Sql` seam sends it.
 #[derive(Debug, Deserialize)]
@@ -219,10 +219,9 @@ async fn pool_for(instances: &DbInstances, db: &str) -> Result<Pool<Sqlite>, App
 #[tauri::command]
 pub async fn db_transaction(
     instances: State<'_, DbInstances>,
-    db: String,
     statements: Vec<Statement>,
 ) -> Result<(), AppError> {
-    let pool = pool_for(&instances, &db).await?;
+    let pool = pool_for(&instances, DB_URL).await?;
     run_atomic(&pool, &statements).await
 }
 
@@ -230,10 +229,9 @@ pub async fn db_transaction(
 #[tauri::command]
 pub async fn db_select_snapshot(
     instances: State<'_, DbInstances>,
-    db: String,
     statements: Vec<Statement>,
 ) -> Result<Vec<Vec<JsonRow>>, AppError> {
-    let pool = pool_for(&instances, &db).await?;
+    let pool = pool_for(&instances, DB_URL).await?;
     select_snapshot(&pool, &statements).await
 }
 
@@ -243,7 +241,6 @@ pub async fn db_select_snapshot(
 pub async fn db_backup(
     app: AppHandle,
     instances: State<'_, DbInstances>,
-    db: String,
     label: String,
 ) -> Result<String, AppError> {
     if !valid_label(&label) {
@@ -252,7 +249,7 @@ pub async fn db_backup(
     let dir: PathBuf = backups_dir(&app)?;
     std::fs::create_dir_all(&dir).map_err(|e| AppError::BackupFailed(e.to_string()))?;
     let dest = dir.join(format!("{label}.sqlite"));
-    let pool = pool_for(&instances, &db).await?;
+    let pool = pool_for(&instances, DB_URL).await?;
     backup_to(&pool, &dest).await?;
     // `VACUUM INTO` creates the copy with the default mode; keep it private (DR-157).
     crate::private_fs::restrict_file(&dest)?;
