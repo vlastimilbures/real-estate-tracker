@@ -3,6 +3,13 @@
 import type { BackupState } from "../../state/backup";
 import { localDay } from "../../lib/day";
 
+/** The local calendar day a backup was exported, like its file name and "Last backup"
+ *  (ADR 0149), as a UTC-midnight date (`fmtDate`); null for a stamp that is not a date. */
+export function exportedDay(exportedAt: string): Date | null {
+  const at = new Date(exportedAt);
+  return Number.isNaN(at.getTime()) ? null : localDay(at);
+}
+
 /** A backup older than this many days, with data changed since, shows the hint. */
 export const BACKUP_STALE_DAYS = 30;
 

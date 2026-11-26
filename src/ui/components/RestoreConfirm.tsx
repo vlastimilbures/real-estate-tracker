@@ -11,7 +11,7 @@ import {
 import { useT } from "../hooks/useT";
 import { restoreIssueText } from "../model/restoreIssue";
 import { fmtDate } from "../../lib/format";
-import { localDay } from "../../lib/day";
+import { exportedDay } from "../model/backupRecency";
 import { useFocusAfterBusy } from "../hooks/useBusyFocus";
 
 /** The records of a refused backup, or (`warning`) the out-of-range values a restore asks
@@ -68,13 +68,10 @@ export function IssueTable({
 function Summary({ summary }: { summary: BackupSummary }) {
   const t = useT();
   const b = t.backup;
-  // The local calendar day, like the file name and "Last backup" (ADR 0149).
-  const exported = new Date(summary.exportedAt);
+  const exported = exportedDay(summary.exportedAt);
   return (
     <div className="mb-s4">
-      {!Number.isNaN(exported.getTime()) && (
-        <p>{b.backupDate(fmtDate(localDay(exported)))}</p>
-      )}
+      {exported && <p>{b.backupDate(fmtDate(exported))}</p>}
       {summary.schemaVersion < SCHEMA_HEAD && (
         <p className="restore-older">{b.olderVersion}</p>
       )}

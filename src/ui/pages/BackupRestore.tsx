@@ -1,10 +1,8 @@
-import { useId, useState } from "react";
+import { useId } from "react";
 import { usePortfolioStore } from "../../state/portfolioStore";
 import { useUiStore, type OutcomeAction } from "../../state/uiStore";
 import { Panel, Button } from "../components/primitives";
-import { chooseRestoreFile, type PickedBackup } from "../../state/backup";
-import { logFailure, type FailureSite } from "../../state/diagnostics";
-import { revealDataDir } from "../../state/platform";
+import { type FailureSite } from "../../state/diagnostics";
 import { toActionError } from "../../state/actionError";
 import { type Dictionary } from "../../i18n";
 import { useT } from "../hooks/useT";
@@ -14,6 +12,7 @@ import { ClearSampleButton } from "../components/ClearSampleDialog";
 import { backupRecency, type BackupAgo } from "../model/backupRecency";
 import { RestoreConfirm } from "../components/RestoreConfirm";
 import { logBackupFailure } from "../components/restoreFailure";
+import { useRestoreFlow, useRevealDataFolder } from "../hooks/useRestoreFlow";
 import {
   KEEP,
   pressed,
@@ -75,18 +74,13 @@ export function BackupRestorePanel() {
 
   const [exporting, setExporting] = useBusyFocus(pressed);
   const [loadingSample, setLoadingSample] = useBusyFocus(afterLoadSample);
-  const [restoring, setRestoring] = useBusyFocus(afterRestore);
-  const [pendingBackup, setPendingBackup] = useState<PickedBackup | null>(null);
+  const restoreBusy = useBusyFocus(afterRestore);
   const { showToast } = useToast();
   const folderHintId = useId();
   const setNotice = useUiStore((s) => s.setNotice);
   const setFailure = useUiStore((s) => s.setFailure);
   const dismissFailure = useUiStore((s) => s.dismissFailure);
   const dataReplaced = useUiStore((s) => s.dataReplaced);
-  // Whole-database work in progress, also one started before this page last opened:
-  // the other actions wait for it (ADR 0154).
-  const queued = usePortfolioStore((s) => s.replacing > 0);
-  const replacing = restoring || loadingSample || queued;
 
   /** Report a failure in the notice, which follows the owner to any page; a refused
    *  backup keeps its records there, anything else is logged under `site` (ADR 0154).
@@ -95,6 +89,31 @@ export function BackupRestorePanel() {
     logBackupFailure(site, e);
     setFailure(action, toActionError(e));
   }
+
+  const restore = useRestoreFlow({
+    busy: restoreBusy,
+    clearFailure: dismissFailure,
+    pickFailed: (e) => fail(e, "RESTORE", "pickBackup"),
+    restore: restoreBackup,
+    restored: ({ safetyBackup }) => {
+      // The only pointer to the undo copy: a notice until dismissed (ADR 0154).
+      dataReplaced();
+      setNotice({ kind: "restored", file: safetyBackup });
+    },
+    // One transaction: only a failure before the commit lands here, so the current data
+    // is unchanged. A failed read-back after it succeeds, and the app stops on the error
+    // screen (ADR 0228).
+    restoreFailed: (error) => setFailure("restore", error),
+  });
+  /** Show the app folder in Finder (ADR 0153 §4); its `backups` folder holds the
+   *  safety and pre-migration copies (ADR 0175). */
+  const showFolder = useRevealDataFolder(dismissFailure, (e) =>
+    setFailure("revealFolder", toActionError(e)),
+  );
+  // Whole-database work in progress, also one started before this page last opened:
+  // the other actions wait for it (ADR 0154).
+  const queued = usePortfolioStore((s) => s.replacing > 0);
+  const replacing = restore.restoring || loadingSample || queued;
 
   async function handleExport() {
     setExporting(true);
@@ -127,49 +146,6 @@ export function BackupRestorePanel() {
     }
   }
 
-  /** Show the app folder in Finder (ADR 0153 §4); its `backups` folder holds the
-   *  safety and pre-migration copies (ADR 0175). */
-  async function handleShowFolder() {
-    dismissFailure();
-    try {
-      await revealDataDir();
-    } catch (e) {
-      logFailure("REVEAL", e);
-      setFailure("revealFolder", toActionError(e));
-    }
-  }
-
-  async function handleChooseRestore() {
-    dismissFailure();
-    try {
-      const picked = await chooseRestoreFile();
-      if (picked) setPendingBackup(picked);
-    } catch (e) {
-      fail(e, "RESTORE", "pickBackup");
-    }
-  }
-
-  async function handleConfirmRestore() {
-    if (!pendingBackup) return;
-    setRestoring(true);
-    dismissFailure();
-    try {
-      const restored = await restoreBackup(pendingBackup.backup);
-      if (restored.ok) {
-        setPendingBackup(null);
-        // The only pointer to the undo copy: a notice until dismissed (ADR 0154).
-        dataReplaced();
-        setNotice({ kind: "restored", file: restored.value.safetyBackup });
-      }
-      // One transaction: only a failure before the commit lands here, so the current data
-      // is unchanged. A failed read-back after it succeeds, and the app stops on the
-      // error screen (ADR 0228).
-      else setFailure("restore", restored.error);
-    } finally {
-      setRestoring(false);
-    }
-  }
-
   return (
     <>
       <Panel title={t.backup.exportTitle} info={t.backup.exportHint}>
@@ -186,7 +162,7 @@ export function BackupRestorePanel() {
           {t.backup.folderHint}
         </p>
         <Button
-          onClick={() => void handleShowFolder()}
+          onClick={() => void showFolder()}
           aria-describedby={folderHintId}
         >
           {t.boot.showDataFolder}
@@ -195,20 +171,20 @@ export function BackupRestorePanel() {
 
       <Panel title={t.backup.restoreTitle} hint={t.backup.restoreHint}>
         <p className="muted-note">{t.backup.restoreBody}</p>
-        {!pendingBackup ? (
+        {!restore.pending ? (
           <Button
             id={CHOOSE_FILE}
-            onClick={handleChooseRestore}
+            onClick={restore.choose}
             disabled={replacing}
           >
             {t.backup.chooseFile}
           </Button>
         ) : (
           <RestoreConfirm
-            pending={pendingBackup}
-            restoring={restoring}
-            onCancel={() => setPendingBackup(null)}
-            onConfirm={handleConfirmRestore}
+            pending={restore.pending}
+            restoring={restore.restoring}
+            onCancel={restore.cancel}
+            onConfirm={restore.confirm}
           />
         )}
       </Panel>

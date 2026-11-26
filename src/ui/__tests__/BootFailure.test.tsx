@@ -176,6 +176,18 @@ describe("per-code screen (#115)", () => {
     expect(revealDataDir).toHaveBeenCalledOnce();
     expect(alert().textContent).toContain(en.boot.revealFailed);
   });
+
+  it("a failed Show data folder is forgotten when the next one works", async () => {
+    fail("DB_INTEGRITY");
+    render(<App />);
+    revealDataDir.mockRejectedValueOnce(new Error("no folder"));
+    const show = screen.getByRole("button", { name: en.boot.showDataFolder });
+    await userEvent.click(show);
+    expect(alert().textContent).toContain(en.boot.revealFailed);
+    await userEvent.click(show);
+    expect(revealDataDir).toHaveBeenCalledTimes(2);
+    expect(alert().textContent).not.toContain(en.boot.revealFailed);
+  });
 });
 
 describe("a save whose read-back failed (ADR 0228)", () => {

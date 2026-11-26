@@ -1,7 +1,25 @@
 // ADR 0110: how old the last backup is, and when the sidebar hint shows, for an
-// injected "now".
+// injected "now". ADR 0149: the local day a backup was exported.
 import { describe, expect, it } from "vitest";
-import { BACKUP_STALE_DAYS, backupRecency } from "../backupRecency";
+import {
+  BACKUP_STALE_DAYS,
+  backupRecency,
+  exportedDay,
+} from "../backupRecency";
+
+describe("exportedDay (ADR 0149)", () => {
+  it("is the local calendar day of the export, as a UTC-midnight date", () => {
+    const at = new Date(2026, 9, 3, 0, 30); // 03.10.2026 00:30 local
+    expect(exportedDay(at.toISOString())?.toISOString()).toBe(
+      "2026-10-03T00:00:00.000Z",
+    );
+  });
+
+  it("is null for a stamp that is not a date", () => {
+    expect(exportedDay("not a date")).toBeNull();
+    expect(exportedDay("")).toBeNull();
+  });
+});
 
 const now = new Date(2026, 9, 3, 12, 0); // 03.10.2026 12:00 local
 const state = (lastAt: string | null, changedSince: boolean) => ({
