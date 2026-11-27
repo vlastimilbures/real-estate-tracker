@@ -3,6 +3,7 @@
 import { edate } from "../../dates";
 import type { Portfolio } from "../../types";
 import { money } from "../../brands";
+import { mixedWithRefi } from "./synthetic";
 
 /** Every loan with two prepayments and a recast (ADR 0109; #130 G1-6-04). Javorová's
  *  and the inactive loan's first prepayments replay as history, the dev loan meets its
@@ -29,3 +30,23 @@ export const withEvents = (p: Portfolio): Portfolio => ({
     ],
   })),
 });
+
+/** The loan events of ADR 0109 on the refinance fixture, plus Dubová's second recast
+ *  in the instalment form (both recast forms run). */
+export const eventsWithRefi: Portfolio = (() => {
+  const p = withEvents(mixedWithRefi);
+  return {
+    ...p,
+    mortgages: p.mortgages.map((m) =>
+      m.id === "m-dubova"
+        ? {
+            ...m,
+            recasts: [
+              ...(m.recasts ?? []),
+              { date: edate(m.startDate, 180), instalment: money("25000") },
+            ],
+          }
+        : m,
+    ),
+  };
+})();
