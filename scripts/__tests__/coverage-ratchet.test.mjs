@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   MAX_SLACK,
+  NONE,
   floorsJson,
   headroom,
   issueBody,
@@ -147,7 +148,9 @@ describe("coverage ratchet --raise (nightly)", () => {
     const out = raise(ratchet(summary, floors, ROOT), floors);
     expect(out.raised).toEqual([]);
     expect(out.floors).toEqual(floors);
-    expect(issueBody(out)).toBe("");
+    // A sentinel, not an empty file: upload-artifact never sees a 0-byte file.
+    expect(NONE).toBe("<!-- coverage-floors: none -->");
+    expect(issueBody(out)).toBe(`${NONE}\n`);
   });
 
   it("writes coverage-floors.json in its own layout, one line per glob", () => {
@@ -169,6 +172,7 @@ describe("coverage ratchet --raise (nightly)", () => {
       '```json\n{\n  "src/engine/**": { "lines": 47, "branches": 79 }\n}\n```',
     );
     expect(body).toContain(`more than ${MAX_SLACK} points`);
+    expect(body.split("\n")[0]).not.toBe(NONE);
   });
 });
 
@@ -214,6 +218,32 @@ describe("nightly.yml coverage floors jobs", () => {
     expect(run).toContain('gh issue list --label "$label" --state open');
     expect(run).toContain("gh issue edit");
     expect(run).toContain("gh issue close");
+  });
+
+  it("tells nothing to raise by the script's sentinel line, not by file size", () => {
+    const run = issue.steps.map((s) => s.run ?? "").join("\n");
+    expect(run).toContain(
+      `if [[ "$(head -n 1 coverage-floors.md)" == "${NONE}" ]]; then`,
+    );
+    expect(run).not.toContain("-s coverage-floors.md");
+  });
+
+  it("updates the issue on main only", () => {
+    expect(issue.if).toBe("github.ref == 'refs/heads/main'");
+  });
+
+  // The list comes from a file the coverage job wrote: it reaches gh as a file, never
+  // as a shell or expression interpolation.
+  it("passes the issue body with --body-file only", () => {
+    const run = issue.steps.map((s) => s.run ?? "").join("\n");
+    const writes = run
+      .split("\n")
+      .filter((l) => /gh issue (create|edit)\b/.test(l));
+    expect(writes).toHaveLength(2);
+    for (const l of writes) expect(l).toMatch(/--body-file body\.md$/);
+    expect(run).not.toMatch(/--body[ =]/);
+    expect(run).not.toContain("$(cat");
+    expect(run).not.toContain("${{");
   });
 
   it("reports a failed coverage job like the other nightly jobs", () => {

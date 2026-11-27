@@ -6,7 +6,8 @@
 //   pnpm coverage:ratchet --raise [--out f]   the nightly run: the same, and lists every
 //                                             floor more than MAX_SLACK points below
 //                                             measured with its raised value, as an issue
-//                                             body in `f` (empty when nothing to raise)
+//                                             body in `f` (the NONE line alone when
+//                                             nothing is left to raise)
 //
 // A PR that raises coverage never fails here (owner decision on #499, 2026-11-27): the
 // nightly run keeps one issue with the floors to raise. Each glob's measure is the folder
@@ -17,6 +18,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 /** How far a floor may lag measured before the nightly run asks to raise it. */
 export const MAX_SLACK = 3;
+/** The `--raise` file's only line when nothing is left to raise: never a 0-byte file. */
+export const NONE = "<!-- coverage-floors: none -->";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const METRICS = ["lines", "branches"];
 
@@ -92,9 +95,9 @@ export function floorsJson(floors) {
   return `{\n${rows.join(",\n")}\n}\n`;
 }
 
-/** The nightly issue's body, or "" when there is nothing to raise. */
+/** The nightly issue's body, or the NONE line when there is nothing to raise. */
 export function issueBody({ raised, floors }) {
-  if (raised.length === 0) return "";
+  if (raised.length === 0) return `${NONE}\n`;
   return [
     `These coverage floors sit more than ${MAX_SLACK} points below what the suite measures on main.`,
     "Raise them in `coverage-floors.json` to measured minus the headroom (2 points under",
@@ -151,7 +154,7 @@ function main(args) {
   if (report(rows)) return 1;
   if (!args.includes("--raise")) return 0;
   const body = issueBody(raise(rows, floors));
-  console.log(body === "" ? "\nNo floor to raise." : `\n${body}`);
+  console.log(body === `${NONE}\n` ? "\nNo floor to raise." : `\n${body}`);
   if (out) writeFileSync(out, body);
   return 0;
 }

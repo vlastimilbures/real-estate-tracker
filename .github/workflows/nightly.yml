@@ -284,7 +284,8 @@ jobs:
           label=coverage-floors
           title="Coverage floors to raise"
           num=$(gh issue list --label "$label" --state open --limit 1 --json number --jq '.[0].number // empty')
-          if [[ ! -s coverage-floors.md ]]; then
+          # The script's sentinel line (NONE in check-coverage-ratchet.mjs): nothing to raise.
+          if [[ "$(head -n 1 coverage-floors.md)" == "<!-- coverage-floors: none -->" ]]; then
             if [[ -n "$num" ]]; then
               gh issue close "$num" --comment "Nothing left to raise on main @ \`${SHA:0:8}\` ($RUN_URL)."
             fi
