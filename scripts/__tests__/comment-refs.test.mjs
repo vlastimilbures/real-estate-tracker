@@ -103,9 +103,137 @@ describe("comment references", () => {
     expect(inScope("scripts/gates.mjs")).toBe(false);
   });
 
+  it.each([
+    ["C-", "// the checklist (C-14)"],
+    ["F-", "// the axe gate (F-08)"],
+    ["H-", "// the pool finding (H-14)"],
+  ])("rejects the %s finding family in a comment", (_, line) => {
+    expect(problems(line)).toHaveLength(1);
+  });
+
   it("passes on the repository's own source", () => {
     const r = check();
     expect(r.files).toBeGreaterThan(100);
     expect(r.problems).toEqual([]);
+  });
+});
+
+describe("comment references in Rust", () => {
+  const rs = (text) => problemsIn(text, "src-tauri/src/x.rs", ADRS, OPEN);
+
+  it("finds line, doc, inner-doc, trailing and nested block comments", () => {
+    const code = [
+      "//! DR-1",
+      "/// DR-2",
+      "let a = 1; // DR-3",
+      "/* outer /* DR-4 */ still a comment: DR-5 */",
+      "fn f() {}",
+    ].join("\n");
+    expect(rs(code).map((p) => [p.line, p.message])).toEqual([
+      [1, "retired archive id DR-1"],
+      [2, "retired archive id DR-2"],
+      [3, "retired archive id DR-3"],
+      [4, "retired archive id DR-4"],
+      [4, "retired archive id DR-5"],
+    ]);
+  });
+
+  it("reads strings, raw strings, chars and lifetimes as code", () => {
+    const code = [
+      'let s = "DR-1 // DR-2";',
+      'let r = r#"P9 /* DR-3 */ "quoted" "#;',
+      "let q = '\"'; let c = '/'; // DR-4",
+      "fn f<'a>(x: &'a str) -> &'a str { x } // UX-5",
+      '#[ignore = "DR-169: a probe"]',
+    ].join("\n");
+    expect(rs(code).map((p) => p.message)).toEqual([
+      "retired archive id DR-4",
+      "retired archive id UX-5",
+    ]);
+  });
+
+  it("applies the ADR and issue rules", () => {
+    expect(
+      rs("// ADR 0999, closed #291, open #476").map((p) => p.message),
+    ).toEqual([
+      "ADR 0999 has no file in docs/adr",
+      "issue #291 is not on CITED_OPEN_ISSUES",
+    ]);
+  });
+});
+
+describe("comment references in the living docs", () => {
+  const md = (text, path = "docs/roadmap.md") =>
+    problemsIn(text, path, ADRS, OPEN).map((p) => [p.line, p.message]);
+
+  it("reads the whole text, code spans included", () => {
+    expect(md("# Title\n\nSee `DR-044` and (D-17).\n| P4a | x |")).toEqual([
+      [3, "retired archive id DR-044"],
+      [3, "retired archive id D-17"],
+      [4, "retired archive id P4a"],
+    ]);
+  });
+
+  it("checks ADR cites but leaves issue numbers alone", () => {
+    expect(md("Decided in ADR 0049 and ADR 0999 (#158, #291).")).toEqual([
+      [1, "ADR 0999 has no file in docs/adr"],
+    ]);
+  });
+});
+
+describe("the files the check reads", () => {
+  it.each([
+    "src-tauri/src/db.rs",
+    "src-tauri/src/commands/backup.rs",
+    "src-tauri/build.rs",
+    "README.md",
+    "CONTRIBUTING.md",
+    "SPEC.md",
+    "docs/roadmap.md",
+    "docs/design/czech-mortgage-extensions.md",
+    "ux-capture/README.md",
+    "ux-capture/helpers.ts",
+    "src/engine/__tests__/reference/mortgageReference.ts",
+  ])("reads %s", (path) => {
+    expect(inScope(path)).toBe(true);
+  });
+
+  it.each([
+    ["Rust tests", "src-tauri/tests/menu.rs"],
+    ["generated Rust", "src-tauri/target/debug/build/x.rs"],
+    ["an ADR", "docs/adr/0014-rust-transaction-command.md"],
+    ["the ADR index", "docs/adr/README.md"],
+    ["the wording log", "docs/decisions/wording.md"],
+    ["a review record", "docs/reviews/2026-10-claude-code-review.md"],
+    ["the changelog", "CHANGELOG.md"],
+    ["a capture test", "ux-capture/__tests__/png.test.ts"],
+    ["a reference test", "src/engine/__tests__/reference/edgeCases.test.ts"],
+    ["test support", "src/engine/__tests__/support/seed.ts"],
+    ["the Claude rules", ".claude/rules/engine-parity.md"],
+  ])("leaves out %s", (_, path) => {
+    expect(inScope(path)).toBe(false);
+  });
+
+  it("applies the issue rule to app source only", () => {
+    const closed = "// a shape (#291)";
+    const issues = (path) => problemsIn(closed, path, ADRS, OPEN).length;
+    expect(issues("src/x.ts")).toBe(1);
+    expect(issues("src-tauri/src/x.rs")).toBe(1);
+    expect(issues("src/engine/__tests__/reference/loanGen.ts")).toBe(0);
+    expect(issues("ux-capture/helpers.ts")).toBe(0);
+  });
+
+  it("scans the Rust source and the living docs of the repository", () => {
+    const { paths } = check();
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        "src-tauri/src/db.rs",
+        "src-tauri/build.rs",
+        "SPEC.md",
+        "docs/roadmap.md",
+        "ux-capture/README.md",
+      ]),
+    );
+    expect(paths.filter((p) => p.startsWith("docs/adr/"))).toEqual([]);
   });
 });

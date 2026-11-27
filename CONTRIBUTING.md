@@ -116,13 +116,19 @@ still describe it. Which document owns what is listed in
   stylesheet reads them. A needed `!important` gets a
   `stylelint-disable-next-line … -- reason` comment.
 - **Comment references** (#457): `pnpm lint` runs `scripts/check-comment-refs.mjs`. A
-  comment in the app's source (`src/**/*.ts`, `.tsx`, `.css`; tests are out of scope)
-  cites a decision as `ADR nnnn`, which must have a file in `docs/adr`. Ids from the
-  retired refactor archive (`DR-nnn`, `UX-nnn`, `J-nn`, `Q-nn`, `D-nn`, phase ids such as
-  `P5b`) are refused: say the reason in words or cite the ADR. So is an issue number
-  (`#nnn`) unless the issue is open and on `CITED_OPEN_ISSUES` in the script; the pull
-  request that closes one of those removes it there. Only comments are read, so a string
-  or JSX text is never flagged.
+  comment in the app's source (`src/**/*.ts`, `.tsx`, `.css`, and `src-tauri/src/**/*.rs`
+  with `src-tauri/build.rs`; tests are out of scope) cites a decision as `ADR nnnn`, which
+  must have a file in `docs/adr`. Ids from the retired refactor archive (`DR-nnn`,
+  `UX-nnn`, `J-nn`, `Q-nn`, `D-nn`, the `C-nn` / `F-nn` / `H-nn` finding ids, phase ids
+  such as `P` plus a number) are refused: say the reason in words or cite the ADR. So is
+  an issue number (`#nnn`) unless the issue is open and on `CITED_OPEN_ISSUES` in the
+  script; the pull request that closes one of those removes it there. In code only
+  comments are read, so a string or JSX text is never flagged. The same id and ADR rules
+  (not the issue rule) cover the reference models in `src/engine/__tests__/reference`,
+  the `ux-capture` harness, and the living docs, read whole: `README.md`,
+  `CONTRIBUTING.md`, `SPEC.md`, `docs/**/*.md` and `ux-capture/README.md`. The
+  append-only history keeps its ids: the ADRs (`docs/adr`), `docs/decisions/wording.md`,
+  the review records in `docs/reviews` and `CHANGELOG.md`.
 - **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches). Never
   lower one to pass. CI runs `pnpm coverage:ratchet` after `pnpm test:coverage` and fails when
   a floor sits more than the slack (`MAX_SLACK` in `scripts/check-coverage-ratchet.mjs`, 3
