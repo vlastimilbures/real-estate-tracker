@@ -1,4 +1,4 @@
-//! P8: the navigation guard allows only the app's own pages.
+//! The navigation guard allows only the app's own pages.
 
 use app_lib::nav::is_app_url;
 use tauri::Url;

@@ -314,7 +314,7 @@ export async function expectDataCheckLayout(p: Locator) {
   }
 }
 
-/** Property detail with stored data that breaks an engine rule (DR-146): the page keeps
+/** Property detail with stored data that breaks an engine rule: the page keeps
  *  its heading, shows the invalid-data notice naming the broken rule, and keeps
  *  the sections where the record can be fixed (Records, Financing, Holding costs); the
  *  sections that need figures are gone from the page and from the section nav. */

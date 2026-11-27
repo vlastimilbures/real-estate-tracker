@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build, ad-hoc sign and verify the macOS release (P8, D-09, D-63: Apple Silicon only,
+# Build, ad-hoc sign and verify the macOS release (ADR 0009, ADR 0063: Apple Silicon only,
 # macOS 13+). Usage: scripts/release-macos.sh [--skip-checks]
 # Refuses a dirty tree, so the build is exactly the commit that gets tagged. Without
 # --skip-checks it runs `pnpm check:release` first (CONTRIBUTING.md#checks). Never

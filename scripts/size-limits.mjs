@@ -10,7 +10,7 @@ const TESTS = ["src/**/__tests__/**", "src/**/*.test.{ts,tsx}"];
 // Components: JSX is long by nature.
 const COMPONENTS = { lines: 150, complexity: 15 };
 const OTHER = { lines: 80, complexity: 12 };
-// P4a limits (P04a-engine-refactor.md §6): keep engine functions small.
+// Engine limits: keep engine functions small.
 export const ENGINE_LIMITS = { lines: 60, complexity: 10 };
 
 /** The ESLint rules for one set of limits. */

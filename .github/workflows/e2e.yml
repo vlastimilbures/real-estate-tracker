@@ -1,7 +1,7 @@
 name: E2E (nightly, manual)
 
 # Playwright smoke tests against the browser build (in-memory sql.js seed, no real
-# database). Optional per D-06 and ADR 0078 decision 3: never required for a merge. They
+# database). Optional per ADR 0006 and ADR 0078 decision 3: never required for a merge. They
 # run nightly so a break is noticed (#141), and by hand.
 on:
   schedule:

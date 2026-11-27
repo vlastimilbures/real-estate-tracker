@@ -182,11 +182,11 @@ const resizeObserverBans = [
   },
 ];
 
-// Only src/lib/money.ts touches decimal.js directly (DR-075): one Decimal configuration.
+// Only src/lib/money.ts touches decimal.js directly: one Decimal configuration.
 const decimalPath = {
   name: "decimal.js",
   message:
-    "Import Decimal helpers from src/lib/money.ts, not decimal.js directly (DR-075).",
+    "Import Decimal helpers from src/lib/money.ts, not decimal.js directly.",
 };
 // The layer list is shared with dependency-cruiser (scripts/engine-layers.cjs says what
 // each tool covers that the other does not).
@@ -317,7 +317,7 @@ export default tseslint.config(
       ],
     },
   },
-  // The independent reference model (P2) is deliberately written on decimal.js directly.
+  // The independent reference model is deliberately written on decimal.js directly.
   {
     files: ["src/engine/__tests__/reference/**"],
     rules: {
@@ -361,7 +361,7 @@ export default tseslint.config(
         engineNumberBans,
         engineDateBan,
       ),
-      // P4a limits (P04a-engine-refactor.md §6): keep engine functions small.
+      // Engine limits: keep engine functions small.
       ...sizeRules(ENGINE_LIMITS),
       // At most four positional parameters; more travel as one object (#480).
       "max-params": ["error", 4],
@@ -422,7 +422,7 @@ export default tseslint.config(
       ],
     },
   },
-  // Single public engine API (P4a, DR-073): outside src/engine, import the engine only
+  // Single public engine API: outside src/engine, import the engine only
   // through its barrel (src/engine/index.ts). Engine test fixtures stay importable.
   {
     files: ["src/**/*.{ts,tsx}", "e2e/**/*.{ts,tsx}"],

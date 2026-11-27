@@ -7,8 +7,8 @@ use crate::error::AppError;
 use crate::fs_atomic::write_new_private;
 use crate::paths::{backups_dir, valid_backup_name};
 
-/// Write `json` to `<app-config>/backups/<filename>` (the database's own folder, D-52)
-/// through the verified temp-file write, 0600 (DR-157). An existing file of that name is
+/// Write `json` to `<app-config>/backups/<filename>` (the database's own folder, ADR 0052)
+/// through the verified temp-file write, 0600 (ADR 0080). An existing file of that name is
 /// refused (`BACKUP_EXISTS`), never replaced. Async, so the write of a large backup never
 /// runs on the main thread.
 #[tauri::command]

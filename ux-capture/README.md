@@ -74,8 +74,8 @@ every variant (#536: 22-property-mortgage-add-errors; 64b-settings-backup-refuse
 82-load-sample-loaded at `min`). Such a scene clicks with `clickInPlace()` (helpers.ts),
 which neither scrolls nor moves the pointer.
 
-PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
-skip their entry animation), turns CSS transitions off (DR-160), parks the mouse pointer
+PNG hashes cannot prove a no-op. The capture emulates "Reduce motion" (charts
+skip their entry animation), turns CSS transitions off, parks the mouse pointer
 at the window's top-left corner (the sidebar's padding, where nothing reacts to a hover)
 and waits until animations stop and the charts' SVG is stable before each shot. A scene
 that hovers or focuses on purpose for a tooltip passes `keepPointer: true` to

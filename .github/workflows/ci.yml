@@ -136,7 +136,7 @@ jobs:
           [[ "${{ needs.frontend-checks.result }}" == success ]]
           [[ "${{ needs.frontend-time-zones.result }}" == success ]]
 
-  # ── UI captures and axe: every captured screen (F-08, ADR 0078, ADR 0158) ──
+  # ── UI captures and axe: every captured screen (ADR 0078, ADR 0158) ──
   # Runs the ux:capture harness on the in-memory sample portfolio (no real data) and fails
   # on any axe WCAG 2.2 AA violation, or on a layout screen in Czech or Russian with a
   # string clipped or covered. Screenshots are a by-product.
@@ -278,8 +278,8 @@ jobs:
       - name: Clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
-      # Integration tests (DB transactions, migrations, H-14 probe). The timing-dependent
-      # H-14 probe is #[ignore]d (DR-169); run it locally with `cargo test -- --ignored`.
+      # Integration tests (DB transactions, migrations, ADR 0014 pool probe). The timing-dependent
+      # pool probe is #[ignore]d (ADR 0068); run it locally with `cargo test -- --ignored`.
       - name: Tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
 

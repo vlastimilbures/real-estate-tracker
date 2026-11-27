@@ -1,4 +1,4 @@
-//! P5a: behaviour of src/db.rs (D-14) against temporary file databases opened exactly as
+//! Behaviour of src/db.rs (ADR 0014) against temporary file databases opened exactly as
 //! tauri-plugin-sql opens them. Never touches the real database.
 
 use app_lib::db::{backup_to, run_atomic};
@@ -150,7 +150,7 @@ async fn backup_into_a_missing_directory_fails() {
     cleanup(path, pool).await;
 }
 
-/// DR-084: a migration is sent as ONE multi-statement text; every statement in it runs
+/// A migration is sent as ONE multi-statement text; every statement in it runs
 /// inside the transaction, and a failure in a later statement undoes the earlier ones.
 #[tokio::test]
 async fn multi_statement_text_runs_whole_inside_the_transaction() {
