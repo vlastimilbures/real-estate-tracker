@@ -543,3 +543,25 @@ describe("an invalid horizon raises HORIZON_NOT_POSITIVE first", () => {
     });
   }
 });
+
+// ADR 0017: the message names the entity of the first problem, and "input" when the
+// list carries none.
+describe("EngineInputError message", () => {
+  it("names input when there is no first problem", () => {
+    expect(new EngineInputError([]).message).toBe("Invalid input: ");
+  });
+
+  it("names the first problem's entity and id, then every code", () => {
+    const e = new EngineInputError([
+      { code: "HORIZON_NOT_POSITIVE", entity: "mortgage", id: "m1" },
+      {
+        code: "HORIZON_NOT_POSITIVE",
+        entity: "assumptions",
+        field: "horizonYears",
+      },
+    ]);
+    expect(e.message).toBe(
+      "Invalid mortgage m1: HORIZON_NOT_POSITIVE, HORIZON_NOT_POSITIVE (horizonYears)",
+    );
+  });
+});

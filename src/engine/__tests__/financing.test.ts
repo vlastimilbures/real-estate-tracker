@@ -697,6 +697,40 @@ describe("ADR 0103: upcoming events", () => {
   });
 });
 
+describe("ADR 0176: same-day events of one kind follow the property order", () => {
+  const day = isoDate("2026-12-31");
+  // Portfolio order c, b, a: the order the events are listed in never decides.
+  const p: Portfolio = {
+    ...single(),
+    properties: ["c", "b", "a"].map((id) => ({
+      ...single().properties[0],
+      id,
+      name: id,
+    })),
+  };
+  const payoff = (propertyId: string) => ({
+    propertyId,
+    blockId: `m-${propertyId}`,
+    nextFixation: null,
+    payoffDate: day,
+    remainingMonths: 7,
+    interestSaved: null,
+  });
+  const order = (ids: string[]) =>
+    upcomingEvents(
+      p,
+      { asOf: BASE_DATE, loans: ids.map(payoff), resets: [] },
+      12,
+    ).map((e) => `${e.kind}:${e.propertyId}`);
+
+  it.each([
+    ["against the portfolio order", ["a", "b"]],
+    ["in the portfolio order", ["b", "a"]],
+  ])("payoffs listed %s", (_name, ids) => {
+    expect(order(ids)).toEqual(["loanPayoff:b", "loanPayoff:a"]);
+  });
+});
+
 describe("ADR 0103: properties", () => {
   it(
     "debt resetting is Σ upcoming balances in the window, monotone in N, within the schedule",

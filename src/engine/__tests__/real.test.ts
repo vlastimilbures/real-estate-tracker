@@ -79,7 +79,9 @@ describe("cpiAt — price index at an as-of date (baseDate = 1)", () => {
       cpi[assumptions.horizonYears].toString(),
     );
     const justPast = edate(BASE_DATE, assumptions.horizonYears * 12 + 1);
-    expect(() => cpiAt(assumptions, justPast)).toThrow(RangeError);
+    expect(() => cpiAt(assumptions, justPast)).toThrow(
+      new RangeError("cpiAt: as-of 2056-07-07 is past the horizon."),
+    );
     const far = edate(BASE_DATE, (assumptions.horizonYears + 5) * 12);
     expect(() => cpiAt(assumptions, far)).toThrow(RangeError);
   });
