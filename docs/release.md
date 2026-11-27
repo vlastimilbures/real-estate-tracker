@@ -4,6 +4,10 @@ The app ships as an **ad-hoc-signed** Apple Silicon build (ADR 0009, ADR 0063): 
 owner's own Mac, no Apple Developer account. Minimum macOS 13. No App Sandbox (hardened
 runtime only, ADR 0063).
 
+**Prerequisite:** install the Rust target once, beforehand: `rustup target add aarch64-apple-darwin`.
+The release step never downloads it; `scripts/release-macos.sh` stops with that command if the
+target is missing.
+
 ## Checklist
 
 1. **Back up the database** (Settings → Backup & Restore → Export backup), and keep a copy of
