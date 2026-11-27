@@ -7,7 +7,9 @@
 import type { ValidationCode } from "../engine";
 import type { IntRange } from "../lib/rules";
 import {
+  commandCodeOf,
   isCommandError,
+  type CommandErrorCode,
   type ConstraintFailure,
 } from "../platform/commandError";
 import { saveFailureDetail } from "../platform/saveFileTypes";
@@ -48,23 +50,47 @@ export interface UpgradeStop {
   backupPath: string | null;
 }
 
+/** The app command whose Rust detail a DataError's `details` holds: its code, and the
+ *  file name the webview gave it, for the message (ADR 0271). */
+export interface FailedCommand {
+  code: CommandErrorCode;
+  file: string;
+}
+
+/** The failed app command behind `e`, with the file the webview named for it; undefined
+ *  when `e` is not a command's failure (ADR 0271). */
+export function failedCommandOf(
+  e: unknown,
+  file: string,
+): FailedCommand | undefined {
+  const code = commandCodeOf(e);
+  return code ? { code, file } : undefined;
+}
+
 export class DataError extends Error {
   readonly code: DataErrorCode;
   /** One human-readable line per offending record, without financial values. */
   readonly details: string[];
   /** Set on MIGRATION_FAILED (ADR 0153). */
   readonly upgrade?: UpgradeStop;
+  /** Set on MIGRATION_BACKUP_FAILED when Rust refused the copy (ADR 0271). */
+  readonly failedCommand?: FailedCommand;
   constructor(
     code: DataErrorCode,
     message: string,
     details: string[] = [],
-    options?: { cause?: unknown; upgrade?: UpgradeStop },
+    options?: {
+      cause?: unknown;
+      upgrade?: UpgradeStop;
+      failedCommand?: FailedCommand;
+    },
   ) {
     super(message, options);
     this.name = "DataError";
     this.code = code;
     this.details = details;
     if (options?.upgrade) this.upgrade = options.upgrade;
+    if (options?.failedCommand) this.failedCommand = options.failedCommand;
   }
 }
 
@@ -153,13 +179,17 @@ export class FileStepError extends Error {
   /** The underlying failure, for display: for an export, the save's OS text without
    *  its English wrapper (ADR 0193). */
   readonly detail: string;
-  constructor(step: FileStep, cause: unknown) {
+  /** The file name the webview chose, for the message: the safety backup's (ADR 0271
+   *  point 4); null when the webview does not know it (a save dialog's pick). */
+  readonly file: string | null;
+  constructor(step: FileStep, cause: unknown, file: string | null = null) {
     const detail =
       step === "export" ? saveFailureDetail(cause) : messageOf(cause);
     super(`${STEP_MESSAGE[step]}: ${detail}`, { cause });
     this.name = "FileStepError";
     this.step = step;
     this.detail = detail;
+    this.file = file;
   }
 }
 

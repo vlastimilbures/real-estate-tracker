@@ -6,7 +6,8 @@ import { useToast } from "../hooks/useToast";
 import { useUiStore } from "../../state/uiStore";
 import { pressed, useBusyFocus } from "../hooks/useBusyFocus";
 import { logFailure } from "../../state/diagnostics";
-import { saveFailureDetail, type SaveOutcome } from "../../state/platform";
+import type { SaveOutcome } from "../../state/platform";
+import { toSaveFailed } from "../../state/actionError";
 import { Button } from "./Button";
 
 /**
@@ -38,11 +39,9 @@ export function ExportXlsxButton({
         showToast(t.xlsx.exported(outcome.filename));
     } catch (e) {
       logFailure("EXPORT", e);
-      // A failed save's OS text, else the error's own message (ADR 0193).
-      setFailure("xlsxExport", {
-        kind: "saveFailed",
-        detail: saveFailureDetail(e),
-      });
+      // A failed save's OS text, else the error's own message (ADR 0193), with its
+      // Rust code (ADR 0271).
+      setFailure("xlsxExport", toSaveFailed(e));
     } finally {
       setBusy(false);
     }

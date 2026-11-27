@@ -17,7 +17,12 @@
 // in ONE transaction together with its schema_migrations row, so it applies completely or
 // not at all.
 import type { Sql, SqlStatement } from "../sql";
-import { DataError, messageOf, type UpgradeStop } from "../errors";
+import {
+  DataError,
+  failedCommandOf,
+  messageOf,
+  type UpgradeStop,
+} from "../errors";
 import { BASELINE } from "./baseline";
 import { MIGRATIONS, type Migration } from "./steps";
 
@@ -167,11 +172,14 @@ async function safetyCopy(sql: Sql, label: string): Promise<string> {
   try {
     return await sql.backup(label);
   } catch (e) {
+    // Rust names the copy `<label>.sqlite` (src-tauri/src/db.rs, db_backup); the message
+    // names that file, never the path (ADR 0271).
+    const failedCommand = failedCommandOf(e, `${label}.sqlite`);
     throw new DataError(
       "MIGRATION_BACKUP_FAILED",
       "Database upgrade stopped: the safety backup could not be written or verified. Nothing was changed.",
       [messageOf(e)],
-      { cause: e },
+      { cause: e, ...(failedCommand && { failedCommand }) },
     );
   }
 }

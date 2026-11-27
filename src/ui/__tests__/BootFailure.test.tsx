@@ -157,6 +157,51 @@ describe("per-code screen (#115)", () => {
     expect(button(en.app.tryAgain)).not.toBeNull();
   });
 
+  // ADR 0271 point 6: a copy that failed with a covered code shows its translated text as
+  // a plain list item; Rust's line is not on screen.
+  it("MIGRATION_BACKUP_FAILED with a covered code: its text, not in code", () => {
+    act(() => {
+      usePortfolioStore.setState({
+        status: {
+          kind: "startupFailed",
+          error: { kind: "other", message: "x" },
+          startup: {
+            code: "MIGRATION_BACKUP_FAILED",
+            details: ["BACKUP_FAILED: database or disk is full"],
+            failedCommand: { code: "BACKUP_FAILED", file: "pre-x.sqlite" },
+          },
+        },
+        init,
+      } as never);
+    });
+    render(<App />);
+    const item = screen.getByText(en.commandErrors.BACKUP_FAILED);
+    expect(item.tagName).toBe("LI");
+    expect(alert().querySelector("code")).toBeNull();
+    expect(alert().textContent).not.toContain("database or disk is full");
+  });
+
+  it("MIGRATION_BACKUP_FAILED with an uncovered code keeps Rust's line in code", () => {
+    act(() => {
+      usePortfolioStore.setState({
+        status: {
+          kind: "startupFailed",
+          error: { kind: "other", message: "x" },
+          startup: {
+            code: "MIGRATION_BACKUP_FAILED",
+            details: ["database is locked"],
+            failedCommand: { code: "SQL", file: "pre-x.sqlite" },
+          },
+        },
+        init,
+      } as never);
+    });
+    render(<App />);
+    expect(alert().querySelector("li code")?.textContent).toBe(
+      "database is locked",
+    );
+  });
+
   it("ROW_INVALID: records involved and the next step; no Try again", () => {
     fail("ROW_INVALID", ["leases l1: monthly_rent is not a finite decimal"]);
     render(<App />);

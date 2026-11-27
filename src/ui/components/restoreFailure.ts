@@ -5,6 +5,7 @@ import { logFailure, type FailureSite } from "../../state/diagnostics";
 import { toActionError, type ActionError } from "../../state/actionError";
 import type { Dictionary } from "../../i18n";
 import { describeWriteError } from "../model/writeError";
+import { commandFailureText } from "../model/commandErrorText";
 
 type RestoreRefused = Extract<ActionError, { kind: "restoreRefused" }>;
 
@@ -52,16 +53,20 @@ export function backupFailureText(
       return { text: restoreErrorText(t, e), issues: e.issues };
     case "sampleNotEmpty":
       return { text: t.sample.errNotEmpty, issues: [] };
+    // Rust's detail, or the text for its code (ADR 0271).
     case "safetyBackup":
-      return { text: safety(e.detail), issues: [] };
+      return { text: safety(commandFailureText(t, e)), issues: [] };
     case "backupExport":
-      return { text: t.backup.exportFailed(e.detail), issues: [] };
+      return {
+        text: t.backup.exportFailed(commandFailureText(t, e)),
+        issues: [],
+      };
     case "backupUnreadable":
       return { text: t.backup.errUnreadable(e.detail), issues: [] };
     // Neither reaches these callers: a file save fails inside a backup export, and the
     // Import page shows a refused plan's problems itself (ADR 0229 §2).
     case "saveFailed":
-      return { text: other(e.detail), issues: [] };
+      return { text: other(commandFailureText(t, e)), issues: [] };
     case "planRefused":
       return { text: other(""), issues: [] };
     default:

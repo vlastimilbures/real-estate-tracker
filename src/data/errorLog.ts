@@ -12,10 +12,7 @@
 // (the startup upgrade's MIGRATION_* errors): a closed list of upper snake case names,
 // written as it is.
 import { DataError, messageOf } from "./errors";
-import {
-  isCommandError,
-  type CommandErrorCode,
-} from "../platform/commandError";
+import { commandCodeOf } from "../platform/commandError";
 import { isTauri } from "../lib/tauri";
 import { writeErrorLine } from "../platform/errorLog";
 
@@ -52,18 +49,6 @@ export type FailureSite =
   // Showing the data folder: the startup error screen (ADR 0153), Settings → Backup
   // (ADR 0175).
   | "REVEAL";
-
-/** The Rust code of the failed command behind `e`: in `e` itself or in its `cause`
- *  chain (the backup errors and the upgrade's DataErrors keep the rejection as their
- *  cause). A looping chain ends. */
-function commandCodeOf(e: unknown): CommandErrorCode | null {
-  const seen = new Set<unknown>();
-  for (let at = e; at instanceof Error && !seen.has(at); at = at.cause) {
-    if (isCommandError(at)) return at.code;
-    seen.add(at);
-  }
-  return null;
-}
 
 /** The code + context line written for a failure in `where`. */
 export function describeFailure(

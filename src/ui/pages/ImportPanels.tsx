@@ -7,7 +7,9 @@ import { Badge } from "../components/status";
 import { HelpText } from "../components/HelpText";
 import type { CsvImportProblem } from "../../state/csv";
 import { logFailure } from "../../state/diagnostics";
-import { saveFailureDetail, saveFile } from "../../state/platform";
+import { saveFile } from "../../state/platform";
+import { toSaveFailed } from "../../state/actionError";
+import { commandFailureText } from "../model/commandErrorText";
 import { useT } from "../hooks/useT";
 import { Disclosure } from "../components/Disclosure";
 import { RowAction, RowActions } from "../components/RowActions";
@@ -170,7 +172,9 @@ function ImportFileRow({ type }: { type: ImportFileType }) {
       await saveCsv(file, templateFn());
     } catch (e) {
       logFailure("TEMPLATE", e);
-      setTemplateError(t.importPage.templateFailed(saveFailureDetail(e)));
+      setTemplateError(
+        t.importPage.templateFailed(commandFailureText(t, toSaveFailed(e))),
+      );
     }
   }
 
