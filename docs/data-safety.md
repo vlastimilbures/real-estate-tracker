@@ -44,7 +44,10 @@ version 8 or later) upgrades as described above. An older one is not upgraded (A
 the app stops with "This database was last opened with a version older than 1.4.0. Open it
 once with version 1.5.0, then update." and writes nothing to it. Install 1.5.0, open the
 database once (it upgrades it), quit, then install the current version. A JSON backup from
-any version restores in any later version (next section).
+any version restores in any later version (next section), unless it holds data that version
+refuses: since 1.6.0, for example, two loans on one property starting within a month of each
+other, or a development-loan tranche in a loan's last two payments (ADR 0226). Restore then
+refuses the file and the current data stays.
 
 ## Restore a backup
 
