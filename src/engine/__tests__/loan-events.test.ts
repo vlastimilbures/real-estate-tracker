@@ -762,6 +762,43 @@ describe("ADR 0109: refinance handovers", () => {
     expect(s.rows[55].prepaid.toFixed(0)).toBe("100000");
   });
 
+  it("a shortenTerm that could not shorten keeps its report when the successor starts years later (ADR 0179)", () => {
+    // The owner still pays after payment 56 until the successor's draw in 2036 (grid
+    // month 116), so the warning stands: only a month-d prepayment loses it.
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [prepay("2031-01-17", 100000, "shortenTerm")]),
+        refi("2036-01-17"),
+      ],
+      assumptions,
+    );
+    expect(s.refinances[0].month).toBe(116);
+    expect(s.eventOutcomes).toHaveLength(1);
+    expect(s.eventOutcomes[0]).toMatchObject({
+      month: 56,
+      issue: "PREPAYMENT_TERM_NOT_SHORTENED",
+    });
+  });
+
+  it("a kept prepayment above the balance stays reported as exceeding it", () => {
+    // Payment 56 leaves 1,386,249.89 Kč (parity table); the 2,000,000 Kč prepayment
+    // that follows it repays exactly that, and the successor pays nothing off.
+    const s = propertySchedule(
+      [
+        withEvents(javorova, [prepay("2031-01-17", 2000000)]),
+        refi("2031-01-17"),
+      ],
+      assumptions,
+    );
+    expect(s.eventOutcomes).toHaveLength(1);
+    expect(s.eventOutcomes[0]).toMatchObject({
+      month: 56,
+      issue: "PREPAYMENT_EXCEEDS_BALANCE",
+    });
+    expect(s.eventOutcomes[0].applied.toFixed(2)).toBe("1386249.89");
+    expect(s.refinances[0].paidOff.toFixed(2)).toBe("0.00");
+  });
+
   it("a prepayment in a dropped payment period is paid at the handover", () => {
     const plain = propertySchedule([javorova, refi("2031-01-10")], assumptions);
     const s = propertySchedule(

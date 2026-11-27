@@ -81,6 +81,28 @@ describe("drawdown progress (ADR 0167)", () => {
     expect(late!.drawn.equals(late!.total)).toBe(true);
   });
 
+  it("lists tranches entered out of order by date", () => {
+    const unordered = mortgageBlock({
+      ...devBlock,
+      draws: [
+        { date: isoDate("2027-08-20"), amount: money("1000000") },
+        { date: isoDate("2026-11-15"), amount: money("1500000") },
+        { date: isoDate("2027-02-10"), amount: money("500000") },
+      ],
+    });
+    const [dd] = drawdowns([unordered], isoDate("2027-03-01"));
+    expect(
+      dd!.tranches.map((t) => [t.date, t.amount.toString(), t.status]),
+    ).toEqual([
+      [isoDate("2026-03-01"), "2000000", "drawn"],
+      [isoDate("2026-11-15"), "1500000", "drawn"],
+      [isoDate("2027-02-10"), "500000", "drawn"],
+      [isoDate("2027-08-20"), "1000000", "ahead"],
+    ]);
+    expectKc(dd!.drawn, 4000000);
+    expectKc(dd!.total, 5000000);
+  });
+
   it("a loan that starts after as-of has its start draw ahead", () => {
     const [dd] = drawdowns([devBlock], isoDate("2026-02-01"));
     expect(dd!.tranches.map((t) => t.status)).toEqual([
