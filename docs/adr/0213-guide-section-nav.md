@@ -1,6 +1,6 @@
 # 0213. Guide: section navigation
 
-- Status: Accepted
+- Status: Superseded by 0274
 - Date: 2026-11-16
 - Source: issue #390 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's decision); acceptance delegated by the owner for the

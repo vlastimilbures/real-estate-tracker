@@ -64,11 +64,10 @@ export default defineConfig({
     // Engine benchmarks (`pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },
     // Coverage ratchet. Thresholds are per folder (coverage-floors.json) and only ever go
-    // up: a raised floor is measured minus 1-2 points of headroom (2 for UI folders, where
-    // new code lands less covered). Enforced by `pnpm test:coverage` in CI;
-    // `pnpm coverage:ratchet` fails when a floor lags measured by more than MAX_SLACK
-    // points (scripts/check-coverage-ratchet.mjs, #141). Re-baselined once for Vitest 4's
-    // AST-based v8 counting (ADR 0083).
+    // up, by the headroom rule in scripts/check-coverage-ratchet.mjs. Enforced by
+    // `pnpm test:coverage` in CI; the nightly run lists the floors that lag measured by
+    // more than MAX_SLACK points in one issue (#141, #499). Re-baselined once for Vitest
+    // 4's AST-based v8 counting (ADR 0083).
     coverage: {
       provider: "v8",
       include: ["src/**"],
