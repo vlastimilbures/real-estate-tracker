@@ -313,9 +313,10 @@ delegates a run's decisions, recorded on its tracking issue, its ADRs ship as **
 
 A round of layout or styling adjustments that changes no rule, limit, stored data or export
 shares one ADR with numbered items; a change to a rule, limit, rejection, stored data or export
-still gets its own (ADR 0272). From ADR 0272 on, every record has `Topic`, `Trigger` (what the
-user must do to reach the case) and `Likelihood` (routine, plausible, rare or practically
-never; `n/a` for a record that adds no handling) lines. A practically-never case gets a refusal
+still gets its own (ADR 0272). From ADR 0272 on, every record has `Trigger` (what the user must
+do to reach the case) and `Likelihood` (routine, plausible, rare or practically never; `n/a`
+for a record that adds no handling) lines; an optional `Topic` line fills the index's Topic
+column. A practically-never case gets a refusal
 with a message, or nothing, never a model of the case. An ADR with three or more amenders is
 not amended again: one superseding record states the rule as it is now.
 
@@ -330,8 +331,7 @@ pass on green CI; a major runtime upgrade gets the maintainer's review in its PR
 
 The ADR index in `docs/adr/README.md` is generated: run `pnpm adr:index` after adding or
 changing an ADR header. `pnpm adr:check` (in CI) fails on a stale index, a one-sided
-Amends / Amended-by link, or a record from 0272 on without its Topic, Trigger and Likelihood
-lines.
+Amends / Amended-by link, or a record from 0272 on without its Trigger and Likelihood lines.
 
 Refactors are behaviour-neutral and need no ADR.
 

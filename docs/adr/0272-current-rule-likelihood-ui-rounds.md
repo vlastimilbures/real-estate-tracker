@@ -4,7 +4,10 @@
 - Date: 2026-11-27
 - Source: issue #498 (code review 2026-11, tracking #435); owner decision 2026-11-16 on #498
   (option B, decision text approved, then numbered 0238); owner decision 2026-11-27 on #498
-  (implement as approved, renumbered 0272)
+  (implement as approved, renumbered 0272); owner review of PR #710 on 2026-11-27 (the Topic
+  line is optional; confirmed the reading of point 1: a change to an ADR with three or more
+  amenders becomes a superseding current-rule record, and the other chains are restated on
+  their next change)
 - Amends: [0001](0001-behaviour-change-gate.md) (a round of layout or styling adjustments
   shares one ADR), [0152](0152-wording-log-and-generated-index.md) (the template and the
   generated index gain Topic, Trigger and Likelihood)
@@ -28,18 +31,20 @@ The review behind #498 counted the records in `docs/adr/` at its base:
 - The index lists records by number only.
 
 On 2026-11-16 the owner chose option B: restate long chains, add a likelihood line, and let a
-round of UI adjustments share one record. The decision text was approved under the number 0238. The record was not written then, and later records took the numbers up to 0271, so on
-2026-11-27 the owner had it implemented as approved under 0272. **0238 stays a gap**: no record has that number and none
-will be given it.
+round of UI adjustments share one record. The decision text was approved as number 0238.
+The record was not written then, and later records took the numbers up to 0271, so on
+2026-11-27 the owner had it implemented as approved under 0272. **0238 stays a gap**: no
+record has that number and none will be given it.
 
 ## Decision
 
 1. **Current-rule records.** An ADR with three or more amenders gets one superseding record
    that states the rule as it is now, in full, without the reader having to open the chain.
-   The old chain is marked superseded, both sides linked (ADR 0152): the restated record and
-   each amender whose content the new record restates in full get `Status: Superseded by
-NNNN`; an amender that also decides other things gets `Superseded in part by: NNNN`. The first three are prepayments and
-   recasts (0109), sections (0107) and the Data check (0118).
+   The old chain is marked superseded, both sides linked (ADR 0152): the restated record
+   and each amender whose content the new record restates in full get
+   `Status: Superseded by NNNN`; an amender that also decides other things gets
+   `Superseded in part by: NNNN`. The first three are prepayments and recasts (0109),
+   sections (0107) and the Data check (0118).
    From now on, a change to an ADR that already has three amenders is written as that
    superseding record, not as a fourth amendment. A change to an ADR with fewer amenders
    may still amend it.
@@ -57,25 +62,25 @@ NNNN`; an amender that also decides other things gets `Superseded in part by: NN
    and 0225 already do. Any change to a rule, limit, rejection, stored data or export still
    gets its own ADR. The gate of ADR 0001 is otherwise unchanged: an accepted ADR and a failing
    test written first.
-4. **The index.** `pnpm adr:index` adds a Topic column, taken from a `Topic:` header line
-   (an area and a subject, such as "Loans: prepayments"). `pnpm adr:check` requires the
-   `Topic`, `Trigger` and `Likelihood` lines on every record from 0272 on and checks that
-   Likelihood starts with one of the four levels or `n/a`. Records before 0272 are not
-   checked for them.
+4. **The index.** `pnpm adr:index` adds a Topic column, filled from an optional `Topic:`
+   header line (an area and a subject, such as "Loans: prepayments"); no record fails the
+   check for leaving it out (owner, 2026-11-27). `pnpm adr:check` requires the `Trigger` and
+   `Likelihood` lines on every record from 0272 on and checks that Likelihood starts with one
+   of the four levels or `n/a`. Records before 0272 are not checked for them.
 5. **The delegated records.** ADRs 0198–0225, which carried "Accepted (delegated, owner review
    pending)", are accepted as they stand (owner, 2026-11-16). Their status already reads
    Accepted.
 
 ## Consequences
 
-- `docs/adr/README.md` (the steps and the template) and CONTRIBUTING.md describe the three
-  new lines, current-rule records and UI rounds. CLAUDE.md §8 gets the approved sentence in
-  its own change, since that file is the owner's.
+- `docs/adr/README.md` (the steps and the template) and CONTRIBUTING.md describe the
+  Trigger and Likelihood lines, the optional Topic line, current-rule records and UI rounds.
+  CLAUDE.md §8 gets the approved sentence in its own change, since that file is the owner's.
 - The three current-rule records for 0109, 0107 and 0118 follow, one docs change each.
   Sixteen other records have three or more amenders today; each is restated when it is next
   changed, under point 1. `pnpm adr:check` does not count amenders, so an existing chain
   never fails the check.
-- Topics of records before 0272 are blank in the index until a record is restated or its
-  header is next edited; adding a `Topic:` line to an old record is allowed at any time.
+- The Topic column is blank for a record without a `Topic:` line. A `Topic:` line may be added
+  to any record, old or new, at any time.
 - Fewer records per UI review round, and a stated likelihood on every new edge case, so a
   "practically never" case is refused instead of modelled.
