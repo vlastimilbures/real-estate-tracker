@@ -4,14 +4,15 @@
 // Offline only: nothing leaves the machine.
 //
 // No personal financial values: a DataError contributes its code and details (table,
-// row id, column, rule — never a value); any other error's message has every number
-// masked, so an amount that slipped into a message is not recorded (ADR 0147), except an
+// row id, column, rule — never a value); a MIGRATION_* error's details, which are the
+// driver's or Rust's own text and can quote a stored value (ADR 0277), and any other
+// error's message have every number masked, so an amount that slipped into a message is not recorded (ADR 0147), except an
 // OS or SQLite error code, which says what failed (ADR 0175). Names are kept (they help
 // diagnosis); the bug form says to replace them before pasting. A failed app command's
 // context starts with its Rust code (ADR 0270 point 7), also when a DataError wraps it
 // (the startup upgrade's MIGRATION_* errors): a closed list of upper snake case names,
 // written as it is.
-import { DataError, messageOf } from "./errors";
+import { DataError, messageOf, type DataErrorCode } from "./errors";
 import { commandCodeOf } from "../platform/commandError";
 import { isTauri } from "../lib/tauri";
 import { writeErrorLine } from "../platform/errorLog";
@@ -29,6 +30,13 @@ export function maskNumbers(text: string): string {
     (_run, code: string | undefined) => code ?? "#",
   );
 }
+
+/** The DataErrors whose details are a driver's or Rust's message, not names and ids:
+ *  logged masked (ADR 0277). The screen shows them as they are. */
+const FREE_TEXT_DETAILS: ReadonlySet<DataErrorCode> = new Set<DataErrorCode>([
+  "MIGRATION_BACKUP_FAILED",
+  "MIGRATION_FAILED",
+]);
 
 /** Where a failure happened: the prefix of its log code (`<SITE>_FAILED`). */
 export type FailureSite =
@@ -57,11 +65,13 @@ export function describeFailure(
 ): { code: string; context: string } {
   const rust = commandCodeOf(e);
   const withRust = (text: string) => (rust ? `${rust}: ${text}` : text);
-  if (e instanceof DataError)
-    return {
-      code: e.code,
-      context: withRust(`${where}: ${e.details.join("; ")}`),
-    };
+  if (e instanceof DataError) {
+    const details = e.details.join("; ");
+    const logged = FREE_TEXT_DETAILS.has(e.code)
+      ? maskNumbers(details)
+      : details;
+    return { code: e.code, context: withRust(`${where}: ${logged}`) };
+  }
   return {
     code: `${where}_FAILED`,
     context: withRust(maskNumbers(messageOf(e))),

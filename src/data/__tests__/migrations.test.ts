@@ -237,6 +237,41 @@ describe("migration safety: abort paths leave the database unchanged", () => {
     });
   });
 
+  // ADR 0277: a stopped upgrade's log line masks the numbers in the driver's detail, as
+  // every other free-text log line does (ADR 0147); the screen keeps the detail as it is.
+  it("a migration failure logs no digit of the stored value (ADR 0277)", async () => {
+    const sql = await v8WithData();
+    // Synthetic: the driver's message quotes the stored purchase price of p1.
+    const detail =
+      "error returned from database: (code: 275) bad value '7500000.50' in properties.purchase_price";
+    sql.transaction = () => Promise.reject(new CommandError("SQL", detail));
+
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.code).toBe("MIGRATION_FAILED");
+    expect(e.details).toEqual([detail]);
+    const { context } = describeFailure("STARTUP", e);
+    expect(context).not.toMatch(/7500000|50'/);
+    expect(context).toBe(
+      "SQL: STARTUP: error returned from database: (code: 275) bad value '#' in properties.purchase_price",
+    );
+  });
+
+  it("a failed safety backup logs no digit of its detail (ADR 0277)", async () => {
+    const sql = await v8WithData();
+    sql.backup = () =>
+      Promise.reject(
+        new CommandError("BACKUP_FAILED", "copy stopped after 7500000 bytes"),
+      );
+
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.details).toEqual(["copy stopped after 7500000 bytes"]);
+    expect(describeFailure("STARTUP", e).context).toBe(
+      "BACKUP_FAILED: STARTUP: copy stopped after # bytes",
+    );
+  });
+
   it("a migration whose statements fail is rolled back whole", async () => {
     const sql = await v8WithData();
     const before = snapshot(sql);

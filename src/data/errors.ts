@@ -1,7 +1,9 @@
 // The data layer's typed errors, in one place. A DataError's code maps to an i18n
 // message (`t.dataErrors`), and its `details` carry what the message lists: table names,
 // row ids, property names and rule names — never money amounts, so a DataError is
-// written to the log as it is. Names and ids built from names stay in it (ADR 0147).
+// written to the log as it is. Names and ids built from names stay in it (ADR 0147). A
+// MIGRATION_* error's details are the driver's or Rust's message, logged with its numbers
+// masked (ADR 0277).
 // Backup & Restore's errors (a refused backup, a failed file step) and the refused
 // sample load follow; the UI reaches them through the state facades (ADR 0072).
 import type { ValidationCode } from "../engine";
