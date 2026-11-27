@@ -18,19 +18,16 @@ Every issue from the 2026-10 pre-release review
 #101–#178) is closed; each closed issue links the ADR or PR that resolved it. New work is
 tracked as [GitHub issues](https://github.com/vlastimilbures/real-estate-tracker/issues).
 
-## In progress: the 2026-11 code review
+## Done: the 2026-11 reviews
 
-The code review (architecture, maintainability, edge-case realism) is tracked in
-[#435](https://github.com/vlastimilbures/real-estate-tracker/issues/435). Its open issues:
-[`code-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=is%3Aissue+is%3Aopen+label%3Acode-review-2026-11).
-
-## The 2026-11 UX/UI review
-
-Every work issue is closed. The tracking issue
-[#392](https://github.com/vlastimilbures/real-estate-tracker/issues/392) and the decisions left for
-the owner ([#415](https://github.com/vlastimilbures/real-estate-tracker/issues/415)) are open. Open
-issues:
-[`ux-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=is%3Aissue+is%3Aopen+label%3Aux-review-2026-11).
+The code review (architecture, maintainability, edge-case realism), tracked in
+[#435](https://github.com/vlastimilbures/real-estate-tracker/issues/435) (label
+[`code-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Acode-review-2026-11)),
+and the UX/UI review, tracked in
+[#392](https://github.com/vlastimilbures/real-estate-tracker/issues/392) with the owner's
+decisions in [#415](https://github.com/vlastimilbures/real-estate-tracker/issues/415) (label
+[`ux-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=label%3Aux-review-2026-11)),
+are closed, every work issue included.
 
 ## Feature ideas (no issue yet)
 
