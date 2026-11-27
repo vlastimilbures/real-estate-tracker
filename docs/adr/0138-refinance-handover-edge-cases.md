@@ -54,7 +54,7 @@ The owner chose on 2026-10-05: #229 / #221 item 2 option A, #221 item 1 fix, #22
   tranche, which the owner's lender now receives back.
 - Decision 1 also raises the cap on a prepayment paid at such a handover (ADR 0109): it can
   now use the tranche too. A prepayment above the balance before month `d` but within the
-  balance with the tranche was capped with `PREPAYMENT_CAPPED`; it is now applied in full
+  balance with the tranche was capped with `PREPAYMENT_EXCEEDS_BALANCE`; it is now applied in full
   with no issue. Example (`loanEvents.crossCheck.test.ts`): a development loan owing
   2,000,000 Kč before the handover month and drawing a 1,500,000 Kč tranche in it; a
   2,500,000 Kč prepayment was capped at 2,000,000 and is now applied in full.
@@ -76,3 +76,7 @@ The owner chose on 2026-10-05: #229 / #221 item 2 option A, #221 item 1 fix, #22
   `loanEvents.crossCheck.test.ts` (a development loan's tranche and a 100,000 or 2,500,000 Kč
   prepayment before a refinance that drops the payment, engine = reference),
   `loanEvents.property.test.ts` (#229 pin).
+
+Note (2026-11-27): identifier corrected. The Consequences named the issue code
+`PREPAYMENT_CAPPED`, which does not exist; the clamp reports `PREPAYMENT_EXCEEDS_BALANCE`
+(`src/engine/types.ts`). Text only; the rule is unchanged.

@@ -10,8 +10,8 @@ export type { PropertyFormTarget, PropertySection };
 
 /** The sections Property detail renders, in page order. Records, Financing and Holding
  *  costs are always there (they stay editable with invalid data); the rest need output.
- *  The Data check follows the Overview (ADR 0118); the Acquisition section, which needs
- *  output too, follows Financing (ADR 0119 §9). */
+ *  The Acquisition section, which needs output too, follows Financing (ADR 0119 §9); the
+ *  Data check is last (ADR 0223 §5, ADR 0274 §2.1). */
 export function propertySections(has: {
   overview: boolean;
   /** False for a deactivated property: no data-entry nudges (ADR 0155). */
