@@ -307,3 +307,18 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
   (the six `BACKUP_*` texts as written, resolved question 4; the three file-write texts
   in decision 3), cs/ru as drafted in ADR 0271 with four changes (cs `SAVED_FILE_MISMATCH`
   and `NO_FILE_NAME`, ru `BACKUP_PATH_NOT_UTF8` and `SAVED_FILE_MISMATCH`)
+
+### 2026-11-27 · note / PR #715
+
+- Keys: `dashboard.financingUpcoming`, `dashboard.financingNoEvents` (en, cs, ru), deleted
+  by PR #402 (ADR 0204 decision 9); `importPage.errOutOfRange`, `importPage.errSizeRange`,
+  `backup.issueOutOfRange`, `backup.issueOutOfRangeSize` (en, cs, ru), deleted by PR #573
+  (ADR 0259); `dashboard.financingRowsNominal` (en, cs, ru), deleted by PR #603
+- Change: no text changes. A note listing every key an earlier entry cites that is no
+  longer in the dictionaries, so a reader does not look for it: the first two in the
+  2026-10-13 Track 14 N7a entry (the fixation timeline later replaced the Dashboard's
+  upcoming list), the next four in the 2026-11-24 #464 entry and the last in the
+  2026-11-25 #485 entry, which already mark them deleted. Every other key the log cites
+  is still in the dictionaries.
+- Rejected: marking the keys in the old entries, which the log's append-only rule forbids.
+- Approved by: owner, 2026-11-27
