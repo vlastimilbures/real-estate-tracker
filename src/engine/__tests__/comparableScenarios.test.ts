@@ -2,7 +2,11 @@
 // engine rule. The filter is an engine rule, so it lives in the engine, not in a hook.
 import { describe, it, expect } from "vitest";
 import { rate } from "../brands";
-import { comparableScenarios, scenarioRuleErrors } from "../validate";
+import {
+  comparableScenarios,
+  scenarioErrorsAddedBy,
+  scenarioRuleErrors,
+} from "../validate";
 import type { Scenario } from "../scenarios";
 import { assumptions } from "./support/seed";
 
@@ -34,5 +38,38 @@ describe("comparableScenarios", () => {
 
   it("returns none for none", () => {
     expect(comparableScenarios(assumptions, [])).toEqual([]);
+  });
+});
+
+// ADR 0128 §6: an assumptions edit is blocked only by the rules it newly breaks; a rule
+// the scenario already broke on another field does not hide it.
+describe("scenarioErrorsAddedBy", () => {
+  const shock = (deltaPa: string) => ({
+    deltaPa: rate(deltaPa),
+    durationYears: 3,
+  });
+  const overrides = {
+    rateShock: shock("-0.05"),
+    inflationShock: shock("-0.6"),
+  };
+  const lowInflation = { ...assumptions, inflationPa: rate("-0.5") };
+
+  it("lists the new problem beside one the scenario already had", () => {
+    expect(scenarioRuleErrors(assumptions, overrides)).toEqual([
+      {
+        code: "SHOCKED_RATE_OUT_OF_RANGE",
+        entity: "assumptions",
+        field: "rateShock",
+      },
+    ]);
+    expect(scenarioErrorsAddedBy(assumptions, lowInflation, overrides)).toEqual(
+      [
+        {
+          code: "SHOCKED_INFLATION_OUT_OF_RANGE",
+          entity: "assumptions",
+          field: "inflationShock",
+        },
+      ],
+    );
   });
 });

@@ -89,6 +89,29 @@ describe("loanChainChanges — stopped events (ADR 0160)", () => {
     expect(stopped([p], [p, b])).toEqual(["b p prepayment 2028-01-17"]);
   });
 
+  it("an edit that adds an event still pairs each stored event with its own outcome", () => {
+    const p = stored({
+      prepayments: [prepayment("2028-01-17"), prepayment("2033-01-17")],
+    });
+    const edited = stored({
+      prepayments: [
+        prepayment("2027-01-17"),
+        prepayment("2028-01-17"),
+        prepayment("2033-01-17"),
+      ],
+    });
+    const b = successor("b", "2031-01-17");
+    expect(stopped([p], [edited, b])).toEqual(["b p prepayment 2033-01-17"]);
+  });
+
+  it("removing every block stops nothing and leaves nothing unused", () => {
+    const p = stored({ prepayments: [prepayment("2032-01-17")] });
+    expect(loanChainChanges([p], [], assumptions)).toEqual({
+      stopped: [],
+      unused: [],
+    });
+  });
+
   it("no change stops nothing", () => {
     const p = stored({ prepayments: [prepayment("2032-01-17")] });
     expect(stopped([p], [p])).toEqual([]);

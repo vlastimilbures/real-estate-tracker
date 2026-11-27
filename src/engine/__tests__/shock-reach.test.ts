@@ -291,6 +291,97 @@ describe("blocksReachedByShock", () => {
   });
 });
 
+describe("blocksReachedByShock at the row and successor bounds", () => {
+  // A 40-year loan whose 30-year fixation ends at the horizon: its first refixed payment
+  // is due one month after the fixation end, in grid row 12·30 + 1 − (payments due by
+  // baseDate).
+  const longFix = (startDate: string) => ({
+    ...shockLoan({
+      id: "a",
+      startDate: isoDate(startDate),
+      fixationYears: 30,
+      loanTermYears: 40,
+    }),
+    monthlyInstalment: money("12600"),
+  });
+
+  it("hits a block whose first refixed payment falls in the last horizon row", () => {
+    // One payment due by baseDate (2026-06-07): payment 361 (2056-06-07) is in row 360.
+    expect(only([longFix("2026-05-07")])).toEqual({
+      blockId: "a",
+      hit: true,
+      fixedUntil: isoDate("2056-05-07"),
+    });
+  });
+
+  it("misses a block whose first refixed payment falls one row past the horizon", () => {
+    // Starting on baseDate, no payment is due yet: payment 361 (2056-07-07) is in row 361.
+    expect(only([longFix("2026-06-07")])).toEqual({
+      blockId: "a",
+      hit: false,
+      reason: "refixAfterHorizon",
+      fixedUntil: isoDate("2056-06-07"),
+    });
+  });
+
+  // Block a: 64 payments due by baseDate, so its first refixed payment (121, due
+  // 2031-02-17) is in grid row 57 (2031-02-07, 2031-03-07].
+  const refixing = shockLoan({
+    id: "a",
+    startDate: isoDate("2021-01-17"),
+    fixationYears: 10,
+  });
+  const hitA = {
+    blockId: "a",
+    hit: true,
+    fixedUntil: isoDate("2031-01-17"),
+  };
+  const reachOfA = (successorStart: string) => {
+    const [loan] = reachOf([
+      refixing,
+      shockLoan({
+        id: "b",
+        startDate: isoDate(successorStart),
+        fixationYears: 30,
+      }),
+    ]);
+    return loan?.blocks[0];
+  };
+
+  it("hits a block whose successor starts after the payment, in the same row", () => {
+    expect(reachOfA("2031-02-20")).toEqual(hitA);
+  });
+
+  it("hits a block whose successor draws in the next row", () => {
+    expect(reachOfA("2031-03-10")).toEqual(hitA);
+  });
+
+  it("misses a block whose successor starts before the payment, in the same row", () => {
+    expect(reachOfA("2031-02-10")).toEqual({
+      ...hitA,
+      hit: false,
+      reason: "replacedBySuccessor",
+    });
+  });
+
+  it("leaves out an active property without a mortgage", () => {
+    const p = withBlocks([
+      shockLoan({
+        id: "a",
+        startDate: isoDate("2021-01-17"),
+        fixationYears: 10,
+      }),
+    ]);
+    const bare = { ...p.properties[0]!, id: "bare", name: "bare" };
+    const reach = blocksReachedByShock(
+      { ...p, properties: [bare, ...p.properties] },
+      assumptions,
+      shock(3),
+    );
+    expect(reach.map((l) => l.propertyId)).toEqual(["p1"]);
+  });
+});
+
 // The reach must agree with the projection: a portfolio's net cash flows move under
 // the shock exactly when some block is hit.
 describe("blocksReachedByShock agrees with the shocked projection", () => {
