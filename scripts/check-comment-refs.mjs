@@ -206,14 +206,20 @@ function walk(dir) {
 /** `paths` (relative to `root`) without the ones git ignores: local notes never reach CI,
  *  so a local run must not fail on them either. */
 function notIgnored(root, paths) {
-  const r = spawnSync("git", ["check-ignore", "--stdin"], {
+  // No inherited GIT_* (a hook or `rebase --exec` sets GIT_DIR): git reads `root` (#589).
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([k]) => !k.startsWith("GIT_")),
+  );
+  // `-z`: NUL-separated and never quoted, so a non-ASCII name comes back as given.
+  const r = spawnSync("git", ["check-ignore", "-z", "--stdin"], {
     cwd: root,
-    input: paths.join("\n"),
+    env,
+    input: paths.join("\0"),
     encoding: "utf8",
   });
   // 0: some ignored, 1: none ignored; anything else (no git, no repo) ignores nothing.
   if (r.status !== 0) return paths;
-  const ignored = new Set(r.stdout.split("\n").filter(Boolean));
+  const ignored = new Set(r.stdout.split("\0").filter(Boolean));
   return paths.filter((p) => !ignored.has(p));
 }
 

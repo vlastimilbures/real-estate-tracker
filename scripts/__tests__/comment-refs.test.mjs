@@ -254,6 +254,7 @@ describe("files git ignores", () => {
         "docs/adr/0017-x.md": "# 0017\n",
         "docs/kept.md": "See ADR 0017.\n",
         "docs/local/notes.md": "The old check (DR-143).\n",
+        "docs/local/poznámky.md": "The old check (UX-021).\n",
         "src/x.ts": "// ADR 0017\n",
         "src-tauri/src/x.rs": "// ADR 0017\n",
         "src-tauri/build.rs": "",
