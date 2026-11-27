@@ -126,8 +126,9 @@ it stays out of this ADR (resolved question 1).
    | `commandErrors.NO_FOLDER`            | `There is no folder to save the file in.`                                             |
    | `commandErrors.NO_FILE_NAME`         | `There is no file name to save the file under.`                                       |
 
-   The six `BACKUP_*` texts are the owner's accepted texts; the three file-write texts are
-   drafted in the same style. `SAVED_FILE_MISMATCH` says "not kept" because the temp file is
+   The six `BACKUP_*` texts are the owner's accepted texts; the three file-write texts were
+   drafted in the same style and approved by the owner on 2026-11-27 (comment on PR #694).
+   `SAVED_FILE_MISMATCH` says "not kept" because the temp file is
    removed and the target is left as it was (`fs_atomic.rs:49-52`). The surrounding keys
    (`backup.safetyBackupFailed`, `sample.safetyBackupFailed`, `backup.exportFailed`,
    `xlsx.exportFailed`, `importPage.templateFailed`, `dataErrors.MIGRATION_BACKUP_FAILED`)
@@ -272,8 +273,8 @@ The owner answered on 2026-11-27 (comment on PR #694).
    (point 5).
 3. **Where the file name comes from.** The webview keeps the name it chose, so the wire
    shape from ADR 0270 does not change (point 4).
-4. **The English texts.** The six texts are accepted as written. The three new ones are
-   drafted in the same style (point 3).
+4. **The English texts.** The six texts are accepted as written. The three new ones were
+   drafted in the same style (point 3) and approved by the owner on 2026-11-27.
 5. **The Czech and Russian texts.** Approved on 2026-11-27 (comment on PR #694) as
    drafted here, with four changes: the Czech `SAVED_FILE_MISMATCH` and `NO_FILE_NAME`
    and the Russian `BACKUP_PATH_NOT_UTF8` and `SAVED_FILE_MISMATCH` ("Czech and Russian
