@@ -925,7 +925,7 @@ offline badge, and controls for language and theme.
    stating it once and a chip per affected property (its age, date or price) that links to the
    property section (or form) that fixes it; the own-cash chip opens the form with its
    Acquisition section open. When something needs attention the page title shows an amber
-   review pill with the count ("N to review in the Data check"), which opens the panel and
+   review pill with the count (named "N to review in the Data check"), which opens the panel and
    moves focus to its heading (ADR 0218, ADR 0275). The panel opens when something
    needs attention; a property not yet purchased has no findings except the own-cash one.
 
