@@ -1,6 +1,6 @@
 # 0179. Shorten term keeps the next payment's instalment at the next payment's rate
 
-- Status: Accepted
+- Status: Superseded by 0273
 - Date: 2026-10-11
 - Source: issues #164 and #235 (owner decisions 2026-10-11: #164 option A, #235 option B);
   owner answers to the E4b plan (2026-10-11: Q1 = A plus a warning); Track 14 PR E4b-2

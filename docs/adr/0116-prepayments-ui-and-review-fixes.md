@@ -1,6 +1,7 @@
 # 0116. Prepayments: form, outputs and review fixes
 
 - Status: Accepted
+- Superseded in part by: [0273](0273-prepayments-and-recasts-current-rule.md) (decisions 1 to 10, 12, 13 and 15)
 - Date: 2026-10-03
 - Source: issue #32 (#32b); independent review of PR #91 (2026-10-03)
 - Amends: [0109](0109-loan-prepayments-and-recasts.md)

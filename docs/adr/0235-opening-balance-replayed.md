@@ -1,6 +1,7 @@
 # 0235. A loan's opening balance is always replayed
 
 - Status: Accepted
+- Superseded in part by: [0273](0273-prepayments-and-recasts-current-rule.md) (the opening of a loan with past events)
 - Date: 2026-11-18
 - Source: issue #449 (code review 2026-11, tracking #435); owner decisions 2026-11-16
   (option A, always replay) and 2026-11-18 (option A, replay accepted for both odd cases)
