@@ -314,19 +314,60 @@ jobs:
   # ── The AppKit menu pin on macOS (#666) ───────────────────────────────────
   # The app ships on macOS only, and tests/menu_built.rs reads the built menu back from
   # AppKit, so the Linux job above skips it. This job runs that one test on a Mac.
+  # It is a required check, so it is never skipped as a job (a check that never reports
+  # blocks the merge): it always runs, and its steps wait on the path check below.
   rust-macos:
     name: Rust menu on macOS (AppKit pin)
     if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: macos-latest
 
     steps:
+      # Depth 2: on a pull request HEAD is the merge commit and HEAD^1 the base branch.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+
+      # The test runs only when the built menu can change (owner, 2026-11-27): on a pull
+      # request, when the merge brings in a change to one of these paths; on a push to
+      # main, always. A failed diff runs it too. scripts/gates.mjs (`MENU_PATHS`) and its
+      # tests pin the list and run this script.
+      - name: Did a menu input change?
+        id: menu-paths
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          paths=(
+            .github/workflows/ci.yml
+            rust-toolchain.toml
+            src-tauri/Cargo.lock
+            src-tauri/Cargo.toml
+            src-tauri/icons/menu-settings@2x.rgba
+            src-tauri/src/menu.rs
+            src-tauri/tests/menu_built.rs
+            src-tauri/tests/menu_built.txt
+          )
+          if [[ "$EVENT" != pull_request ]]; then
+            echo "menu inputs: $EVENT, the full check runs"
+            changed=true
+          elif ! git rev-parse -q --verify 'HEAD^2' > /dev/null; then
+            echo "menu inputs: HEAD is no merge commit, the full check runs"
+            changed=true
+          elif files=$(git diff --name-only 'HEAD^1' HEAD -- "${paths[@]}") && [[ -z "$files" ]]; then
+            echo "menu inputs: none changed, the menu test does not run"
+            changed=false
+          else
+            echo "menu inputs changed, the full check runs:" ${files:-"(git diff failed)"}
+            changed=true
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
 
       # Installs the pinned toolchain and components from rust-toolchain.toml.
       - name: Install Rust toolchain
+        if: steps.menu-paths.outputs.changed == 'true'
         run: rustup toolchain install && rustup show active-toolchain
 
       - name: Rust build cache
+        if: steps.menu-paths.outputs.changed == 'true'
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: src-tauri
@@ -334,6 +375,7 @@ jobs:
       # The test prints "menu_built: N lines match" when it compared the menu, and
       # "menu_built: skipped" when its macOS code was compiled out: only the first passes.
       - name: Built menu matches tests/menu_built.txt
+        if: steps.menu-paths.outputs.changed == 'true'
         run: |
           set -o pipefail # GitHub runs `bash -e` without it: the pipe would exit with tee's status
           log="$RUNNER_TEMP/menu_built.log"
