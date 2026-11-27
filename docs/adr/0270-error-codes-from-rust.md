@@ -100,7 +100,7 @@ constraint? }`.
 6. **Rust and TypeScript change in one commit.** TypeScript that still expects a string
    would show a structured rejection as `[object Object]`, so the two sides land together.
 7. **The error log also records the Rust code** (extends ADR 0147). `describeFailure`
-   (`src/data/errorLog.ts:50`) finds the `CommandError` in the error itself or in its
+   (`src/data/errorLog.ts:67`) finds the `CommandError` in the error itself or in its
    `cause` chain (`BackupExportError`, `BackupReadError` and `SafetyBackupError` keep the
    original rejection as `cause`, `backupFiles.ts:31`, `:77`, `:122`).
    - **What a line gains.** For such a failure, the context field starts with the Rust code

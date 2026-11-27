@@ -59,13 +59,13 @@ export function toBlock(l: RefLoan, id = "x", propertyId = "p"): MortgageBlock {
 export const REF: Omit<RefOptions, "baseDate" | "months"> = {
   resetRatePa: RESET,
   calendar: "gridDueDate",
-  devInstalment: "fromTerm", // D-31
-  openingDraws: "nextPeriod", // D-41
+  devInstalment: "fromTerm", // ADR 0031
+  openingDraws: "nextPeriod", // ADR 0024
 };
 
 /**
- * Engine schedule and reference rows for one loan. Under D-41 (`openingDraws:
- * "nextPeriod"`), reference row 1's `draw` is rebased to the engine's meaning (DR-092):
+ * Engine schedule and reference rows for one loan. Under ADR 0024 (`openingDraws:
+ * "nextPeriod"`), reference row 1's `draw` is rebased to the engine's meaning:
  * the tranches after the last payment due and on/before baseDate leave it, because the
  * engine counts them as opening debt. Balances and every other column are untouched.
  */
@@ -105,7 +105,7 @@ export function chainBoth(
     months: REF_MONTHS,
     ...opts,
   });
-  // Row 1's draw rebased to the engine's meaning, as in `both` (D-41, DR-092). On a
+  // Row 1's draw rebased to the engine's meaning, as in `both` (ADR 0024). On a
   // handover in month 1 the row's `draw` is the successor's: rebase the owner's draw
   // there instead.
   const inForce = loans.filter((l) => l.start <= base).at(-1);
@@ -134,7 +134,7 @@ function openingDraws(l: RefLoan, base: string): Decimal {
  * reference runs longer than the engine (`REF_MONTHS`): every reference row past the
  * engine's last one must be idle, else the engine dropped a row that still pays.
  * On a refinance handover row the engine's `refinanced` is the successor's draw less
- * what it paid off (D-47, ADR 0130), the reference's `draw` the successor's gross draw:
+ * what it paid off (ADR 0027, ADR 0130), the reference's `draw` the successor's gross draw:
  * pass the reference `handovers` so the row is compared as gross − paid off. An owner
  * tranche landing on that row is in the engine's `drawn` there, and in the reference's
  * paid-off balance (`ownerDraw`).

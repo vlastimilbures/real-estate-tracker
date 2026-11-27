@@ -1,4 +1,4 @@
-# Dependency updates (P10): weekly, grouped so minor/patch bumps arrive as one PR per
+# Dependency updates: weekly, grouped so minor/patch bumps arrive as one PR per
 # ecosystem. Major bumps stay separate PRs. A runtime dependency change still needs the
 # owner's approval (ADR 0002) — review, don't auto-merge.
 version: 2

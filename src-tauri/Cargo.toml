@@ -26,9 +26,9 @@ tauri = { version = "2.11.2", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-dialog = "2"
-# D-64 (DR-142, UX-065): restores window size/position; Rust-only, no webview permission.
+# ADR 0064: restores window size/position; Rust-only, no webview permission.
 tauri-plugin-window-state = "2"
-# D-14 (J-13 b): src/db.rs runs atomic transactions on tauri-plugin-sql's own pool. The same
+# ADR 0014 (option b): src/db.rs runs atomic transactions on tauri-plugin-sql's own pool. The same
 # sqlx 0.8.6 the plugin already compiles in; declared directly to name its types.
 sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
 
@@ -40,7 +40,7 @@ sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runti
 [patch.crates-io]
 sqlx-sqlite = { path = "vendor/sqlx-sqlite" }
 
-# Dev-only: async test runtime for tests/*.rs (H-14 proof, db.rs behaviour).
+# Dev-only: async test runtime for tests/*.rs (the ADR 0014 pool proof, db.rs behaviour).
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 # tests/menu_built.rs builds the real menu on tauri's mock runtime (no app, no window) and
@@ -60,6 +60,6 @@ harness = false
 
 # Build scripts and proc-macros only (the app binary is unaffected): release builds strip
 # their debug info by default, and macOS 27's loader rejects the stripped proc-macro
-# dylibs ("mis-aligned LINKEDIT string pool"), so `tauri build` fails (P8).
+# dylibs ("mis-aligned LINKEDIT string pool"), so `tauri build` fails.
 [profile.release.build-override]
 strip = "none"

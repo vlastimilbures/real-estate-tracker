@@ -1,4 +1,4 @@
-//! Navigation guard (P8): the webview may only show the app's own pages. Any other
+//! Navigation guard: the webview may only show the app's own pages. Any other
 //! navigation — a remote site, `mailto:`, a file URL — is refused, so a stray link or
 //! injected script cannot take the window off the app.
 

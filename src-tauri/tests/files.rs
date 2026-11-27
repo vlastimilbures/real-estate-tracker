@@ -1,4 +1,4 @@
-//! P8 (D-64): the file helpers (fs_atomic, private_fs, paths, commands), against temporary folders. Never
+//! ADR 0064: the file helpers (fs_atomic, private_fs, paths, commands), against temporary folders. Never
 //! touches the user's files.
 
 use app_lib::commands::dialogs::percent_decode;
@@ -182,7 +182,7 @@ fn write_new_private_writes_a_new_file() {
     assert_eq!(fs::read(&dest).unwrap(), b"{}");
 }
 
-// DR-157 (ADR 0080): the app's own files are private to the user.
+// ADR 0080: the app's own files are private to the user.
 fn mode(path: &std::path::Path) -> u32 {
     use std::os::unix::fs::PermissionsExt;
     fs::metadata(path).unwrap().permissions().mode() & 0o777

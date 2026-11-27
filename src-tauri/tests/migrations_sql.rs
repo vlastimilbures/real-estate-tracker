@@ -49,7 +49,7 @@ const ROW_COUNTS: [(&str, i64); 7] = [
 ];
 
 /// Applies one migration as the app does: its SQL as one multi-statement text inside a
-/// transaction (DR-084). Empty SQL is skipped, as `migrationText` skips it.
+/// transaction. Empty SQL is skipped, as `migrationText` skips it.
 async fn apply(pool: &Pool<Sqlite>, migration: &Value) {
     let version = migration["version"].as_i64().unwrap();
     let name = migration["name"].as_str().unwrap();

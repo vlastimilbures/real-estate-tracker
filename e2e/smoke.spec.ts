@@ -26,7 +26,7 @@ test("editing a valuation moves the Dashboard net-worth KPI", async ({
   await expect(kpi).toBeVisible({ timeout: 30_000 });
   const before = await readNetWorth(page);
 
-  // Drill into the first property from the keyboard: its name is a button (UX-022).
+  // Drill into the first property from the keyboard: its name is a button.
   await page.getByRole("button", { name: en.nav.properties }).click();
   await page.locator("table.data tbody tr td.left button").first().focus();
   await page.keyboard.press("Enter");
