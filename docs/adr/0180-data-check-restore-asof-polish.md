@@ -104,5 +104,5 @@ as-of resolver (#264, ADR 0150) and the lifecycle states (#275, ADR 0155) left s
   value (#260 item 6); a refused file's rows use the error colour; Property detail at a future
   base date and the tiles at a clamped horizon (#265 item 7).
 
-Note (2026-11-27): identifier corrected. The Consequences named `outOfRangeFields`; the
+Note (2026-11-27): identifier corrected. Decision 2 named `outOfRangeFields`; the
 range check is `rangeProblems` in `src/lib/rules.ts`. Text only; the rule is unchanged.
