@@ -321,6 +321,10 @@ engine without the form, and remove it when the last part lands.
   a vendored copy of sqlx-sqlite 0.8.6 with one widened version bound; CI checks the
   vendored copy against the published crate. The database file format is unchanged
   (ADR 0196, #395).
+- A database upgrade that stops at startup no longer writes **raw numbers from stored
+  data** to the local error log: its detail is masked like every other free-text line,
+  for example `bad value '#'` instead of `bad value '7500000.50'`. An SQLite error code
+  stays. The startup screen is unchanged (ADR 0277).
 
 ## [1.5.0] - 2026-10-14
 
