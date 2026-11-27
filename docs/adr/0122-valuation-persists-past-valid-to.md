@@ -1,6 +1,7 @@
 # 0122. A valuation keeps governing after its "Valid to" date
 
 - Status: Accepted
+- Superseded in part by: [0275](0275-data-check-current-rule.md) (decision 5)
 - Date: 2026-10-04
 - Source: issue #110 (2026-10 code review, findings G1-1-01, G1-4-01 and G1-4-10); the
   valuation half of issue #121 (G1-4-02)

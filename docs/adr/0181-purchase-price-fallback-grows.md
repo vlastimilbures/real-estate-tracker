@@ -1,6 +1,7 @@
 # 0181. A property with no valuation grows its purchase price to the projection start
 
 - Status: Accepted
+- Superseded in part by: [0275](0275-data-check-current-rule.md) (decision 4: the `dataCheck.noValuation` and `dataCheck.valuationStale` items and the note on their accessible role)
 - Date: 2026-10-11
 - Source: issue #157 (owner, 2026-10-11: options B + D; Q3 = sharpen the stale-valuation
   text only, no Settings note; Q4 = the property's own rate, else the base rate), issue #152
