@@ -1,6 +1,7 @@
 # 0225. Round-2 sweep: the Guide's nav in narrow windows, import error tables named
 
 - Status: Accepted
+- Superseded in part by: [0274](0274-sections-current-rule.md) (decision 2)
 - Date: 2026-11-16
 - Source: issue #424 (UX/UI review 2026-11, round 2, tracking #425); the round-1
   follow-ups listed on #392 (the Guide's top bar in Russian at 900 px; the import error

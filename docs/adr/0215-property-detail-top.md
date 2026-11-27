@@ -1,6 +1,7 @@
 # 0215. Property detail: a breadcrumb and the Dashboard's tile strip
 
 - Status: Accepted
+- Superseded in part by: [0274](0274-sections-current-rule.md) (decisions 1, 2 and 4)
 - Date: 2026-11-16
 - Source: issue #384 (UX/UI review 2026-11, tracking #392); direction approved by the
   owner on 2026-11-15 (the issue's decision); acceptance delegated by the owner for the
