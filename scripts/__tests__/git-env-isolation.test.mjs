@@ -26,6 +26,7 @@ const SELF = "scripts/__tests__/git-env-isolation.test.mjs";
 // its git, and the scripts it starts, with support/cleanGitEnv.mjs.
 const GIT_SUITES = [
   "scripts/__tests__/changelog-check.test.mjs",
+  "scripts/__tests__/comment-refs.test.mjs",
   "scripts/__tests__/menu-paths.test.mjs",
 ];
 // Tests that import a script that runs git but call only its pure functions: no git runs.

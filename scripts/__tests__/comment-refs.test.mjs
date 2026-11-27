@@ -1,7 +1,12 @@
 // `pnpm lint` comment-reference check (#457) on synthetic sources: comments cite
 // decisions as `ADR nnnn` only, never an id from the retired refactor archive or a
 // closed issue.
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { cleanGitEnv } from "./support/cleanGitEnv.mjs";
 import {
   check,
   commentsOf,
@@ -235,5 +240,40 @@ describe("the files the check reads", () => {
       ]),
     );
     expect(paths.filter((p) => p.startsWith("docs/adr/"))).toEqual([]);
+  });
+});
+
+describe("files git ignores", () => {
+  // The owner's local notes (docs/refactor/, ignored) cite retired ids; they never reach
+  // CI, so a local `pnpm lint` or release run must not fail on them either.
+  it("are not read", () => {
+    const root = mkdtempSync(join(tmpdir(), "comment-refs-"));
+    try {
+      const files = {
+        ".gitignore": "docs/local/\n",
+        "docs/adr/0017-x.md": "# 0017\n",
+        "docs/kept.md": "See ADR 0017.\n",
+        "docs/local/notes.md": "The old check (DR-143).\n",
+        "docs/local/poznámky.md": "The old check (UX-021).\n",
+        "src/x.ts": "// ADR 0017\n",
+        "src-tauri/src/x.rs": "// ADR 0017\n",
+        "src-tauri/build.rs": "",
+        "ux-capture/x.ts": "",
+        "README.md": "",
+        "CONTRIBUTING.md": "",
+        "SPEC.md": "",
+      };
+      for (const [f, text] of Object.entries(files)) {
+        mkdirSync(dirname(join(root, f)), { recursive: true });
+        writeFileSync(join(root, f), text);
+      }
+      execFileSync("git", ["init", "-q"], { cwd: root, env: cleanGitEnv() });
+      const r = check(root);
+      expect(r.paths).toContain("docs/kept.md");
+      expect(r.paths).not.toContain("docs/local/notes.md");
+      expect(r.problems).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

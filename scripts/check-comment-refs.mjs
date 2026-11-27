@@ -10,6 +10,7 @@
 // README) are read whole; the append-only history (ADRs, the wording log, review records,
 // the changelog) is not. Tests are out of scope: their comments name cases, not
 // decisions. The reference models and the capture harness are read for ids and ADRs.
+import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, realpathSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -202,6 +203,26 @@ function walk(dir) {
   });
 }
 
+/** `paths` (relative to `root`) without the ones git ignores: local notes never reach CI,
+ *  so a local run must not fail on them either. */
+function notIgnored(root, paths) {
+  // No inherited GIT_* (a hook or `rebase --exec` sets GIT_DIR): git reads `root` (#589).
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([k]) => !k.startsWith("GIT_")),
+  );
+  // `-z`: NUL-separated and never quoted, so a non-ASCII name comes back as given.
+  const r = spawnSync("git", ["check-ignore", "-z", "--stdin"], {
+    cwd: root,
+    env,
+    input: paths.join("\0"),
+    encoding: "utf8",
+  });
+  // 0: some ignored, 1: none ignored; anything else (no git, no repo) ignores nothing.
+  if (r.status !== 0) return paths;
+  const ignored = new Set(r.stdout.split("\0").filter(Boolean));
+  return paths.filter((p) => !ignored.has(p));
+}
+
 /** The ADR numbers with a file in docs/adr. */
 export function adrNumbers(root = ROOT) {
   return new Set(
@@ -214,12 +235,15 @@ export function adrNumbers(root = ROOT) {
 /** Every in-scope file of the repository (`paths`) and its refused references. */
 export function check(root = ROOT) {
   const adrs = adrNumbers(root);
-  const paths = [
-    ...WALKED.flatMap((d) => walk(join(root, d))),
-    ...TOP_FILES.map((f) => join(root, f)),
-  ]
-    .map((p) => relative(root, p).split(sep).join("/"))
-    .filter(inScope);
+  const paths = notIgnored(
+    root,
+    [
+      ...WALKED.flatMap((d) => walk(join(root, d))),
+      ...TOP_FILES.map((f) => join(root, f)),
+    ]
+      .map((p) => relative(root, p).split(sep).join("/"))
+      .filter(inScope),
+  );
   const problems = paths.flatMap((f) =>
     problemsIn(readFileSync(join(root, f), "utf8"), f, adrs),
   );

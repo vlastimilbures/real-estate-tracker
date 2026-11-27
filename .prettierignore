@@ -5,3 +5,5 @@ src-tauri/gen/
 pnpm-lock.yaml
 # ADR 0196: the vendored crate stays byte-identical to its crates.io source (one line aside).
 src-tauri/vendor/
+# Claude Code agent worktrees: whole checkouts of other branches, not this tree.
+.claude/worktrees/
