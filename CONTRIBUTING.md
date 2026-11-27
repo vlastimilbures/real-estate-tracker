@@ -213,8 +213,8 @@ still describe it. Which document owns what is listed in
   CI runs them nightly and on manual dispatch, never as a merge check. They start their own
   Vite server on port 1440 (`E2E_PORT`), so a running `pnpm tauri dev` does not interfere.
 - **Rust integration tests** (`cargo test`) run in CI, locally and in
-  `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent H-14 probe
-  is `#[ignore]`d (ADR 0068, G-4); `cargo test -- --ignored` runs it.
+  `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent pool probe
+  (ADR 0014) is `#[ignore]`d (ADR 0068, G-4); `cargo test -- --ignored` runs it.
 
 ### Architecture rules and the baseline
 
