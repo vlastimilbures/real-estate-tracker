@@ -12,6 +12,8 @@
   capped)
 - Amended by: [0270](0270-error-codes-from-rust.md) (decision 7: a line for a failed Rust command
   also records its error code)
+- Amended by: [0277](0277-migration-error-details-masked.md) (decision 5: a `MIGRATION_*`
+  error's details are masked in the log)
 
 ## Context
 
