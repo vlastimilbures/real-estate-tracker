@@ -11,6 +11,13 @@ updates:
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
+    ignore:
+      # @types/node describes one Node major. Its major follows the Node we run, which is
+      # pinned by hand (package.json engines ">=24", node-version 24 in
+      # .github/actions/setup), not the newest Node release. Raise it with the Node pin.
+      # Today it is ^26, ahead of that pin; moving it back to ^24 is tracked in #499.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: cargo
     directory: /src-tauri
     schedule:
