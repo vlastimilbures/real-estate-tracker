@@ -11,7 +11,7 @@
 ## Context
 
 ADR 0075 bounded the whole-number form fields and ADR 0076 applied the same bounds to CSV
-import (`src/lib/intRanges.ts`). Backup restore checks only the engine rules, which have no
+import (`src/lib/rules.ts`). Backup restore checks only the engine rules, which have no
 upper bound, so a hand-edited backup or one written by another tool can bring in a horizon
 of 150 years, a fixation or term of 60 years, or a property size of 20 000 m².
 
@@ -38,3 +38,6 @@ Owner, 2026-10-03:
 Valid input computes the same numbers: parity, the golden master and the bench budgets are
 unchanged. Restore refuses files it accepted before (user-visible). DB CHECK upper bounds stay
 out of scope: they would need a table-rebuild migration and every entry point now checks.
+
+Note (2026-11-27): path corrected. The Context named `src/lib/intRanges.ts`; the ranges live
+in `src/lib/rules.ts`. Text only; the rule is unchanged.

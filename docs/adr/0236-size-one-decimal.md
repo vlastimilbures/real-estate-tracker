@@ -35,8 +35,8 @@ No calculation reads the size: it is shown in the property's subtitle only.
 
 ## Consequences
 
-- One rule, `oneDecimal` in `src/lib/intRanges.ts`, is the size's precision in
-  `outOfRangeFields`; the horizon, fixation and loan term stay whole numbers. Restore (via
+- One rule, `oneDecimal` in `src/lib/rules.ts`, is the size's precision in
+  `rangeProblems`; the horizon, fixation and loan term stay whole numbers. Restore (via
   `checkInputRules`) and the Data check use it, so a stored 54.5 neither warns nor is listed;
   54.55 still warns `OUT_OF_RANGE` at restore and is listed in the Data check.
 - The property form has a new field kind `size` (`parseSizeField`): digits with an optional
@@ -62,3 +62,7 @@ No calculation reads the size: it is shown in the property's subtitle only.
     used to read "1234 m²", now reads "1 234 m²".
 - Because this ADR records the new texts, no wording-log entry is needed (ADR 0152 §1).
 - `src/engine`, figures, parity targets and the golden master do not change.
+
+Note (2026-11-27): identifiers corrected. The Consequences named `outOfRangeFields` in
+`src/lib/intRanges.ts`; the range check is `rangeProblems` in `src/lib/rules.ts`, which
+holds `oneDecimal` too. Text only; the rule is unchanged.

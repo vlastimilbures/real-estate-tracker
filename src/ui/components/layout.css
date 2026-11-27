@@ -12,7 +12,7 @@
      max 920px   charts.css:178        .chart-grid: one column
      max 920px   forms.css:409         .form-grid: one column
      max 1099px  shell.css:273         .section-nav.one-row: one row, scrolls
-     max 1099px  shell.css:458         .topbar .narrow-hide labels: hidden, icon only
+     max 1099px  shell.css:468         .topbar .narrow-hide labels: hidden, icon only
    Container (@container):
      max 639px   charts.css:40         .chart-grid-wrap      .chart-grid.pairs: one column
      max 899px   charts.css:50         .chart-grid-wrap      .chart-grid.trio: 2 + 1 across

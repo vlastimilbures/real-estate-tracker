@@ -81,7 +81,7 @@ interest saved and the clamp warnings come in #32b, and both ship in the same re
      - An instalment-form recast before a development loan's completion is rejected. A
        maturity-form recast is allowed there; it applies at completion.
    - **Cap:** the effective maturity is at most the later of loan start + 50 years
-     (`MAX_LOAN_TERM_YEARS`) and the contract term. An instalment that would go beyond the cap
+     (`MAX_LOAN_TERM_MONTHS`) and the contract term. An instalment that would go beyond the cap
      becomes a maturity-form recast at the cap and is reported.
 7. **Development tranches.** If a tranche lands on or after the effective maturity's payment,
    the maturity goes back to the contract term (ADR 0116). A recast maturity otherwise persists.
@@ -137,3 +137,7 @@ prepayment, so "repay 500,000 at the next fixation end" vs "keep the cash" canno
 side by side: scenarios change only Assumptions, and a prepayment belongs to one loan. Today:
 add it, read the KPIs and interest saved, then delete it. It belongs with per-property scenario
 overrides (DR-077).
+
+Note (2026-11-27): identifier corrected. §6 named the cap constant `MAX_LOAN_TERM_YEARS`; the
+constant is `MAX_LOAN_TERM_MONTHS` (`src/engine/loanConstants.ts`, ADR 0244). Text only; the
+rule is unchanged.

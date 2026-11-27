@@ -466,8 +466,9 @@ describe("data check: scope (ADR 0118)", () => {
     ],
   };
 
-  it("a property bought after the as-of date has only the own-cash finding until its purchase date", () => {
+  it("a property bought after the as-of date has no dated finding and only the own-cash default until its purchase date", () => {
     // Its own cash is the projection's down payment (ADR 0119), so it is listed early.
+    // Stored values would be listed too (ADR 0275 §5.2); this fixture has none.
     expect(check("future", BASE_DATE, future)).toEqual({
       attention: [],
       defaults: [{ kind: "fundingUnknown", future: true }],

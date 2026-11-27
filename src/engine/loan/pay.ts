@@ -3,9 +3,9 @@
 // One month step (`stepMonth`: the first draw, the payoff guard, or payment p — tranche
 // terms, re-amortization trigger, `amortizeMonth` — then its prepayments and recasts)
 // drives every loan: the baseDate grid of a plain or a development loan, and the catch-up
-// from startDate to baseDate. The catch-up opens every development loan running at
-// baseDate, and a plain loan once the rate of its last payment due differs from the
-// contract rate (fixation ended, ADR 0030) or an event is dated by baseDate (ADR 0109).
+// from startDate to baseDate. The catch-up opens every loan running at baseDate, plain
+// or development (ADR 0235), so a fixation that already ended (ADR 0030) and events dated
+// by baseDate are seen.
 // The loans differ only as data in the `Run`, each difference named:
 //   • payoff guard — the grid emits zero rows once the balance is repaid; the catch-up
 //     (`replay`) has none;
