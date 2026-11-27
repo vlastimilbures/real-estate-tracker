@@ -1,4 +1,4 @@
-// Compare two capture runs screen by screen (DR-147, D15). A pixel counts as changed when
+// Compare two capture runs screen by screen. A pixel counts as changed when
 // its R, G or B moves by more than UX_DIFF_TOLERANCE levels (default 8), which ignores
 // anti-aliasing noise; a screen fails when more than UX_DIFF_MAX_PX pixels (default 50)
 // changed. One changed KPI digit (a 21×30 px box) is about 300 changed px, so it fails

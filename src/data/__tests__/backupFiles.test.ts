@@ -9,13 +9,12 @@ import { migrate } from "../migrations";
 import { seedIfEmpty } from "../seed";
 import {
   BACKUP_MAX_BYTES,
-  BackupExportError,
   chooseRestoreFile,
   confirmRestore,
   exportBackup,
   exportToJson,
+  FileStepError,
   RestoreError,
-  SafetyBackupError,
   writeSafetyBackup,
   type BackupFile,
 } from "../backup";
@@ -146,7 +145,8 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
     const err = await confirmRestore(sql, backup, checkInputRules).catch(
       (e: unknown) => e,
     );
-    expect(err).toBeInstanceOf(SafetyBackupError);
+    expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "safety" });
     expect((err as Error).message).toMatch(/disk full/);
     expect(await propertyCount()).toBe(3);
   });
@@ -162,8 +162,9 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
       await emptyBackup(),
       checkInputRules,
     ).catch((e: unknown) => e);
-    expect(err).toBeInstanceOf(SafetyBackupError);
-    expect((err as SafetyBackupError).detail).toMatch(/^BACKUP_EXISTS: /);
+    expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "safety" });
+    expect((err as FileStepError).detail).toMatch(/^BACKUP_EXISTS: /);
     expect(await propertyCount()).toBe(3);
   });
 
@@ -248,13 +249,14 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
 });
 
 describe("writeSafetyBackup — reading the data is part of it (ADR 0147)", () => {
-  it("a failed read of the current data is a SafetyBackupError (#122)", async () => {
+  it("a failed read of the current data is a safety-step FileStepError (#122)", async () => {
     const failing = {
       ...sql,
       selectSnapshot: () => Promise.reject(new Error("disk I/O error")),
     };
     const err = await writeSafetyBackup(failing).catch((e: unknown) => e);
-    expect(err).toBeInstanceOf(SafetyBackupError);
+    expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "safety" });
     expect(commands()).toEqual([]);
   });
 });
@@ -279,7 +281,7 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
     );
   });
 
-  it("a file that cannot be read is a BackupReadError (#122)", async () => {
+  it("a file that cannot be read is a read-step FileStepError (#122)", async () => {
     rust.openPick = {
       code: "IO",
       detail: "Operation not permitted (os error 1)",
@@ -288,7 +290,8 @@ describe("chooseRestoreFile — the picked backup (DR-138)", () => {
       (e: unknown) => e,
     );
     expect(err).toMatchObject({
-      name: "BackupReadError",
+      name: "FileStepError",
+      step: "read",
       detail: "Operation not permitted (os error 1)",
     });
   });
@@ -339,20 +342,22 @@ describe("exportBackup — honest outcome in Tauri (DR-026)", () => {
     expect(files.size).toBe(0);
   });
 
-  it("throws BackupExportError when the file cannot be written", async () => {
+  it("throws an export-step FileStepError when the file cannot be written", async () => {
     rust.savePick = "/Users/me/backup.json";
     rust.writeError = { code: "IO", detail: "permission denied" };
     const err = await exportWithAppDeps(sql).catch((e: unknown) => e);
-    expect(err).toBeInstanceOf(BackupExportError);
-    expect((err as BackupExportError).detail).toBe("permission denied");
+    expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "export" });
+    expect((err as FileStepError).detail).toBe("permission denied");
   });
 
-  it("throws BackupExportError when the file does not read back as written", async () => {
+  it("throws an export-step FileStepError when the file does not read back as written", async () => {
     rust.savePick = "/Users/me/backup.json";
     rust.readBack = () => "{}";
     const err = await exportWithAppDeps(sql).catch((e: unknown) => e);
-    expect(err).toBeInstanceOf(BackupExportError);
-    expect((err as BackupExportError).detail).toMatch(/does not match/);
+    expect(err).toBeInstanceOf(FileStepError);
+    expect(err).toMatchObject({ step: "export" });
+    expect((err as FileStepError).detail).toMatch(/does not match/);
   });
 
   it("returns saved with the chosen file name on success", async () => {

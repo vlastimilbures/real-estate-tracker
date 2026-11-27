@@ -1,6 +1,7 @@
 use tauri::Manager;
 #[cfg(target_os = "macos")]
-use tauri::{RunEvent, WindowEvent};
+use tauri::RunEvent;
+use tauri::WindowEvent;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind};
 
 pub mod commands;
@@ -31,7 +32,6 @@ pub fn command_names() -> &'static [&'static str] {
     app_commands!(command_names)
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     crash::install_panic_hook();
     // ADR 0233: timing is on in a debug build, or when started with RTRACKER_PERF=1.
@@ -45,8 +45,8 @@ pub fn run() {
         .plugin(nav::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
-        // UX-065 (DR-142): reopen at the last size/position (and maximised state), kept in
-        // `<app config>/.window-state.json`. Not VISIBLE: ⌘W hides the window (UX-045),
+        // ADR 0064: reopen at the last size/position (and maximised state), kept in
+        // `<app config>/.window-state.json`. Not VISIBLE: ⌘W hides the window (below),
         // and the next launch must still show it.
         .plugin(
             tauri_plugin_window_state::Builder::new()
@@ -57,7 +57,7 @@ pub fn run() {
                 )
                 .build(),
         )
-        // Local error log (P5a): one rotating file in the OS log dir
+        // Local error log: one rotating file in the OS log dir
         // (macOS: ~/Library/Logs/com.bures.realestate-tracker/app.log), 1 MB per file, the
         // five newest kept. Release builds record warnings and errors only; the webview
         // appends via the `log_error` command (codes and context, no financial values).
@@ -79,7 +79,7 @@ pub fn run() {
         )
         .invoke_handler(app_commands!(command_handler))
         .setup(|app| {
-            // DR-157: the database, its backups and the window state are private (0600 in
+            // ADR 0080: the database, its backups and the window state are private (0600 in
             // a 0700 folder). Covers files from older versions; never fatal.
             match app.path().app_config_dir() {
                 Ok(dir) => {
@@ -104,16 +104,13 @@ pub fn run() {
             Ok(())
         })
         .on_menu_event(menu::on_event)
-        // macOS convention (UX-045): ⌘W and the red close button hide the window instead of
+        // macOS convention: ⌘W and the red close button hide the window instead of
         // quitting; clicking the Dock icon shows it again; ⌘Q (Quit) still exits.
         .on_window_event(|window, event| {
-            #[cfg(target_os = "macos")]
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.hide();
             }
-            #[cfg(not(target_os = "macos"))]
-            let _ = (window, event);
         })
         .build(tauri::generate_context!())
         // `build()` fails only while creating the runtime or starting a plugin, before
@@ -134,6 +131,8 @@ pub fn run() {
                     let _ = window.set_focus();
                 }
             }
+            // `RunEvent::Reopen` is macOS-only in tauri; this arm keeps the Linux CI build
+            // (clippy -D warnings) free of unused variables.
             #[cfg(not(target_os = "macos"))]
             let _ = (app, event);
         });

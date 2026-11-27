@@ -1,4 +1,4 @@
-//! H-14 proof (P5a step 0): is `BEGIN … COMMIT/ROLLBACK` issued through
+//! Pool-transaction proof (ADR 0014): is `BEGIN … COMMIT/ROLLBACK` issued through
 //! `@tauri-apps/plugin-sql` atomic, and does `PRAGMA foreign_keys` hold on every call?
 //!
 //! The plugin (tauri-plugin-sql 2.4.0, `src/wrapper.rs`) opens the DB with
@@ -79,7 +79,7 @@ async fn foreign_keys_on_for_every_pooled_connection() {
 /// Even strictly sequential, awaited calls are not atomic: a connection goes back to the
 /// idle queue asynchronously after each call, so the next call can be handed a different
 /// connection. Observed 6/6 runs on macOS (sqlx 0.8.6): the INSERT commits outside the
-/// transaction and ROLLBACK cannot undo it. Timing-dependent (DR-169), so not run in CI:
+/// transaction and ROLLBACK cannot undo it. Timing-dependent (ADR 0068), so not run in CI:
 /// `cargo test -- --ignored` runs it.
 #[tokio::test]
 #[ignore = "DR-169: timing-dependent pool probe; run with `cargo test -- --ignored`"]
@@ -96,11 +96,11 @@ async fn sequential_begin_rollback_is_not_atomic_either() {
     drop(path);
 }
 
-/// H-14 CONFIRMED: when any other call is in flight (a UI reload, a second save), the
+/// CONFIRMED (ADR 0014): when any other call is in flight (a UI reload, a second save), the
 /// pool hands the next statement of the "transaction" to a different connection. That
 /// statement autocommits outside the transaction, and ROLLBACK cannot undo it.
 ///
-/// Deterministic (DR-169): the test holds connection A, which carries the open
+/// Deterministic (ADR 0068): the test holds connection A, which carries the open
 /// transaction, so the pool must run the next write on another connection B.
 #[tokio::test]
 async fn begin_via_pool_is_not_atomic_under_concurrency() {
@@ -125,7 +125,7 @@ async fn begin_via_pool_is_not_atomic_under_concurrency() {
     drop(path);
 }
 
-/// The batch alternative (J-13 option a): one `execute` carrying the whole
+/// The batch alternative (ADR 0014 option a): one `execute` carrying the whole
 /// `BEGIN; …; COMMIT;` text runs on ONE connection. sqlx's SQLite driver executes every
 /// statement of a multi-statement string. A failing statement stops the batch; the
 /// caller must then make sure the connection is not left mid-transaction.

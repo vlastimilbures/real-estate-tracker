@@ -1,4 +1,4 @@
-//! P9 (DR-134): `select_snapshot` runs several SELECTs in one read transaction on one
+//! ADR 0066: `select_snapshot` runs several SELECTs in one read transaction on one
 //! pooled connection and returns rows the way tauri-plugin-sql's `select` does. Against
 //! a temporary file database opened as the plugin opens it; never the real database.
 

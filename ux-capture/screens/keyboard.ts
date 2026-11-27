@@ -65,7 +65,7 @@ export const keyboardScreens: Screen[] = [
       expect(skipTarget).toBe("main");
       ux.writeJson("90-keyboard-skip-link.json", { skipTarget });
       // Properties list: can a row (the drill-in target) be reached by keyboard? A
-      // button outside the actions column counts (UX-022 makes the name a button).
+      // button outside the actions column counts (the name itself is a button).
       await nav(ux, "properties");
       const rowFocusable = await ux.page
         .locator("table.data tbody tr")

@@ -8,15 +8,13 @@ import { writeSafetyBackup } from "./backupFiles";
 
 export { BACKUP_MAX_BYTES, SCHEMA_HEAD, type BackupFile } from "./format";
 export {
+  FileStepError,
   RestoreError,
   type RestoreErrorCode,
   type RestoreIssue,
-} from "./validate";
+} from "../errors";
 export { type BackupSummary, type InputRules } from "./restorePlan";
 export {
-  BackupExportError,
-  BackupReadError,
-  SafetyBackupError,
   chooseRestoreFile,
   confirmRestore,
   exportBackup,

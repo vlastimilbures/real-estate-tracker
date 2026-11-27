@@ -1,6 +1,6 @@
 //! Verified file writes: a new temp file in the target folder, read back and compared
 //! before it is renamed over the target, so a crash or a failed check never leaves a
-//! partial file (DR-139, DR-112, ADR 0175).
+//! partial file (ADR 0064, ADR 0175).
 
 use std::fs;
 use std::io::{ErrorKind, Read, Seek, Write};
@@ -18,7 +18,7 @@ pub fn atomic_write(dest: &Path, data: &[u8]) -> Result<(), AppError> {
 }
 
 /// `atomic_write` for the app's own files (backups): created 0600, readable by the
-/// user only (DR-157).
+/// user only (ADR 0080).
 pub fn atomic_write_private(dest: &Path, data: &[u8]) -> Result<(), AppError> {
     write_via_temp(dest, data, Some(PRIVATE_FILE))
 }
@@ -87,24 +87,18 @@ fn fill_and_check(mut file: fs::File, data: &[u8]) -> Result<(), AppError> {
 }
 
 /// Create `path` exclusively (it must not exist) for reading and writing, with `mode`
-/// when given (unix).
+/// when given.
 fn create_new(path: &Path, mode: Option<u32>) -> std::io::Result<fs::File> {
     let mut options = fs::OpenOptions::new();
     options.read(true).write(true).create_new(true);
-    #[cfg(unix)]
     if let Some(m) = mode {
         use std::os::unix::fs::OpenOptionsExt;
         options.mode(m);
     }
-    #[cfg(not(unix))]
-    let _ = mode;
     options.open(path)
 }
 
-/// Fsync a folder, so a rename in it is on disk; best effort (unix; a no-op elsewhere).
+/// Fsync a folder, so a rename in it is on disk; best effort.
 fn sync_dir(dir: &Path) {
-    #[cfg(unix)]
     let _ = fs::File::open(dir).and_then(|d| d.sync_all());
-    #[cfg(not(unix))]
-    let _ = dir;
 }

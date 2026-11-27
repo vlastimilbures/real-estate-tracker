@@ -101,7 +101,7 @@ export const guideEmptyScreens: Screen[] = [
         for (let i = 0; i < 4; i++) await ux.page.keyboard.press("Tab");
         expect(await clear("a:focus"), "a tabbed-to link in view").toBe(true);
       }
-      // A metric label still opens the Guide at its term (UX-044), shown below the
+      // A metric label still opens the Guide at its term (ADR 0058), shown below the
       // taller top bar.
       await nav(ux, "projections");
       await ux.page

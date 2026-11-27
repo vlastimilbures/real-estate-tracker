@@ -35,7 +35,8 @@ change](ux-capture/README.md#proving-a-ui-change)).
 
 A change is done when `pnpm check` passes. It runs these gates in order and stops at the
 first failure (the list is `scripts/gates.mjs`; `pnpm gates:docs` regenerates this table and
-the [README](README.md#quality)'s). CI runs the same commands on Linux.
+the [README](README.md#quality)'s). CI runs the same commands on Linux, and the built-menu
+test on a macOS runner, because the Linux run skips it.
 
 <!-- gates:start -->
 
@@ -88,10 +89,10 @@ still describe it. Which document owns what is listed in
 [docs/release.md](docs/release.md#who-owns-what).
 
 - **Git hooks** (husky + lint-staged): on commit, staged files are formatted (`.mjs`, `.cjs`
-  and `.html` included), linted (`.mjs` and `.cjs` included, not `.html`) and their related
-  Vitest tests run; on push, the full typecheck, `pnpm depcruise`, `pnpm knip`,
-  `pnpm knip:prod` and `pnpm adr:check` run. A green CI run is required to merge — do not
-  bypass the hooks.
+  and `.html` included), linted (`.mjs` and `.cjs` included, not `.html`; `.css` with
+  stylelint) and, for `.ts` / `.tsx` files under `src/`, their related Vitest tests run; on
+  push, the full typecheck, `pnpm depcruise`, `pnpm knip`, `pnpm knip:prod` and
+  `pnpm adr:check` run. A green CI run is required to merge — do not bypass the hooks.
 - **Git in tests** (#589): git sets `GIT_DIR` inside `git rebase --exec` run in a linked
   worktree and inside some hooks (a commit hook can also get `GIT_INDEX_FILE`), and a test
   that inherits it runs its git on the real repository (once: `core.bare=true` and a stray
@@ -115,13 +116,19 @@ still describe it. Which document owns what is listed in
   stylesheet reads them. A needed `!important` gets a
   `stylelint-disable-next-line … -- reason` comment.
 - **Comment references** (#457): `pnpm lint` runs `scripts/check-comment-refs.mjs`. A
-  comment in the app's source (`src/**/*.ts`, `.tsx`, `.css`; tests are out of scope)
-  cites a decision as `ADR nnnn`, which must have a file in `docs/adr`. Ids from the
-  retired refactor archive (`DR-nnn`, `UX-nnn`, `J-nn`, `Q-nn`, `D-nn`, phase ids such as
-  `P5b`) are refused: say the reason in words or cite the ADR. So is an issue number
-  (`#nnn`) unless the issue is open and on `CITED_OPEN_ISSUES` in the script; the pull
-  request that closes one of those removes it there. Only comments are read, so a string
-  or JSX text is never flagged.
+  comment in the app's source (`src/**/*.ts`, `.tsx`, `.css`, and `src-tauri/src/**/*.rs`
+  with `src-tauri/build.rs`; tests are out of scope) cites a decision as `ADR nnnn`, which
+  must have a file in `docs/adr`. Ids from the retired refactor archive (`DR-nnn`,
+  `UX-nnn`, `J-nn`, `Q-nn`, `D-nn`, the `C-nn` / `F-nn` / `H-nn` finding ids, phase ids
+  such as `P` plus a number) are refused: say the reason in words or cite the ADR. So is
+  an issue number (`#nnn`) unless the issue is open and on `CITED_OPEN_ISSUES` in the
+  script; the pull request that closes one of those removes it there. In code only
+  comments are read, so a string or JSX text is never flagged. The same id and ADR rules
+  (not the issue rule) cover the reference models in `src/engine/__tests__/reference`,
+  the `ux-capture` harness, and the living docs, read whole: `README.md`,
+  `CONTRIBUTING.md`, `SPEC.md`, `docs/**/*.md` and `ux-capture/README.md`. The
+  append-only history keeps its ids: the ADRs (`docs/adr`), `docs/decisions/wording.md`,
+  the review records in `docs/reviews` and `CHANGELOG.md`.
 - **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches). Never
   lower one to pass. CI runs `pnpm coverage:ratchet` after `pnpm test:coverage` and fails when
   a floor sits more than the slack (`MAX_SLACK` in `scripts/check-coverage-ratchet.mjs`, 3
@@ -212,15 +219,17 @@ still describe it. Which document owns what is listed in
   CI runs them nightly and on manual dispatch, never as a merge check. They start their own
   Vite server on port 1440 (`E2E_PORT`), so a running `pnpm tauri dev` does not interfere.
 - **Rust integration tests** (`cargo test`) run in CI, locally and in
-  `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent H-14 probe
-  is `#[ignore]`d (ADR 0068, G-4); `cargo test -- --ignored` runs it.
+  `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent pool probe
+  (ADR 0014) is `#[ignore]`d (ADR 0068, G-4); `cargo test -- --ignored` runs it.
 
 ### Architecture rules and the baseline
 
 `.dependency-cruiser.cjs` encodes the layer map (ADR 0072, amended by ADR 0171 and ADR 0244): the engine may import
-only `decimal.js`, `src/lib/money.ts` and `src/lib/rules.ts` (which imports only lib/money); Tauri calls live in `src/platform`; the UI reaches data,
+only `decimal.js`, `src/lib/money.ts` and `src/lib/rules.ts` (which imports only lib/money); Tauri calls live in `src/platform`,
+except the SQL plugin, which stays the data adapter's (`src/data/tauriSql.ts`); the UI reaches data,
 import and platform only through `src/state` (the facade modules there); no runtime import
-cycles. State and UI may import _types_ from any layer.
+cycles. State and UI may import _types_ from any layer. ESLint narrows the engine rule: the engine
+takes `Decimal` from `src/lib/money.ts`, never `decimal.js` directly.
 
 `.dependency-cruiser-known-violations.json` is empty. A **new** violation fails CI. Fix it;
 do not regenerate the baseline to make it pass — on a pull request,
@@ -367,7 +376,7 @@ Each outcome is shown once, in one place (ADR 0141, ADR 0154, ADR 0261):
    added from a preset or deleted). A restore leaves a notice, an import its report.
 6. **Store actions never throw.** Every store action that returns a promise resolves with a
    result (`Result<T, E>`, `MutationResult`); the caller branches on `ok` and needs no
-   `catch` (`src/state/__tests__/noActionRejects.test.ts`).
+   `catch` (`src/state/__tests__/portfolioStoreWrites.test.ts`, "no store action rejects").
 
 ## Commits and pull requests
 

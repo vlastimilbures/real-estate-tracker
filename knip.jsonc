@@ -1,4 +1,4 @@
-// Dead-code check (P10, `pnpm knip`): no unused files, exports, types or dependencies.
+// Dead-code check (`pnpm knip`): no unused files, exports, types or dependencies.
 // Entry points come from knip's Vite/Vitest/Playwright/ESLint plugins. Every allow-list
 // entry below says why it is a false positive; never add one to silence real dead code.
 // `pnpm knip:prod` (`knip --production`) checks the shipped app only, where an export that
@@ -17,7 +17,7 @@
   // "Remove from ignoreBinaries"; keep it, `knip:prod` needs it.
   "ignoreBinaries": ["vite"],
   "ignoreIssues": {
-    // The independent reference model (P2) keeps its full API for cross-checks.
+    // The independent reference model keeps its full API for cross-checks.
     "src/engine/__tests__/reference/mortgageReference.ts": ["exports"],
     // Shared tolerance helpers: the full set stays available to parity tests.
     "src/engine/__tests__/support/tolerance.ts": ["exports"],

@@ -35,7 +35,7 @@ export function dbSelectSnapshot(
   return call("db_select_snapshot", { statements: wire(statements) });
 }
 
-/** Copy the database file next to it; resolves to the copy's file name. */
+/** Copy the database file next to it; resolves to the copy's full path. */
 export function dbBackup(label: string): Promise<string> {
   return call("db_backup", { label });
 }

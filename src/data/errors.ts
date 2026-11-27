@@ -1,11 +1,16 @@
-// Typed data-layer errors. Each code maps to an i18n message (`t.dataErrors`), and
-// `details` carries what the message lists: table names, row ids, property names and
-// rule names — never money amounts, so a DataError is written to the log as it is.
-// Names and ids built from names stay in it (ADR 0147).
+// The data layer's typed errors, in one place. A DataError's code maps to an i18n
+// message (`t.dataErrors`), and its `details` carry what the message lists: table names,
+// row ids, property names and rule names — never money amounts, so a DataError is
+// written to the log as it is. Names and ids built from names stay in it (ADR 0147).
+// Backup & Restore's errors (a refused backup, a failed file step) and the refused
+// sample load follow; the UI reaches them through the state facades (ADR 0072).
+import type { ValidationCode } from "../engine";
+import type { IntRange } from "../lib/rules";
 import {
   isCommandError,
   type ConstraintFailure,
 } from "../platform/commandError";
+import { saveFailureDetail } from "../platform/saveFileTypes";
 
 export type DataErrorCode =
   /** `PRAGMA integrity_check` did not return ok at startup. */
@@ -75,4 +80,94 @@ export type { ConstraintFailure } from "../platform/commandError";
  *  failure (ADR 0270 point 3); null for anything else. No message is parsed. */
 export function constraintOf(e: unknown): ConstraintFailure | null {
   return isCommandError(e) ? (e.constraint ?? null) : null;
+}
+
+/** Why a backup file was refused (a RestoreError). */
+export type RestoreErrorCode =
+  /** Larger than BACKUP_MAX_BYTES (ADR 0053). */
+  | "BACKUP_TOO_LARGE"
+  /** Not JSON at all. */
+  | "BACKUP_NOT_JSON"
+  /** Not a backup: wrong shape, missing table, unknown column, non-scalar cell. */
+  | "BACKUP_INVALID"
+  /** Written by a newer app version. */
+  | "BACKUP_NEWER"
+  /** Rows that the app cannot read or that break its rules; see `issues`. */
+  | "BACKUP_ROWS_INVALID";
+
+/** One offending row. Never carries a value — table, id, column and rule only. */
+export interface RestoreIssue {
+  table: string;
+  id?: string;
+  column?: string;
+  rule:
+    | ValidationCode
+    | "UNREADABLE_VALUE"
+    | "DUPLICATE_KEY"
+    | "MISSING_ASSUMPTIONS"
+    | "OUT_OF_RANGE"
+    | "BEYOND_LIMIT";
+  /** The allowed range of an OUT_OF_RANGE or BEYOND_LIMIT field. */
+  range?: IntRange;
+}
+
+/** The backup was refused before anything was changed. */
+export class RestoreError extends Error {
+  readonly code: RestoreErrorCode;
+  readonly issues: RestoreIssue[];
+  /** BACKUP_INVALID: what is wrong · BACKUP_NEWER: "v<file> > v<app>". */
+  readonly detail: string;
+  constructor(
+    code: RestoreErrorCode,
+    message: string,
+    {
+      issues = [],
+      detail = "",
+    }: { issues?: RestoreIssue[]; detail?: string } = {},
+  ) {
+    super(message);
+    this.name = "RestoreError";
+    this.code = code;
+    this.issues = issues;
+    this.detail = detail;
+  }
+}
+
+/** The file step of Backup & Restore that failed: the export through the save dialog,
+ *  the read of a picked restore file (an unplugged disk, a file not downloaded from
+ *  iCloud: nothing is known about its content, ADR 0147), or the pre-restore safety
+ *  backup (nothing changed). */
+export type FileStep = "export" | "read" | "safety";
+
+/** The English message each step starts with: the log line's text (ADR 0147). */
+const STEP_MESSAGE: Readonly<Record<FileStep, string>> = {
+  export: "Could not save the backup",
+  read: "Could not read the backup file",
+  safety: "Could not save the safety backup",
+};
+
+/** A Backup & Restore file step failed. The failure stays its `cause`, so the error log
+ *  finds a failed command's Rust code in it (ADR 0270 point 7). */
+export class FileStepError extends Error {
+  readonly step: FileStep;
+  /** The underlying failure, for display: for an export, the save's OS text without
+   *  its English wrapper (ADR 0193). */
+  readonly detail: string;
+  constructor(step: FileStep, cause: unknown) {
+    const detail =
+      step === "export" ? saveFailureDetail(cause) : messageOf(cause);
+    super(`${STEP_MESSAGE[step]}: ${detail}`, { cause });
+    this.name = "FileStepError";
+    this.step = step;
+    this.detail = detail;
+  }
+}
+
+/** `loadSample` refused: the portfolio has properties, and the sample never merges with
+ *  them (ADR 0112). */
+export class SampleNotEmptyError extends Error {
+  constructor() {
+    super("The sample loads only into an empty portfolio");
+    this.name = "SampleNotEmptyError";
+  }
 }

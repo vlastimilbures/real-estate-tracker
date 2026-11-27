@@ -1,4 +1,4 @@
-//! The one error type of the Tauri commands (DR-173).
+//! The one error type of the Tauri commands.
 //!
 //! Each failure is a typed variant. It crosses the IPC boundary as `{ code, detail }`
 //! (ADR 0270): `code` is the stable code of `AppError::code`, which the webview matches
@@ -338,7 +338,7 @@ mod tests {
         ]
     }
 
-    /// Every variant keeps the exact string the commands returned before DR-173.
+    /// Every variant keeps the exact string the commands returned before they shared this type.
     #[test]
     fn display_matches_the_pre_dr173_strings() {
         for (e, want, _) in samples() {

@@ -28,6 +28,7 @@ import {
   SAMPLE_SEEDED,
 } from "./appMeta";
 import { writeSafetyBackup } from "./backup/backupFiles";
+import { SampleNotEmptyError } from "./errors";
 import { SELLING_COST_DEFAULT } from "./schema";
 import { money } from "../engine";
 
@@ -238,15 +239,6 @@ export async function seedIfEmpty(sql: Sql): Promise<boolean> {
     flagStatement(SAMPLE_ACTIVE),
   ]);
   return true;
-}
-
-/** `loadSample` refused: the portfolio has properties, and the sample never merges with
- *  them (ADR 0112). */
-export class SampleNotEmptyError extends Error {
-  constructor() {
-    super("The sample loads only into an empty portfolio");
-    this.name = "SampleNotEmptyError";
-  }
 }
 
 /** "Load sample portfolio" (ADR 0112): only into an empty portfolio, in one transaction

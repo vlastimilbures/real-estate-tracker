@@ -30,7 +30,7 @@ const AXE_TAGS = [
   "best-practice",
 ];
 
-/** `UX_AXE=0` skips the scan for a faster local proof; CI keeps it on (F-08). */
+/** `UX_AXE=0` skips the scan for a faster local proof; CI keeps it on (ADR 0078). */
 const AXE = axeEnabled(process.env);
 
 /** Options of a shot. `keepPointer` leaves the mouse where the scene put it, for a scene
@@ -80,12 +80,12 @@ export const test = base.extend<{ ux: Ux }>({
         localStorage.setItem("ui.theme", theme);
         localStorage.setItem("ui.sidebarCollapsed", "false");
         // Ids in creation order: rows created at the same (frozen) time sort by id, so
-        // random ids would flip their order between runs (DR-180, DR-181).
+        // random ids would flip their order between runs (ADR 0078, ADR 0080).
         let seq = 0;
         crypto.randomUUID = () =>
           `00000000-0000-4000-8000-${String(++seq).padStart(12, "0")}`;
         // No CSS transitions: a shot taken after one (e.g. the sidebar's
-        // grid-template-columns) could land on a layout 1 px off its end state (DR-160).
+        // grid-template-columns) could land on a layout 1 px off its end state.
         document.addEventListener("DOMContentLoaded", () => {
           const style = document.createElement("style");
           style.textContent =
@@ -218,7 +218,7 @@ export async function settle(page: Page) {
   );
   if (await page.locator(".recharts-wrapper").count()) {
     // Charts resize after layout changes (ResizeObserver): wait until every chart's
-    // SVG markup is unchanged over three samples 200 ms apart (DR-147).
+    // SVG markup is unchanged over three samples 200 ms apart.
     let last = "";
     let same = 0;
     for (let i = 0; i < 40 && same < 3; i++) {

@@ -100,7 +100,7 @@ constraint? }`.
 6. **Rust and TypeScript change in one commit.** TypeScript that still expects a string
    would show a structured rejection as `[object Object]`, so the two sides land together.
 7. **The error log also records the Rust code** (extends ADR 0147). `describeFailure`
-   (`src/data/errorLog.ts:50`) finds the `CommandError` in the error itself or in its
+   (`src/data/errorLog.ts:67`) finds the `CommandError` in the error itself or in its
    `cause` chain (`BackupExportError`, `BackupReadError` and `SafetyBackupError` keep the
    original rejection as `cause`, `backupFiles.ts:31`, `:77`, `:122`).
    - **What a line gains.** For such a failure, the context field starts with the Rust code
@@ -108,6 +108,13 @@ constraint? }`.
      field stays the failure site (ADR 0147 point 1). For example,
      `WRITE_FAILED disk full at #` becomes `WRITE_FAILED IO: disk full at #`. A failure
      without a `CommandError` logs exactly as today.
+   - **A `DataError` that wraps one** (the startup upgrade's `MIGRATION_BACKUP_FAILED`
+     and `MIGRATION_FAILED`, `src/data/migrations/index.ts`, keep the rejection as
+     `cause`) gets the same prefix before its usual context; its code field and details
+     do not change. For example, `MIGRATION_BACKUP_FAILED STARTUP: disk full` becomes
+     `MIGRATION_BACKUP_FAILED BACKUP_FAILED: STARTUP: disk full`. (Clarified 2026-11-27,
+     owner decision: the accepted text did not say, and the code skipped the prefix for a
+     `DataError`, so an upgrade failure did not name its Rust code.)
    - **Where it comes from.** The prefix is the `code` value, one of the fixed
      `CommandErrorCode` constants; nothing from the message or the user goes into it. The
      rest of the context is today's masked text (`maskNumbers`, ADR 0147 point 5, with the

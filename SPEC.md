@@ -230,9 +230,9 @@ a stale value after a baseDate or horizon change never shows: the engine call, t
 text, the Today pill and the page subtitles all use the resolved date. Today counts as today
 only when the resolved date is today (a future baseDate shows the baseDate, dated). A date
 less than six months after baseDate shows the effective-dated snapshot; a later one shows a
-projection-year row on Dashboard, Property detail and, at Today, Properties (D-62, ADR 0150),
+projection-year row on Dashboard, Property detail and, at Today, Properties (ADR 0019, ADR 0150),
 so the tiles agree with the charts. The row is the **nearest whole year** on the baseDate
-grid: `n = round(gridMonths(baseDate, asOf) / 12)`, counting months on the D-21 month-end
+grid: `n = round(gridMonths(baseDate, asOf) / 12)`, counting months on the ADR 0021 month-end
 grid (`lastGridMonthOnOrBefore`), as value growth and the CPI index do. With baseDate 1 Jan
 2026, an as-of of 1 Aug 2026 (7 months) shows year 1 and 1 Jul 2028 (30 months) shows year
 3; with baseDate 31 Aug 2026, 28 Feb 2027 is 6 grid months and shows year 1. When `n` is 0
@@ -254,7 +254,7 @@ governing valuation is the latest one with `validFrom ≤ asOf`, and its `validT
 valuation ends the open-ended one before it on the day before the new start, without asking,
 and a new valuation with its own `validTo` changes no other row (ADR 0227). Before the first
 valuation date, the nearest upcoming record is used (so year 0 lines up with the projection).
-**Leases** have no such fallback (DR-045): snapshot rent is the contractual monthly rent of the lease in force at
+**Leases** have no such fallback (ADR 0080): snapshot rent is the contractual monthly rent of the lease in force at
 `asOf` × 12, unindexed, and 0 when no lease is in force — before the first lease, in a gap
 between leases (a one-day gap is rent-free) and after the last lease's end date. The
 projection treats rent differently (§4.5). **Leases of one property never overlap**
@@ -269,7 +269,7 @@ Derived per-property values:
   completed months ÷ 12** at the appreciation rate (ADR 0032). The anchor is the baseDate,
   a later valuation's `validFrom`, or the purchase date of a property bought after baseDate.
   Months are counted with the month-end rule, so a 29 Feb baseDate still counts a full year
-  (D-45). A valuation that started on or before baseDate is anchored at baseDate, not at its
+  (ADR 0032). A valuation that started on or before baseDate is anchored at baseDate, not at its
   `validFrom`, so its value is not grown for the months before baseDate.
   Falls back to `purchasePrice` only when the property has no valuation (ADR 0122); the
   price then grows by whole months from the purchase date to the anchor, at the property's
@@ -346,7 +346,7 @@ table and its export show `dueDate`.
 - `newBalance = max(0, B − principal)`.
 - **Maturity**: the payment whose number equals the term pays the whole outstanding
   balance — no post-payoff "dust", and a loan whose instalment cannot retire it pays the
-  residual as a final balloon (D-40, in ADR 0021).
+  residual as a final balloon (ADR 0021).
 - **Expired fixation without a successor** (fixation ended before baseDate and no later
   block): the opening balance is replayed on the loan's own due dates with the reset applied
   from the true fixation end, and the UI warns the owner to enter the new fixation's terms as a new
@@ -355,7 +355,7 @@ table and its export show `dueDate`.
   one payment runs at the reset rate (ADR 0129).
 - **Loan starting after baseDate**: opening balance 0; the loan appears as new debt in the
   grid month it is drawn (ADR 0033).
-- **Refinance handover** (successor block, D-47 in ADR 0027): the successor draws in the
+- **Refinance handover** (successor block, ADR 0027): the successor draws in the
   first grid month on/after its start. Predecessor payments due on or before that start are
   still paid (one falling in the draw month is carried by the draw row); later ones are
   dropped. Net refinance cash (successor's initial principal − predecessor balance paid off)
@@ -418,16 +418,16 @@ table and its export show `dueDate`.
   `startDate + loanTermYears` (ADR 0024). After `completionDate` the fully drawn balance
   re-amortizes the same way. The trigger fires only on a real draw or completion.
 - A tranche must be dated strictly after the loan start (`DRAW_BEFORE_START`; money drawn on
-  the start date belongs in the initial principal, D-42; the mortgage form shows it as the
+  the start date belongs in the initial principal, ADR 0024; the mortgage form shows it as the
   drawdown schedule's first row, "Drawn at start", ADR 0167), and on or before the last-but-two
   payment `EDATE(start, term·12 − 2)` (ADR 0226): a tranche after the last-but-one payment
   `EDATE(start, term·12 − 1)` is `DRAW_AFTER_SCHEDULE_END` (ADR 0129), one in the last two
   payment months before it `DRAW_IN_LAST_TWO_PAYMENTS`. So every tranche lands before the final
   payment on the baseDate grid, month-end clamps included. A tranche
   between the last payment due by baseDate and baseDate joins grid month 1 and is part of
-  the baseDate debt (D-41); one dated after baseDate within grid month 1 is new debt in that
-  month (D-44). A tranche landing in a future loan's first draw month joins that draw
-  (D-46).
+  the baseDate debt (ADR 0024); one dated after baseDate within grid month 1 is new debt in that
+  month (ADR 0024). A tranche landing in a future loan's first draw month joins that draw
+  (ADR 0024).
 - During construction the property counts at its completed value and its tranches not drawn
   yet are committed debt (§4.3, ADR 0166); interest and payments run on the drawn balance
   only. The projection year carries `committedDebt` (balance + undrawn) and
@@ -464,7 +464,7 @@ The **acquisition loan** is the property's earliest block when it starts no late
 days after the purchase date (an earlier start counts: an off-plan loan drawn before
 handover), or when it is a development loan, whatever its start: the bank pays the
 developer, never the owner (ADR 0168). It counts its initial principal and every tranche dated on or before the start
-of the block that replaces it (the schedule's cut, D-47). A later block is a successor,
+of the block that replaces it (the schedule's cut, ADR 0027). A later block is a successor,
 never the acquisition loan. A future buy's first plain loan that starts after the window is not
 the acquisition loan: its initial principal is **cash in** in the projection year it is
 drawn, like refinance cash. The same holds for a property owned at baseDate whose first plain
@@ -483,7 +483,7 @@ the property's rows before the turn-on year stay empty. In years 1 … min(tStar
 schedule's interest, principal, prepaid and prepayment fees are **owner cash out**, booked in
 the year paid, beside the down payment (for cumulative cash flow and levered IRR). Tranches
 drawn in those years are the bank's money, not cash; the balance arrives as the turn-on year's
-draw (DR-092). The turn-on year's row already holds all twelve schedule months. A property
+draw. The turn-on year's row already holds all twelve schedule months. A property
 bought after the horizon pays every in-window instalment but never enters equity. The
 principal the acquisition loan repaid before baseDate (drawn by baseDate − its balance at
 baseDate) is charged with the down payment in the turn-on year, when that loan is still the
@@ -630,7 +630,7 @@ netCF_N + equity_N − value_N · sellingCostPct]` — acquisition outflows, ref
 `financingExposure(portfolio, assumptions, schedules, asOf)` reads the same schedules as the
 projection (`src/engine/financing.ts`). A loan is one active property's block chain.
 
-- **Fixation end** = `blockEndDate`. Its payment is still fixed (D-21), so the **balance at
+- **Fixation end** = `blockEndDate`. Its payment is still fixed (ADR 0021), so the **balance at
   fixation end** is the end balance of grid month `fixationYears·12 − paymentOffset`, and the
   reset row is the next one. A 0-year (floating) block has no fixation end (ADR 0162).
 - Status at as-of, first match wins (ADR 0117): **replaced** (a successor starts on or before
@@ -658,12 +658,17 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 
 - **SQLite** on disk (one file in the app's data dir, see `docs/release.md`). Tables mirror
   §4.1 — one per entity, effective-dated where noted — plus a single-row `assumptions`
-  table, a `scenarios` table (§7, overrides as versioned JSON + a name) and `app_meta`.
+  table, a `scenarios` table (§7, overrides as versioned JSON + a name), `app_meta` and
+  `schema_migrations` (the applied migration steps).
 - CHECK constraints and unique natural keys back the §4.1 validation rules.
 - Repositories (`src/data`) expose typed CRUD; the engine never imports the DB — the app
   loads rows, maps them to engine inputs through hand-rolled runtime guards (ADR 0048),
   calls the engine, renders outputs.
-- Every multi-step write runs inside one transaction owned by a Rust command (ADR 0014).
+- Every write runs in one of the app's own Rust commands: one statement through
+  `db_execute`, several in one transaction through `db_transaction` (ADR 0014, ADR 0270).
+  Snapshot reads (`db_select_snapshot`) and SQLite backup copies (`db_backup`) are Rust
+  commands too. The app calls the SQL plugin only to open the database and for single
+  reads.
 - Migrations are versioned; before upgrading an existing database the app writes a verified
   `pre-migration-v<from>-to-v<to>-<stamp>.sqlite` copy to the `backups/` folder next to it.
   Each step commits on its own; a failed step is rolled back. The schema starts at version
@@ -676,7 +681,10 @@ projection (`src/engine/financing.ts`). A loan is one active property's block ch
 - The assumptions row is written on that first run only. A database that later lacks it is
   not repaired from the sample values: startup stops with `ROW_INVALID` on the error screen,
   which offers Restore a backup… (ADR 0252).
-- Errors are typed (`DataError` codes) and logged to a rotating local `app.log`.
+- Errors are typed (`DataError` codes) and logged to a rotating local `app.log`. An app
+  command that fails in Rust rejects with a stable code (`CommandError`, ADR 0270). The log
+  line for such a failure records that code before the masked text (ADR 0270 point 7, which
+  amends ADR 0147); a failure logged as a `DataError` keeps only the `DataError` code.
 - A write that commits but whose read-back fails stops on the startup error screen ("Your
   last change was saved, but the data could not be read back."); nothing is undone, later
   queued writes are refused, and Try again only reads (ADR 0228).
@@ -719,7 +727,7 @@ Clearing a funding amount is a property form edit too: a blank CSV cell keeps it
   byte-order mark is dropped.
 - `property_name` matches a property in one Unicode form (NFC), after trimming,
   case-insensitively; the stored spelling is kept. Two names in one file differing only by
-  case, spaces or Unicode form are a duplicate (fatal). An unknown name is fatal (D-55,
+  case, spaces or Unicode form are a duplicate (fatal). An unknown name is fatal (ADR 0049,
   ADR 0237).
 - Each row also passes the engine's `validateInputs` rules (§4.1) and the lease overlap
   rule (§4.3, ADR 0163).
@@ -785,12 +793,10 @@ price crash**, each with a legend and one line of help (ADR 0102).
   it. Restore only needs a scenario row to be readable, so every backup exported in Settings
   restores (not the startup screen's safety copy of an unreadable row). A stored scenario row the app cannot read stops startup like an unreadable row
   in any other table: the startup screen names it and offers Restore a backup… (ADR 0231).
-  The app never reads `created_at`; it only orders the list (DR-181).
+  The app never reads `created_at`; it only orders the list (ADR 0080).
 - **Compare view**: pick 2–3 scenarios; show their KPIs and key charts side by side
   (net worth, net cash flow, LTV) on one screen, honouring the Nominal/Real lens. The
-  Scenarios page currently hides the lens toggle (`showLens={false}` in
-  `src/ui/pages/Scenarios.tsx`), so the comparison follows the lens last chosen on another
-  page; showing the toggle there is tracked in #15.
+  Scenarios page shows the lens toggle once there is a portfolio to compare (ADR 0155).
   The key figures start with **starting equity** (projection year 0) and **Δ net worth vs
   Base** (horizon net worth minus Base's, in the lens; only when Base is compared). A
   scenario whose starting equity differs from Base's (a price crash at Today) has its
@@ -809,7 +815,7 @@ price crash**, each with a legend and one line of help (ADR 0102).
   key figures (ADR 0108).
 - **Stress presets** (one-click; each creates a named scenario,
   `src/ui/pages/ScenariosPanels.tsx`). Temporary shocks last `DEFAULT_SHOCK_YEARS` = 3
-  years (`src/ui/model/scenarioForm.ts`), then revert to trend:
+  years (`src/ui/model/scenarios.ts`), then revert to trend:
   - **Rate shock at fixation end**: +2 / +4 / +6 pp for 3 years (`rateShock`).
   - **Inflation shock**: +3 / +6 / +9 pp for 3 years (`inflationShock`).
   - **Price crash**: −10 % / −20 % / −35 % of property value at Today / +5 years / +10 years
@@ -848,7 +854,10 @@ price crash**, each with a legend and one line of help (ADR 0102).
   testing (ADR 0026, ADR 0249).
 - **Privacy & security:** offline; no network calls, enforced by a strict Content Security
   Policy, least-privilege Tauri capabilities and a navigation guard. File dialogs and writes
-  run in Rust; the webview never handles file paths (ADR 0064). Data, backup and log
+  run in Rust; the webview never passes a file path (ADR 0064). Of the SQL plugin, the
+  webview is granted `load` and `select` only, not `execute` (ADR 0270). That is not a
+  read-only guarantee: `select` and the app's database commands run any SQL the webview
+  sends, an accepted risk because no remote content can run in it (ADR 0064). Data, backup and log
   locations are listed in `docs/release.md`.
 - **Platform:** Apple Silicon, macOS 13 or later; ad-hoc signed with the hardened runtime, no
   App Sandbox (ADR 0009, ADR 0063).
@@ -860,8 +869,8 @@ price crash**, each with a legend and one line of help (ADR 0102).
   sidebar.
 - **Accessibility & UX:** keyboard-navigable forms, translated validation messages, WCAG 2.2
   AA basics checked by an axe scan per screen (`pnpm ux:capture`, ADR 0057), the accounting
-  colour conventions (negatives red, etc.), macOS menu shortcuts (⌘N, ⌘1–⌘5, ⌘W
-  hides the window).
+  colour conventions (negatives red, etc.), macOS menu shortcuts (⌘N, ⌘1–⌘5, ⌘, for
+  Settings, ⌘W hides the window).
 
 ## 9. Screens (UI)
 

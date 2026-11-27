@@ -17,3 +17,25 @@ export async function openSeeded(): Promise<Sql> {
   await seedIfEmpty(sql);
   return sql;
 }
+
+/** The app's launch recipe (defaultOpen, src/data/open.ts) on `db`: migrate, seed an empty
+ *  database, open. Launching again on the same `db` is a relaunch over its data. */
+export const launchOn =
+  <T extends Sql>(db: T) =>
+  async (): Promise<T> => {
+    await migrate(db);
+    await seedIfEmpty(db);
+    return db;
+  };
+
+/** `real`, but the reload's snapshot read fails: the write commits, the reload after it
+ *  fails. A snapshot that reads `schema_migrations` stands for `exportToJson` (the safety
+ *  backup) and passes; every action's other reads use `select`, so only the reload is
+ *  hit. */
+export const reloadFails = (real: Sql): Sql => ({
+  ...real,
+  selectSnapshot: (statements) =>
+    statements.some((s) => s.query.includes("schema_migrations"))
+      ? real.selectSnapshot(statements)
+      : Promise.reject(new Error("database is locked")),
+});

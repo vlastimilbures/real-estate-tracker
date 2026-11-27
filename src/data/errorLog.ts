@@ -8,8 +8,9 @@
 // masked, so an amount that slipped into a message is not recorded (ADR 0147), except an
 // OS or SQLite error code, which says what failed (ADR 0175). Names are kept (they help
 // diagnosis); the bug form says to replace them before pasting. A failed app command's
-// context starts with its Rust code (ADR 0270 point 7): a closed list of upper snake
-// case names, written as it is.
+// context starts with its Rust code (ADR 0270 point 7), also when a DataError wraps it
+// (the startup upgrade's MIGRATION_* errors): a closed list of upper snake case names,
+// written as it is.
 import { DataError, messageOf } from "./errors";
 import {
   isCommandError,
@@ -53,7 +54,8 @@ export type FailureSite =
   | "REVEAL";
 
 /** The Rust code of the failed command behind `e`: in `e` itself or in its `cause`
- *  chain (the backup errors keep the rejection as their cause). A looping chain ends. */
+ *  chain (the backup errors and the upgrade's DataErrors keep the rejection as their
+ *  cause). A looping chain ends. */
 function commandCodeOf(e: unknown): CommandErrorCode | null {
   const seen = new Set<unknown>();
   for (let at = e; at instanceof Error && !seen.has(at); at = at.cause) {
@@ -68,13 +70,16 @@ export function describeFailure(
   where: FailureSite,
   e: unknown,
 ): { code: string; context: string } {
-  if (e instanceof DataError)
-    return { code: e.code, context: `${where}: ${e.details.join("; ")}` };
-  const masked = maskNumbers(messageOf(e));
   const rust = commandCodeOf(e);
+  const withRust = (text: string) => (rust ? `${rust}: ${text}` : text);
+  if (e instanceof DataError)
+    return {
+      code: e.code,
+      context: withRust(`${where}: ${e.details.join("; ")}`),
+    };
   return {
     code: `${where}_FAILED`,
-    context: rust ? `${rust}: ${masked}` : masked,
+    context: withRust(maskNumbers(messageOf(e))),
   };
 }
 

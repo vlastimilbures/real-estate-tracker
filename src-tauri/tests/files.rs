@@ -1,4 +1,4 @@
-//! P8 (D-64): the file helpers (fs_atomic, private_fs, paths, commands), against temporary folders. Never
+//! ADR 0064: the file helpers (fs_atomic, private_fs, paths, commands), against temporary folders. Never
 //! touches the user's files.
 
 use app_lib::commands::dialogs::percent_decode;
@@ -93,7 +93,6 @@ fn atomic_write_skips_a_file_planted_at_the_temp_name() {
     assert_eq!(entries(&dir), vec![planted_name, "p.csv".to_string()]);
 }
 
-#[cfg(unix)]
 #[test]
 fn atomic_write_does_not_follow_a_symlink_at_the_temp_name() {
     let dir = temp_dir("planted-link");
@@ -183,20 +182,17 @@ fn write_new_private_writes_a_new_file() {
     assert_eq!(fs::read(&dest).unwrap(), b"{}");
 }
 
-// DR-157 (ADR 0080): the app's own files are private to the user.
-#[cfg(unix)]
+// ADR 0080: the app's own files are private to the user.
 fn mode(path: &std::path::Path) -> u32 {
     use std::os::unix::fs::PermissionsExt;
     fs::metadata(path).unwrap().permissions().mode() & 0o777
 }
 
-#[cfg(unix)]
 fn set_mode(path: &std::path::Path, m: u32) {
     use std::os::unix::fs::PermissionsExt;
     fs::set_permissions(path, fs::Permissions::from_mode(m)).unwrap();
 }
 
-#[cfg(unix)]
 #[test]
 fn atomic_write_private_creates_the_file_0600() {
     let dir = temp_dir("private");
@@ -207,7 +203,6 @@ fn atomic_write_private_creates_the_file_0600() {
     assert_eq!(entries(&dir), vec!["portfolio-before-restore.json"]);
 }
 
-#[cfg(unix)]
 #[test]
 fn atomic_write_keeps_the_default_mode_for_exports() {
     let dir = temp_dir("export-mode");
@@ -216,7 +211,6 @@ fn atomic_write_keeps_the_default_mode_for_exports() {
     assert_ne!(mode(&dest), 0o600);
 }
 
-#[cfg(unix)]
 #[test]
 fn restrict_app_dir_makes_folders_0700_and_files_0600() {
     let dir = temp_dir("restrict");
@@ -256,7 +250,6 @@ fn restrict_app_dir_ignores_a_missing_folder() {
     assert!(!dir.exists());
 }
 
-#[cfg(unix)]
 #[test]
 fn restrict_dir_makes_one_folder_0700_and_its_files_0600() {
     let dir = temp_dir("restrict-dir");

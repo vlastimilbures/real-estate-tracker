@@ -1,4 +1,4 @@
-// P8 (D-64): the app's own commands are listed in an app manifest, so the webview may
+// ADR 0064: the app's own commands are listed in an app manifest, so the webview may
 // call one only when capabilities/default.json grants its `allow-*` permission. The list
 // is src/command_list.rs, shared with the handler registration in lib.rs.
 include!("src/command_list.rs");

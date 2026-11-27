@@ -97,7 +97,7 @@ pub struct OpenedFile {
 
 /// Ask for a backup JSON file (native open dialog over `window`) and return its name and
 /// text, or `None` when the dialog is closed. A file over `max_bytes` is refused with
-/// `BACKUP_TOO_LARGE` before it is read (DR-138). Invalid UTF-8 is replaced, as the fs
+/// `BACKUP_TOO_LARGE` before it is read (ADR 0064). Invalid UTF-8 is replaced, as the fs
 /// plugin's text read did, so it surfaces as "not a JSON backup".
 #[tauri::command]
 pub async fn open_backup_file(

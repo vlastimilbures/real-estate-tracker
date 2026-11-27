@@ -1,4 +1,4 @@
-// Independent reference model for the mortgage engine (P02 audit, TEST-ONLY).
+// Independent reference model for the mortgage engine (TEST-ONLY).
 //
 // A deliberately simple, line-by-line monthly amortization written from the Czech
 // retail-mortgage description (anuitní splácení, fixace → refixace, čerpání po
@@ -18,7 +18,7 @@
 //   • on any rate change, the end of interest-only, or a tranche draw, the instalment
 //     re-amortizes the balance over the payments left to the (implied) maturity
 //     start + term (constant maturity); between those events the instalment holds;
-//   • a development loan starts from its entered instalment, or (D-31, option
+//   • a development loan starts from its entered instalment, or (ADR 0031, option
 //     `devInstalment: "fromTerm"`) from the annuity of its principal over the term;
 //   • draws on/before the loan start join the opening principal; later draws join the
 //     balance of the payment period they land in;
@@ -134,7 +134,7 @@ export interface RefLoan {
   ratePa: Value;
   instalment: Value;
   fixationMonths: number;
-  /** Explicit term; when absent it is derived as ceil(NPER) from the instalment (D-08). */
+  /** Explicit term; when absent it is derived as ceil(NPER) from the instalment (ADR 0008). */
   termMonths?: number;
   draws?: RefDraw[];
   /** Interest-only on every payment due on/before this date. */
@@ -167,27 +167,27 @@ export interface RefOptions {
   resetRatePa: Value;
   /**
    * baseDateGrid — rows on EDATE(baseDate, m), the rate read on the grid date
-   *   (J-03 a, ADR 0021);
+   *   (ADR 0021 option a);
    * gridDueDate — rows on EDATE(baseDate, m), but the rate read on the due date of
-   *   the payment the row carries, EDATE(start, k) (J-03 a′, D-21: the engine);
-   * paymentDay — rows on the loan's own payment dates after baseDate (J-03 b).
+   *   the payment the row carries, EDATE(start, k) (ADR 0021 option a′: the engine);
+   * paymentDay — rows on the loan's own payment dates after baseDate (ADR 0021 option b).
    */
   calendar?: "baseDateGrid" | "gridDueDate" | "paymentDay";
-  /** Rounding of a re-amortized instalment (J-01). The entered instalment is kept. */
+  /** Rounding of a re-amortized instalment (ADR 0020). The entered instalment is kept. */
   rounding?: "none" | "ceil" | "halfUp";
   /** Round each month's interest to this many decimals (e.g. 2 = haléře). */
   interestDecimals?: number;
   rateShock?: RefRateShock;
-  /** When a tranche re-amortizes the instalment (J-06). */
+  /** When a tranche re-amortizes the instalment (ADR 0024). */
   drawTiming?: "landing" | "nextMonth";
-  /** A development loan's opening instalment: the entered one (P02 evidence), or the
-   *  annuity of the principal over the term at the start rate (D-31, the engine). */
+  /** A development loan's opening instalment: the entered one (the audit's evidence), or the
+   *  annuity of the principal over the term at the start rate (ADR 0031, the engine). */
   devInstalment?: "entered" | "fromTerm";
   /** A running loan's tranche dated after its last payment due by baseDate (and
-   *  on/before baseDate): folded into the opening balance with no re-amortization (P02
-   *  evidence), or carried into the next payment period, where it re-amortizes like any
-   *  tranche (D-41, the engine). For a future loan, "nextPeriod" also sizes the opening
-   *  instalment on a tranche that lands with the first draw (D-46); "fold" keeps the
+   *  on/before baseDate): folded into the opening balance with no re-amortization (the
+   *  audit's evidence), or carried into the next payment period, where it re-amortizes like any
+   *  tranche (ADR 0024, the engine). For a future loan, "nextPeriod" also sizes the opening
+   *  instalment on a tranche that lands with the first draw (ADR 0024); "fold" keeps the
    *  instalment on the principal alone. */
   openingDraws?: "fold" | "nextPeriod";
 }
@@ -213,7 +213,7 @@ function isDev(loan: RefLoan): boolean {
   return (loan.draws?.length ?? 0) > 0 || loan.completion != null;
 }
 
-/** Term in months: explicit, or ceil(NPER) of the entered instalment (D-08). */
+/** Term in months: explicit, or ceil(NPER) of the entered instalment (ADR 0008). */
 export function termOf(loan: RefLoan): number {
   if (loan.termMonths != null) {
     if (!Number.isInteger(loan.termMonths) || loan.termMonths <= 0) {
@@ -289,7 +289,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
 
   const rateAt = (date: Iso): Dec => {
     if (date <= fixEnd) return d(loan.ratePa);
-    // A scenario shock reprices only payments due after baseDate (DR-117).
+    // A scenario shock reprices only payments due after baseDate (ADR 0079).
     if (shock && shockEnd && date > base && date <= shockEnd)
       return reset.plus(shock.deltaPa);
     return reset;
@@ -326,7 +326,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
   let known = ZERO;
 
   /** One payment period ending on `date`; `k` = payment number since loan start.
-   *  The rate and interest-only are read on `rateDate` (the grid date, unless J-03 a′
+   *  The rate and interest-only are read on `rateDate` (the grid date, unless ADR 0021 option a′
    *  keys them on the due date; ADR 0129 §2). Draws stay on `date`. */
   const step = (
     date: Iso,
@@ -568,7 +568,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
       (date) => drawsIn(lastDue, date),
     );
     // Tranches between the last payment and baseDate: folded into the opening
-    // balance, or (D-41) carried into the next payment period.
+    // balance, or (ADR 0024) carried into the next payment period.
     const late = drawsIn(prev, base);
     const carry = opts.openingDraws === "nextPeriod";
     if (!carry) balance = balance.plus(late);
@@ -620,7 +620,7 @@ export function referenceSchedule(loan: RefLoan, opts: RefOptions): RefRow[] {
         }
         drawnAt = m;
         balance = d(loan.principal).plus(drawsUpTo(date));
-        // D-46: a tranche landing with the first draw re-amortizes over the full term.
+        // ADR 0024: a tranche landing with the first draw re-amortizes over the full term.
         if (
           opts.openingDraws === "nextPeriod" &&
           isDev(loan) &&
@@ -712,7 +712,7 @@ export function closedFormBalance(loan: RefLoan, asOf: Iso): Dec {
 }
 
 // ---------------------------------------------------------------------------
-// Refinance chains (D-27, D-43, D-47)
+// Refinance chains (ADR 0021, ADR 0027)
 // ---------------------------------------------------------------------------
 
 export interface RefHandover {
@@ -728,13 +728,13 @@ export interface RefHandover {
 }
 
 /**
- * One property's loans as a refinance chain on the baseDate grid (J-03 a′). The chain
+ * One property's loans as a refinance chain on the baseDate grid (ADR 0021 option a′). The chain
  * opens with the loan in force at baseDate (else the earliest) and each later start is
  * a successor. A successor draws on the first grid date on/after its start. The
  * predecessor's payment in that grid month is still paid when due on/before the
  * successor's start, and the draw row carries it; otherwise it is dropped and its
- * balance before that month, plus that month's tranches, is paid off (D-47). Tranches
- * dated after the successor's start are dropped (DR-126). Two successors drawing in the same
+ * balance before that month, plus that month's tranches, is paid off (ADR 0027). Tranches
+ * dated after the successor's start are dropped (ADR 0079). Two successors drawing in the same
  * grid month are not modelled.
  */
 export function referenceChain(
@@ -744,7 +744,7 @@ export function referenceChain(
   const base = opts.baseDate;
   const sorted = [...loans].sort((a, b) => (a.start < b.start ? -1 : 1));
   const inForce = sorted.filter((l) => l.start <= base).at(-1);
-  // A loan's tranches dated after its successor's start are never drawn (DR-126);
+  // A loan's tranches dated after its successor's start are never drawn (ADR 0079);
   // nor are its prepayments or recasts (ADR 0109).
   const chain = (
     inForce ? sorted.filter((l) => l.start >= inForce.start) : sorted

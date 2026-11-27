@@ -13,7 +13,7 @@ pub const DB_FILE: &str = "portfolio.db";
 /// `DB_URL`); the database commands run on its pool. The app has one database.
 pub const DB_URL: &str = "sqlite:portfolio.db";
 
-/// The app folder's subfolder for backups (D-52): next to the database.
+/// The app folder's subfolder for backups (ADR 0052): next to the database.
 pub const BACKUPS_DIR: &str = "backups";
 
 /// The app folder: the database, its backups and the window state.

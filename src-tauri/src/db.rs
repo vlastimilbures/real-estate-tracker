@@ -1,11 +1,11 @@
-//! Atomic writes and verified pre-migration backups (P5a, J-13 option b → D-14).
+//! Atomic writes and verified pre-migration backups (ADR 0014, option b).
 //!
 //! `@tauri-apps/plugin-sql` runs every JS call on whichever pooled connection is free, so
-//! `BEGIN … COMMIT` sent from JS is not atomic (H-14, proven in
+//! `BEGIN … COMMIT` sent from JS is not atomic (ADR 0014, proven in
 //! tests/h14_pool_transactions.rs). These commands borrow the plugin's own pool
 //! (`DbInstances`) and run a whole statement list on ONE connection inside a real sqlx
 //! transaction: every statement commits, or none does. Reads that must agree with each
-//! other (the portfolio load, DR-134) run the same way inside one read transaction.
+//! other (the portfolio load, ADR 0066) run the same way inside one read transaction.
 //! A single statement runs here too (`db_execute`, ADR 0270), so every write fails with
 //! an `AppError` and its code; only reads stay on the plugin's `select`.
 
@@ -151,7 +151,7 @@ fn row_to_json(row: &SqliteRow) -> Result<JsonRow, AppError> {
 
 /// Run the SELECTs `statements` on one pooled connection inside one read transaction,
 /// so every result comes from the same database state (a point-in-time snapshot,
-/// DR-134). Returns one row list per statement, in order.
+/// ADR 0066). Returns one row list per statement, in order.
 pub async fn select_snapshot(
     pool: &Pool<Sqlite>,
     statements: &[Statement],
@@ -282,7 +282,7 @@ pub async fn db_backup(
     let dest = dir.join(format!("{label}.sqlite"));
     let pool = pool_for(&instances, DB_URL).await?;
     backup_to(&pool, &dest).await?;
-    // `VACUUM INTO` creates the copy with the default mode; keep it private (DR-157).
+    // `VACUUM INTO` creates the copy with the default mode; keep it private (ADR 0080).
     crate::private_fs::restrict_file(&dest)?;
     Ok(dest.display().to_string())
 }
@@ -299,7 +299,7 @@ mod tests {
         assert!(!valid_label(""));
     }
 
-    /// #473: the exact edges of the label rule, kept when the rule is shared.
+    /// The exact edges of the label rule, kept when the rule is shared.
     #[test]
     fn label_edges() {
         assert!(valid_label(&"a".repeat(100)));
@@ -312,7 +312,7 @@ mod tests {
         }
     }
 
-    /// #471: the label rule of the Sql contract (src/data/__tests__/fixtures/
+    /// The label rule of the Sql contract (src/data/__tests__/fixtures/
     /// sql-contract.json), which the better-sqlite3 test adapter is checked against too.
     #[test]
     fn labels_match_the_contract() {

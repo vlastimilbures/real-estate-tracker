@@ -1,8 +1,11 @@
 # Roadmap & known limitations
 
 What is not done yet, in plain language. Ideas and bugs are welcome as
-[GitHub issues](https://github.com/vlastimilbures/real-estate-tracker/issues). IDs in brackets (`DR-nnn`) are legacy references that still
-appear in code comments (ADR 0081).
+[GitHub issues](https://github.com/vlastimilbures/real-estate-tracker/issues). The retired
+refactor-archive IDs (`DR-nnn` and the like, ADR 0081) no longer appear here, in the code
+comments of the app and the Rust shell, or in the other living docs;
+`scripts/check-comment-refs.mjs` enforces it. They remain in tests and in the ADRs' own
+history.
 
 ## Done: the 2026-10 reviews
 
@@ -15,20 +18,34 @@ Every issue from the 2026-10 pre-release review
 #101–#178) is closed; each closed issue links the ADR or PR that resolved it. New work is
 tracked as [GitHub issues](https://github.com/vlastimilbures/real-estate-tracker/issues).
 
+## In progress: the 2026-11 code review
+
+The code review (architecture, maintainability, edge-case realism) is tracked in
+[#435](https://github.com/vlastimilbures/real-estate-tracker/issues/435). Its open issues:
+[`code-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=is%3Aissue+is%3Aopen+label%3Acode-review-2026-11).
+
+## The 2026-11 UX/UI review
+
+Every work issue is closed. The tracking issue
+[#392](https://github.com/vlastimilbures/real-estate-tracker/issues/392) and the decisions left for
+the owner ([#415](https://github.com/vlastimilbures/real-estate-tracker/issues/415)) are open. Open
+issues:
+[`ux-review-2026-11`](https://github.com/vlastimilbures/real-estate-tracker/issues?q=is%3Aissue+is%3Aopen+label%3Aux-review-2026-11).
+
 ## Feature ideas (no issue yet)
 
 - **Per-property growth in scenarios.** SPEC §7 allows a scenario to override appreciation and
   rent indexation per property; scenarios currently override the portfolio-wide assumptions
-  only. A scenario also cannot clear a shock set on the base. (DR-077)
+  only. A scenario also cannot clear a shock set on the base.
 - **Prepayment what-ifs in Scenarios.** A scenario cannot add, remove or change a prepayment,
   so "repay 500,000 at the next fixation end" vs "keep the cash" cannot be compared side by
   side: scenarios change only Assumptions, and a prepayment belongs to one loan. Today: add it,
   read the KPIs and interest saved, then delete it. Belongs with per-property scenario
-  overrides (DR-077). (#158, decided: ADR 0109)
+  overrides. (#158, decided: ADR 0109)
 - **More Czech mortgage features.** The annual partial-prepayment allowance, a per-loan payment
   day and first partial-month interest. Designed but not built:
   [`docs/design/czech-mortgage-extensions.md`](design/czech-mortgage-extensions.md) §§2–4.
-  One-off prepayments and maturity changes are #32 (ADR 0109).
+  One-off prepayments and maturity changes shipped with #32 (ADR 0109).
 - **Multi-currency.** Each record keeps its own currency, a reporting currency is set in
   Settings, and FX rates are entered or imported by hand to stay offline. This needs a scope ADR
   first, covering four decisions: single currency vs display conversion vs true multi-currency;
@@ -52,7 +69,7 @@ tracked as [GitHub issues](https://github.com/vlastimilbures/real-estate-tracker
 - **Auto-convert Czech-Excel CSV files** (semicolon, decimal comma, Windows-1250). Today such
   files are rejected with a message that names the fix (ADR 0049).
 - **Native-speaker review of the Russian translation.** All three languages are complete and
-  type-checked; the Russian domain terms have not been reviewed by a native speaker. (DR-097)
+  type-checked; the Russian domain terms have not been reviewed by a native speaker.
 
 ## Considered, not planned
 
@@ -66,27 +83,29 @@ product's positioning changes.
 ## Known limitations
 
 - **Several development loans on one property.** One development loan per property
-  (optionally refinanced into a plain loan) is the supported case. (DR-124)
+  (optionally refinanced into a plain loan) is the supported case. (ADR 0098)
 - **Month-end base dates.** The engine counts payments and grid months on loan due dates, so
   results are correct, but two date helpers remain whose semantics differ at month ends; new
-  code should use `lastGridMonthOnOrBefore`. (DR-070)
+  code should use `lastGridMonthOnOrBefore`.
 
 ## Code health
 
 - **Mutation score.** The engine scores ~98.7 % under Stryker (the weekly run breaks below 98 %).
   The surviving mutants are equivalent (no observable difference), defaults no caller can
-  reach, or the text of engine error messages, which the UI never shows. (DR-168)
-- **Bundle size.** Startup JavaScript is ~234 kB gzip plus the active UI dictionary
-  (~19–24 kB), down from ~329 kB; every page but the Dashboard and Properties, and the date
-  picker calendar, load on first use, and the other dictionaries load only on a language
-  switch. Most of the rest is Recharts (~108 kB, which the Dashboard needs at start).
-  (DR-009)
-- **Type tightening.** Plain and development loans share one type with optional fields
-  (DR-051); a few helpers still take loose `Record<string, string>` drafts (DR-081); stored
-  boolean flags are typed as numbers at the database boundary (DR-080); `D()` still accepts a
-  JS `number` (DR-078).
-- **Tests.** The two optional Playwright smoke tests (ADR 0006) run nightly and on manual dispatch
-  (`e2e.yml`), not on every pull request.
+  reach, or the text of engine error messages, which the UI never shows.
+- **Bundle size.** Startup JavaScript is ~275 kB gzip plus the active UI dictionary (~22–29 kB),
+  as `vite build` reports for the entry chunk and the chunks `dist/index.html` preloads
+  (2026-11-26). That is up from the ~234 kB plus ~19–24 kB recorded on 2026-10-04, after lazy
+  pages, the calendar and the dictionaries had brought it down from ~329 kB. Every page but the
+  Dashboard and Properties, and the date picker calendar, load on first use, and the other
+  dictionaries load only on a language switch. More than half of it is the entry chunk (~159 kB),
+  which includes Recharts (the Dashboard needs it at start). The largest chunk is the lazy-loaded
+  spreadsheet export library (~257 kB gzip). (ADR 0066)
+- **Type tightening.** A few helpers still take loose `Record<string, string>` drafts; stored
+  boolean flags are typed as numbers at the database boundary; `D()` still accepts a
+  JS `number` (ADR 0075).
+- **Tests.** The three optional Playwright smoke tests (two spec files, ADR 0006) run nightly and
+  on manual dispatch (`e2e.yml`), not on every pull request.
 - **Row editor focus.** Adding a prepayment or maturity-change row does not move focus to
   its date, and removing one leaves focus on the next row's button or the page (PR #100
   review).

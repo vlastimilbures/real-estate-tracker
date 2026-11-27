@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import { describeFailure, logFailure, maskNumbers } from "../errorLog";
 import { DataError } from "../errors";
-import { SafetyBackupError } from "../backup";
+import { FileStepError } from "../backup";
 import { COMMAND_ERROR_CODES, CommandError } from "../../platform/commandError";
 import { isTauri } from "../../lib/tauri";
 import { unhandledRejections } from "../../__tests__/support/unhandled";
@@ -91,7 +91,7 @@ describe("error log lines", () => {
       context: "IO: disk full at #",
     });
     // Kept as the cause of the data layer's own error.
-    expect(describeFailure("WRITE", new SafetyBackupError(e))).toEqual({
+    expect(describeFailure("WRITE", new FileStepError("safety", e))).toEqual({
       code: "WRITE_FAILED",
       context: "IO: Could not save the safety backup: disk full at #",
     });
@@ -112,6 +112,45 @@ describe("error log lines", () => {
     expect(describeFailure("RESTORE", outer).context).toBe(
       "BACKUP_EXISTS: restore failed",
     );
+  });
+
+  // ADR 0270 point 7: a DataError that wraps a failed command (the startup upgrade's
+  // MIGRATION_* errors) also logs the Rust code, so an upgrade failure is diagnosable.
+  it("a DataError wrapping a failed command logs its Rust code first", () => {
+    const rust = new CommandError("BACKUP_FAILED", "verify failed");
+    const e = new DataError(
+      "MIGRATION_BACKUP_FAILED",
+      "msg",
+      ["verify failed"],
+      {
+        cause: rust,
+      },
+    );
+    expect(describeFailure("STARTUP", e)).toEqual({
+      code: "MIGRATION_BACKUP_FAILED",
+      context: "BACKUP_FAILED: STARTUP: verify failed",
+    });
+  });
+
+  it("finds the command error below a DataError's cause chain", () => {
+    const rust = new CommandError("SQL", "no such table");
+    const e = new DataError("MIGRATION_FAILED", "msg", ["no such table"], {
+      cause: new Error("step", { cause: rust }),
+    });
+    expect(describeFailure("STARTUP", e)).toEqual({
+      code: "MIGRATION_FAILED",
+      context: "SQL: STARTUP: no such table",
+    });
+  });
+
+  it("a DataError without a failed command logs as before", () => {
+    const e = new DataError("MIGRATION_FAILED", "msg", ["boom"], {
+      cause: new Error("boom"),
+    });
+    expect(describeFailure("STARTUP", e)).toEqual({
+      code: "MIGRATION_FAILED",
+      context: "STARTUP: boom",
+    });
   });
 
   it("stops on a cause chain that loops", () => {
