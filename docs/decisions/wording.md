@@ -287,3 +287,23 @@ Cite dictionary keys, never the translated strings; the dictionaries hold the cu
 - Approved by: en, owner 2026-11-26 (#597 decision 6, corrected on PR #613); cs/ru:
   owner-approved choices (opening noun, 'aby bylo možné', 'расчёты'); final text reviewed
   under the owner's delegation, 2026-11-26
+
+### 2026-11-27 · #463 / ADR 0271
+
+- Keys: `commandErrors.BACKUP_EXISTS`, `commandErrors.BACKUP_PATH_NOT_UTF8`,
+  `commandErrors.BACKUP_FAILED`, `commandErrors.BACKUP_UNREADABLE`,
+  `commandErrors.BACKUP_CORRUPT`, `commandErrors.BACKUP_MISMATCH`,
+  `commandErrors.SAVED_FILE_MISMATCH`, `commandErrors.NO_FOLDER`,
+  `commandErrors.NO_FILE_NAME` (en, cs, ru), new
+- Change: what went wrong with a backup copy or a saved file, picked by the failed
+  command's code, in place of Rust's English detail inside the safety-backup, export,
+  CSV template and upgrade messages (ADR 0271). `BACKUP_EXISTS` names the file the webview
+  chose; no text shows a path. The words follow the dictionaries: "složka záloh" and
+  "папка резервных копий" as in `boot.copyAt`, "kontrola integrity" and "проверка
+  целостности" as in `dataErrors.DB_INTEGRITY`.
+- Rejected: the translated text followed by the library text in brackets, which brings
+  English back into a Czech or Russian message (ADR 0271, resolved question 2).
+- Approved by: approved by the owner 2026-11-27 (comment on PR #694): en with ADR 0271
+  (the six `BACKUP_*` texts as written, resolved question 4; the three file-write texts
+  in decision 3), cs/ru as drafted in ADR 0271 with four changes (cs `SAVED_FILE_MISMATCH`
+  and `NO_FILE_NAME`, ru `BACKUP_PATH_NOT_UTF8` and `SAVED_FILE_MISMATCH`)

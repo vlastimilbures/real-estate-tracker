@@ -13,6 +13,8 @@
 - Amended by: [0193](0193-save-errors-panic-marker.md) (a panic message cut at 500 characters ends with "…")
 - Amended by: [0229](0229-import-writes-plan-at-click.md) (§5: the `importPage.planChanged`
   banner is removed)
+- Amended by: [0271](0271-backup-errors-translated-by-code.md) (point 2: a refused safety
+  backup is shown by a translated text that names the file, not by Rust's text)
 - Related: [0014](0014-rust-transaction-command.md) (multi-step writes go through the Rust
   transaction command), [0064](0064-file-io-in-rust.md) (file IO in Rust),
   [0080](0080-close-out.md) decision 6 (0600/0700), [0154](0154-one-outcome-path.md) (one

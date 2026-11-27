@@ -11,7 +11,11 @@ import type {
   HoldingCost,
   Scenario,
 } from "../../engine";
-import type { DataErrorCode, UpgradeStop } from "../../data/errors";
+import type {
+  DataErrorCode,
+  FailedCommand,
+  UpgradeStop,
+} from "../../data/errors";
 import type { WriteError } from "../writeError";
 import type { Result } from "../result";
 import type { ActionError } from "../actionError";
@@ -50,11 +54,13 @@ export type MutationResult = Result<void, WriteError>;
 export type { PropertyExtras };
 
 /** A typed failure that stopped startup; `upgrade` says how far a stopped upgrade got
- *  (ADR 0153). */
+ *  (ADR 0153), `failedCommand` which Rust code refused the copy the details name
+ *  (ADR 0271). */
 export interface StartupError {
   code: DataErrorCode;
   details: string[];
   upgrade?: UpgradeStop;
+  failedCommand?: FailedCommand;
 }
 
 /** What the property form sends: a property without its `active` flag. The form never

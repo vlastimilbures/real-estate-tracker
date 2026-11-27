@@ -169,6 +169,24 @@ export const cs: Dictionary = {
       "Podrobnosti jsou v protokolu aplikace: ~/Library/Logs/com.bures.realestate-tracker/app.log",
   },
 
+  // ADR 0271 (docs/decisions/wording.md).
+  commandErrors: {
+    BACKUP_EXISTS: (file: string) =>
+      `Ve složce záloh už je soubor ${file}, proto nebyl nahrazen.`,
+    BACKUP_PATH_NOT_UTF8:
+      "Cesta ke složce záloh obsahuje znaky, kvůli kterým do ní databáze nemůže zapisovat.",
+    BACKUP_FAILED: "Kopii se nepodařilo zapsat do složky záloh.",
+    BACKUP_UNREADABLE:
+      "Kopie byla zapsána, ale nepodařilo se ji otevřít a zkontrolovat.",
+    BACKUP_CORRUPT: "Kopie byla zapsána, ale neprošla kontrolou integrity.",
+    BACKUP_MISMATCH:
+      "Kopie byla zapsána, ale neobsahuje stejný počet záznamů jako vaše data.",
+    SAVED_FILE_MISMATCH:
+      "Soubor byl zapsán, ale neodpovídal zapsaným datům, proto nebyl uložen.",
+    NO_FOLDER: "Chybí složka, do které by se soubor uložil.",
+    NO_FILE_NAME: "Chybí název souboru, pod kterým by se uložil.",
+  },
+
   // The startup error screen (ADR 0153).
   boot: {
     partialFailed: (reached: number, stoppedAt: number) =>

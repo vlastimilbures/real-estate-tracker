@@ -76,6 +76,18 @@ export function isCommandError(
   return e instanceof CommandError && (code === undefined || e.code === code);
 }
 
+/** The Rust code of the failed command behind `e`: in `e` itself or in its `cause`
+ *  chain (the data layer's errors keep the rejection as their cause). A looping chain
+ *  ends. */
+export function commandCodeOf(e: unknown): CommandErrorCode | null {
+  const seen = new Set<unknown>();
+  for (let at = e; at instanceof Error && !seen.has(at); at = at.cause) {
+    if (isCommandError(at)) return at.code;
+    seen.add(at);
+  }
+  return null;
+}
+
 /** Rust's rejection as a `CommandError`; anything else (Tauri's own refusals are plain
  *  strings) as it came. A code this list does not know is `OTHER`, so its detail is still
  *  the text the user sees, and the code stays one of the list. */

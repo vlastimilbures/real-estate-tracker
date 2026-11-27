@@ -9,6 +9,7 @@ import { en } from "../en";
 import { cs } from "../cs";
 import { ru } from "../ru";
 import { leaves, type Tree } from "./support/leaves";
+import { COMMAND_ERROR_CODES } from "../../platform/commandError";
 
 const DICTS = { en, cs, ru } as const;
 type Lang = keyof typeof DICTS;
@@ -88,6 +89,8 @@ describe("i18n dictionaries — completeness", () => {
 // it: the item list's `navKey: "dashboard"`, or the error code's `"DB_INTEGRITY"` literal.
 const COMPUTED: Record<string, (k: string) => string> = {
   dataErrors: (k) => `"${k}"`,
+  // Read by the failed command's code (ADR 0271, ui/model/commandErrorText.ts).
+  commandErrors: (k) => `"${k}"`,
   inputRules: (k) => `"${k}"`,
   nav: (k) => `navKey: "${k}"`,
   shell: (k) => `labelKey: "${k}"`,
@@ -476,4 +479,22 @@ describe("rent-percentage costs name their base (ADR 0182)", () => {
       }).toEqual(guide[l]);
     },
   );
+});
+
+// ADR 0271 point 2: every BACKUP_* code that reaches a message, and the three fixed
+// file-write codes, has its own text in every language, so a new BACKUP_* code cannot be
+// missed. BACKUP_TOO_LARGE keeps backup.errTooLarge.
+describe("commandErrors cover the codes they translate (ADR 0271)", () => {
+  const covered = [
+    ...COMMAND_ERROR_CODES.filter(
+      (c) => c.startsWith("BACKUP_") && c !== "BACKUP_TOO_LARGE",
+    ),
+    "SAVED_FILE_MISMATCH",
+    "NO_FOLDER",
+    "NO_FILE_NAME",
+  ].sort();
+
+  it.each(LANGS)("%s has a text for each covered code, and no other", (l) => {
+    expect(Object.keys(DICTS[l].commandErrors).sort()).toEqual(covered);
+  });
 });

@@ -165,6 +165,10 @@ describe("confirmRestore — safety backup (DR-019, D-52)", () => {
     expect(err).toBeInstanceOf(FileStepError);
     expect(err).toMatchObject({ step: "safety" });
     expect((err as FileStepError).detail).toMatch(/^BACKUP_EXISTS: /);
+    // ADR 0271 point 4: the name the webview chose, for the message.
+    expect((err as FileStepError).file).toMatch(
+      /^portfolio-before-restore-\d{8}T\d{6}Z\.json$/,
+    );
     expect(await propertyCount()).toBe(3);
   });
 

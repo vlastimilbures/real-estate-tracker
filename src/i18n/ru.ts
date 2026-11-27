@@ -175,6 +175,23 @@ export const ru: Dictionary = {
       "Подробности в журнале приложения: ~/Library/Logs/com.bures.realestate-tracker/app.log",
   },
 
+  // ADR 0271 (docs/decisions/wording.md).
+  commandErrors: {
+    BACKUP_EXISTS: (file: string) =>
+      `В папке резервных копий уже есть файл ${file}, поэтому он не заменён.`,
+    BACKUP_PATH_NOT_UTF8:
+      "Путь к папке резервных копий содержит символы, из-за которых база данных не может записывать в неё данные.",
+    BACKUP_FAILED: "Не удалось записать копию в папку резервных копий.",
+    BACKUP_UNREADABLE: "Копия записана, но её не удалось открыть для проверки.",
+    BACKUP_CORRUPT: "Копия записана, но не прошла проверку целостности.",
+    BACKUP_MISMATCH:
+      "Копия записана, но число записей в ней не совпадает с вашими данными.",
+    SAVED_FILE_MISMATCH:
+      "Файл записан, но при проверке после записи не совпал, поэтому не сохранён.",
+    NO_FOLDER: "Нет папки, в которую можно сохранить файл.",
+    NO_FILE_NAME: "Нет имени, под которым можно сохранить файл.",
+  },
+
   // The startup error screen (ADR 0153).
   boot: {
     partialFailed: (reached: number, stoppedAt: number) =>
