@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import { execSync } from "node:child_process";
 import path from "node:path";
-import { matrixOf, VIEWPORTS } from "./ux-capture/matrix";
+import { matrixOf, VIEWPORTS, workersOf } from "./ux-capture/matrix";
 
 // UX screenshot capture: `pnpm ux:capture` (CI runs its axe scan, ADR 0078). Boots the Vite
 // frontend with VITE_E2E=1, so the app runs on the in-memory sql.js seed (synthetic
@@ -35,6 +35,7 @@ if (!process.env.UX_OUT) {
   process.env.UX_OUT = path.resolve("ux-screens", id);
 }
 
+const workers = workersOf(process.env);
 const { langs, themes, viewports } = matrixOf(process.env);
 
 const projects = langs.flatMap((lang) =>
@@ -60,6 +61,8 @@ export default defineConfig({
   testMatch: process.env.UX_SPEC ?? "capture.spec.ts",
   outputDir: path.join(process.env.UX_OUT, ".playwright"),
   fullyParallel: true,
+  // UX_WORKERS caps the workers for every run (capture, readme, baseline).
+  ...(workers === undefined ? {} : { workers }),
   forbidOnly: true,
   // One retry on CI, none locally (UX_RETRIES overrides): a screen that fails twice is a
   // regression and fails the run; one that passes on the retry is reported as flaky

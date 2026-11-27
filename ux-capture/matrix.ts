@@ -63,3 +63,12 @@ export function matrixKey(env: Env): string {
       throw new Error(`capture matrix: unexpected value in "${p}"`);
   return parts.join("_");
 }
+
+/** `UX_WORKERS` as Playwright's worker cap; unset keeps Playwright's own default. */
+export function workersOf(env: Env): number | undefined {
+  const raw = env.UX_WORKERS;
+  if (!raw) return undefined;
+  if (!/^[1-9]\d*$/.test(raw))
+    throw new Error(`UX_WORKERS: "${raw}" is not a positive whole number`);
+  return Number(raw);
+}

@@ -111,7 +111,8 @@ with `UX_AXE=0` on a free port, moves the run into place and removes the worktre
 folder (`<key>.lock/pid`) makes a second caller wait for the first one's run instead of
 capturing again. A lock is stale when its process is gone, or when it is older than 2 hours;
 Ctrl-C or SIGTERM removes the lock, the unfinished run and the worktree. `UX_WORKERS=<n>`
-caps the capture's Playwright workers. `pnpm ux:baseline --prune` deletes finished runs
+caps the capture's Playwright workers (`ux:capture`, `ux:readme` and `ux:baseline` all
+read it, in playwright.ux.config.ts). `pnpm ux:baseline --prune` deletes finished runs
 (with a valid `complete.json`) whose sha origin/main no longer reaches or that are older
 than 14 days (never origin/main's own), unfinished `.tmp-<pid>` runs and dead locks. It
 only looks inside full-sha folders, never follows a symbolic link, and deletes nothing it
