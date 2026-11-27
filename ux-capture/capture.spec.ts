@@ -4,6 +4,7 @@
 import { test, expect } from "./helpers";
 import { LAYOUT_SCREENS, LAYOUT_TAG } from "./layoutScreens";
 import { SCREENS, ROUTE_COVERAGE } from "./screens/index";
+import { interleave } from "./shardOrder";
 
 const tagsOf = (id: string) =>
   LAYOUT_SCREENS.includes(id) ? [LAYOUT_TAG] : [];
@@ -23,7 +24,8 @@ test("screen ids are unique", () => {
   expect(twice, "screen ids used twice").toEqual([]);
 });
 
-for (const screen of SCREENS) {
+// Interleaved, not in flow order, so the CI shards even out (shardOrder.ts).
+for (const screen of interleave(SCREENS)) {
   test(
     `${screen.id} — ${screen.desc}`,
     { tag: tagsOf(screen.id) },
