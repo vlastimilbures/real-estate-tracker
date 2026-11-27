@@ -47,10 +47,12 @@ Left out:
 1. **The event window after an instalment recast** (0273 §7.3). Any instalment-form recast
    moves the last date an event may have to the cap of 0273 §4.6 (the later of loan start +
    50 years and the contract term), wherever the agreed instalment would actually end the
-   loan. A maturity-form recast moves it to that maturity. An event dated on or after that
-   payment is `EVENT_AFTER_SCHEDULE_END`. Code: `eventTermMonths`
+   loan. The limit is the latest of the contract term, every maturity-form recast's maturity
+   and, when any recast is instalment-form, the cap; a maturity earlier than the contract
+   term does not move it. An event dated on or after that payment is
+   `EVENT_AFTER_SCHEDULE_END`. Code: `eventTermMonths`
    (`src/engine/loanTerm.ts:116-131`), used by `checkLoanEvents`
-   (`src/engine/validate/loanEvents.ts:123-134`). Test:
+   (`src/engine/validate/loanEvents.ts:123-132`). Test:
    `loan-events-validation.test.ts:261` ("an instalment recast lets events run to the
    50-year cap").
 2. **Several recasts in one payment period** (0273 §2.2, §4). They apply in date order,
@@ -71,7 +73,8 @@ Left out:
    refused) and `:282` (the day after is allowed).
 5. **The snapshot instalment at a handover** (0273 §12.2). The snapshot takes the next
    row's instalment only when that row is at the same rate, draws nothing and has no
-   refinance difference. A handover row therefore keeps the month's own instalment. Code:
+   refinance difference. So the month before a handover row that has a refinance
+   difference keeps its own instalment. Code:
    `instalmentAtMonth` (`src/engine/loan/queries.ts:42-49`).
 6. **"Amortizing" in the snapshot means principal above zero** (0273 §12.2). The snapshot
    looks at the next row only when the month's row repaid principal (`row.principal > 0`).
@@ -132,7 +135,7 @@ Left out:
 
 17. **`loanWarnings` is a UI-model function** (0275 §1.2). Among the checks the Data check
     calls, "the loan warnings" are `loanWarnings` in `src/ui/model/propertyDetail.ts:94`,
-    not an engine selector; it reads the engine's outputs.
+    not an engine selector; it calls the engine's selectors on the stored blocks.
 18. **The range check is `rangeProblems` in `src/lib/rules.ts`** (0275 §1.2, §3.1). It is a
     shared lib rule, not an engine rule (`rules.ts:80-84`, `:113`), and the Data check reads
     it for a property (`src/ui/model/dataCheck.ts:204`) and for the portfolio rows
