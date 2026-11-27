@@ -18,8 +18,10 @@ code comments can cite them (e.g. "CLAUDE.md §5").
 A local-first **macOS desktop app** (offline, single user): a rental-apartment portfolio tracker
 with 30-year nominal/real projections, charts, KPIs, and what-if scenarios, modelled on Czech
 mortgage practice. `SPEC.md` is the functional spec; the **parity targets** for the fictional
-sample portfolio (`.claude/rules/engine-parity.md`), the golden master and the independent
-reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
+sample portfolio (`.claude/rules/engine-parity.md`), the golden master
+(`src/engine/__tests__/__snapshots__/golden.test.ts.snap`) and the independent reference models
+(`src/engine/__tests__/reference/mortgageReference.ts`, `kpiReference.ts`) are the regression
+baseline (ADR 0081, 0174).
 
 ## 2. Stack (locked — do not substitute without asking)
 
@@ -36,14 +38,16 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
 
 - `src/engine/` is PURE (§4); `__tests__/` = parity, invariant and property tests.
 - `src/data/sql.ts` = SQL adapter: `tauriSql.ts` in the app, `src/e2e/browserSql.ts` = E2E fallback (only via `open.ts`'s dynamic import).
-  Multi-step writes go through the Rust transaction command (ADR 0014).
+  Every write goes through a Rust command: `db_execute` (one statement, ADR 0270) or
+  `db_transaction` (multi-step, ADR 0014). The SQL plugin only loads and reads (capabilities
+  grant only `sql:allow-load` / `sql:allow-select`).
 - `src/import/`: CSV is canonical — there is no xlsx importer. `csv.ts` = pure parse/validate;
   `csvImport.ts` = DB write.
 - `src/ui/model/` = pure presentation logic (chart/table shaping).
-- `src/platform/` = Tauri command wrappers (file save, perf report, menu events); the UI
-  reaches data, import and platform only through `src/state` facades (ADR 0072).
+- `src/platform/` = Tauri command wrappers (DB commands, file save, perf report, menu events)
+  and `CommandError`; the UI reaches data, import and platform only through `src/state` facades (ADR 0072).
 - `src-tauri/src/` = Rust commands: DB transactions (`db.rs`), file dialogs, backup and
-  reveal (`commands/`), atomic writes (`fs_atomic.rs`, ADR 0064), user-only permissions
+  reveal (`commands/`), stable error codes (`error.rs`, `CommandError`, ADR 0270), atomic writes (`fs_atomic.rs`, ADR 0064), user-only permissions
   (`private_fs.rs`), app paths + file names (`paths.rs`), menu table (`menu.rs`),
   navigation guard, perf log.
 - `ux-capture/` = permanent screenshot + axe harness (`pnpm ux:capture`, ADR 0057).
@@ -139,7 +143,8 @@ reference models (mortgage, KPI) are the regression baseline (ADR 0081, 0174).
 - **Evidence:** every finding cites `file:line` or a command output.
 - Backlog: `docs/roadmap.md` and GitHub issues. Comments cite decisions as `ADR nnnn` only;
   `pnpm lint` (`scripts/check-comment-refs.mjs`) rejects retired archive ids (`DR-`, `UX-`,
-  `J-`, `D-nn`, phase ids) and an `ADR nnnn` with no file.
+  `J-`, `Q-`, `D-nn`, phase ids), an `ADR nnnn` with no file, and an issue number (`#nnn`)
+  not in `CITED_OPEN_ISSUES` (backtick code spans are skipped).
 
 ## 9. Model routing
 
