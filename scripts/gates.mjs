@@ -132,9 +132,9 @@ export const GATES = [
   {
     id: "coverage-ratchet",
     run: "pnpm coverage:ratchet",
-    what: `no floor more than ${MAX_SLACK} points below measured`,
+    what: "no folder's measured coverage below its floor",
     where: "check",
-    readme: `No coverage floor more than ${MAX_SLACK} points below measured`,
+    readme: "No folder's coverage below its floor",
   },
   {
     id: "cargo-fmt",
@@ -297,6 +297,13 @@ export const GATES = [
     what: "every fast-check property test with a new seed",
     where: "nightly",
     readme: "Every fast-check property test with a new seed each night",
+  },
+  {
+    id: "coverage-raise",
+    run: "pnpm coverage:ratchet --raise",
+    what: `lists, in one issue, each coverage floor more than ${MAX_SLACK} points below measured`,
+    where: "nightly",
+    readme: `One issue lists each coverage floor more than ${MAX_SLACK} points below measured`,
   },
   {
     id: "e2e",

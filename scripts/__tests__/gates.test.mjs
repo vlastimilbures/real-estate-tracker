@@ -106,10 +106,17 @@ describe("the gate list", () => {
     ]);
   });
 
+  // #499: the PR gate fails only on a broken floor; the nightly run lists the floors
+  // that lag by more than the slack.
   it("states the coverage ratchet's slack from check-coverage-ratchet.mjs", () => {
-    const gate = GATES.find((g) => g.id === "coverage-ratchet");
-    expect(gate.what).toContain(`more than ${MAX_SLACK} points below`);
-    expect(gate.readme).toContain(`more than ${MAX_SLACK} points below`);
+    const pr = GATES.find((g) => g.id === "coverage-ratchet");
+    expect(pr.what).toContain("below its floor");
+    expect(pr.what).not.toContain("points");
+    const nightly = GATES.find((g) => g.id === "coverage-raise");
+    expect(nightly.where).toBe("nightly");
+    expect(nightly.run).toBe("pnpm coverage:ratchet --raise");
+    expect(nightly.what).toContain(`more than ${MAX_SLACK} points below`);
+    expect(nightly.readme).toContain(`more than ${MAX_SLACK} points below`);
   });
 });
 

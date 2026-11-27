@@ -18,6 +18,11 @@ name: Nightly (bench budgets, property runs; weekly mutation testing)
 # #167, #443). The seed is the run's UTC creation date (YYYYMMDD), so "Re-run failed jobs"
 # replays it.
 #
+# The coverage job (daily, like the bench) runs the suite with coverage on main and lists
+# every coverage floor more than MAX_SLACK points below measured; its issue job keeps one
+# open issue labelled `coverage-floors` with the new values and closes it when nothing is
+# left to raise (#499). A pull request fails only on a broken floor.
+#
 # A run with a failed, timed-out or cancelled job opens one issue labelled
 # `nightly-failure`, or comments on the open one, with the run, each job's result and, when
 # the property job failed or timed out, the seed and the reproduce line (#443). Close the
@@ -219,6 +224,86 @@ jobs:
           path: bench.json
           retention-days: 30
 
+  # Coverage on main (#499): the PR gate fails only on a broken floor, so this run lists
+  # the floors that lag measured by more than MAX_SLACK points
+  # (scripts/check-coverage-ratchet.mjs) for the issue job below. Read-only.
+  coverage:
+    name: Coverage floors to raise
+    needs: changed
+    if: needs.changed.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm, Node and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Test with coverage thresholds
+        run: pnpm test:coverage
+
+      - name: List the floors to raise
+        run: pnpm coverage:ratchet --raise --out coverage-floors.md
+
+      - name: Upload the list
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-floors
+          path: coverage-floors.md
+          retention-days: 7
+
+  # One open issue labelled `coverage-floors`: its body is replaced with each run's list,
+  # and it is closed once nothing is left to raise. The only job besides `report` that may
+  # write, and it checks nothing out, so no repository code runs with that token. Only
+  # for main: a manual run on a branch measures, but leaves the issue alone.
+  coverage-floors:
+    name: Update the coverage floors issue
+    needs: coverage
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: coverage-floors-issue
+      cancel-in-progress: false
+    permissions:
+      issues: write
+    steps:
+      - name: Download the list
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage-floors
+
+      - name: Open, update or close the coverage-floors issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          label=coverage-floors
+          title="Coverage floors to raise"
+          num=$(gh issue list --label "$label" --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [[ ! -s coverage-floors.md ]]; then
+            if [[ -n "$num" ]]; then
+              gh issue close "$num" --comment "Nothing left to raise on main @ \`${SHA:0:8}\` ($RUN_URL)."
+            fi
+            echo "No floor to raise."
+            exit 0
+          fi
+          gh label create "$label" --color 0E8A16 \
+            --description "Coverage floors to raise (nightly.yml)" 2>/dev/null || true
+          {
+            echo "Measured by $RUN_URL on main @ \`${SHA:0:8}\`. Each nightly run replaces this list."
+            echo
+            cat coverage-floors.md
+          } > body.md
+          if [[ -n "$num" ]]; then
+            gh issue edit "$num" --body-file body.md
+          else
+            gh issue create --title "$title" --label "$label" --body-file body.md
+          fi
+
   properties:
     name: Property tests (2000 runs)
     # Daily and on a manual run; the weekly schedule runs mutation only.
@@ -290,7 +375,14 @@ jobs:
 
   report:
     name: Report a failure
-    needs: [changed, mutation, mutation-score, bench, properties]
+    needs:
+      - changed
+      - mutation
+      - mutation-score
+      - bench
+      - coverage
+      - coverage-floors
+      - properties
     # Any failed job, or one that hit its timeout-minutes (it ends `cancelled`), scheduled
     # or dispatched on any branch. A manual cancel reports too.
     if: always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
@@ -315,6 +407,8 @@ jobs:
           MUTATION: ${{ needs.mutation.result }}
           MUTATION_SCORE: ${{ needs.mutation-score.result }}
           BENCH: ${{ needs.bench.result }}
+          COVERAGE: ${{ needs.coverage.result }}
+          COVERAGE_FLOORS: ${{ needs.coverage-floors.result }}
           PROPERTIES: ${{ needs.properties.result }}
           SEED: ${{ needs.properties.outputs.seed }}
           REPRO: ${{ needs.properties.outputs.repro }}
@@ -337,6 +431,8 @@ jobs:
             echo "| Stryker (all legs) | $(result "$MUTATION") |"
             echo "| Mutation score (combined) | $(result "$MUTATION_SCORE") |"
             echo "| Engine bench budgets | $(result "$BENCH") |"
+            echo "| Coverage floors to raise | $(result "$COVERAGE") |"
+            echo "| Update the coverage floors issue | $(result "$COVERAGE_FLOORS") |"
             echo "| Property tests (2000 runs) | $(result "$PROPERTIES") |"
             if [[ "$PROPERTIES" == failure || "$PROPERTIES" == cancelled ]]; then
               echo
