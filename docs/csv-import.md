@@ -23,7 +23,8 @@ one batch, when you press the **Import** button.
 - **Order does not matter.** You can choose the files in any order; properties in the batch
   are written before the rows that refer to them.
 - **Every `property_name` must be known.** It must match a property already in the app or a
-  row in the `properties.csv` of the same batch. Otherwise the row shows _Unknown property_.
+  row in the `properties.csv` of the same batch. An unknown name is listed once, as _Unknown
+  property_, under "Nothing was imported", once the files' own errors are fixed (ADR 0254).
 - The file names above are only labels: the picker decides what a file holds, not its name.
 
 ## The files
@@ -249,7 +250,7 @@ The whole batch — every file you chose — is imported in one step:
 1. Each file is checked as you choose it. Errors are listed with the file line and column,
    and the Import button stays disabled until every file is clean.
 2. The preview merges the rows with your current data and checks the result against the
-   same rules as the forms (for example an instalment that does not cover the interest, a
+   same rules as the forms (for example an unknown property name, an instalment that does not cover the interest, a
    lease that ends before it starts, or a mortgage that starts within a month of another).
 3. If any row breaks a rule, nothing can be imported. The app shows _"Nothing was imported.
    Correct these rows and import again"_ with each file, line and column.
