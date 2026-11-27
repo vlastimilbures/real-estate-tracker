@@ -1,6 +1,6 @@
 # 0275. Data check: the current rule
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-27
 - Source: issue #498 (owner decision 2026-11-27: implement ADR 0272, then one current-rule
   record each for prepayments, sections and the Data check); issue #611 (owner decision
@@ -21,6 +21,8 @@
   [0236](0236-size-one-decimal.md) (decision 3),
   [0264](0264-loan-term-instalment-above-interest.md) (§4 except its bullet on the refusal
   keys; owner decisions 3 and 6 and the addendum on the two `dataCheck` keys)
+- Amended by: [0278](0278-code-only-rules-in-current-rule-records.md) (decisions 17 to
+  23: the rules only the code stated)
 - Related: [0080](0080-close-out.md) (the renewed last lease),
   [0103](0103-financing-exposure.md) (upcoming lease ends),
   [0119](0119-acquisition-funding.md) (own cash and the derived down payment),

@@ -1,6 +1,6 @@
 # 0274. Section navigation and the collapsed amortization schedule: the current rule
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-27
 - Source: issue #498 (owner decision 2026-11-27: implement ADR 0272, then one current-rule
   record each for prepayments, sections and the Data check)
@@ -12,6 +12,8 @@
   [0215](0215-property-detail-top.md) (decisions 1, 2 and 4),
   [0223](0223-data-check-blocks.md) (decision 5), [0224](0224-loan-outlook-figure-row.md)
   (decision 1), [0225](0225-sweep-round-2.md) (decision 2)
+- Amended by: [0278](0278-code-only-rules-in-current-rule-records.md) (decisions 10 to
+  16: the rules only the code stated)
 - Related: [0118](0118-data-check.md) (the Data check and its fix links),
   [0119](0119-acquisition-funding.md) §9 (the Acquisition section),
   [0130](0130-interest-saved-refinance.md) §4, [0159](0159-excel-exports-carry-their-context.md),
