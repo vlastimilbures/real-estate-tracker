@@ -39,8 +39,10 @@ engine without the form, and remove it when the last part lands.
 
 - A line in the **local error log** for a failed app command now starts its context
   with the command's error code, for example `WRITE_FAILED IO: disk full at #` instead
-  of `WRITE_FAILED disk full at #` (ADR 0270, #463). The code comes from a closed list
-  and holds no personal data. Nothing on screen changes.
+  of `WRITE_FAILED disk full at #` (ADR 0270, #463). A database upgrade that stops at
+  startup names it too, for example
+  `MIGRATION_BACKUP_FAILED BACKUP_FAILED: STARTUP: disk full`. The code comes from a
+  closed list and holds no personal data. Nothing on screen changes.
 - The Data check's **"need attention" count** has the same amber border as the review pill
   by the page title, so the two read as one signal; before, its border was grey. Its text,
   colours and size do not change. The other counts, the fix links and the toggles look as
