@@ -338,7 +338,7 @@ amend it.
 | [0270](0270-error-codes-from-rust.md)                          | Rust sends an error code with its text; TypeScript matches on the code                        |                            | Accepted                                                                 | #463, #435, #664                                   |
 | [0271](0271-backup-errors-translated-by-code.md)               | A backup failure from Rust is shown in the user's language, chosen by its code                |                            | Accepted                                                                 | #463, #664                                         |
 | [0272](0272-current-rule-likelihood-ui-rounds.md)              | Decision records state the current rule, their likelihood, and group UI rounds                | Process: decision records  | Accepted                                                                 | #498, #435                                         |
-| [0274](0274-sections-current-rule.md)                          | Section navigation and the amortization schedule: the current rule                            | Layout: section navigation | Accepted                                                                 | #498                                               |
+| [0274](0274-sections-current-rule.md)                          | Section navigation and the collapsed amortization schedule: the current rule                  | Layout: section navigation | Accepted (delegated, owner review pending)                               | #498                                               |
 
 <!-- adr-index:end -->
 
