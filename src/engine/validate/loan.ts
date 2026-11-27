@@ -165,7 +165,7 @@ const INSTALMENT_INPUTS: ReadonlySet<string | undefined> = new Set([
  * without a term; at 0 % it must be above 0. A development loan is not checked (its
  * entered instalment is not used), nor a block with another problem on the fields the
  * rule reads. A write-time rule: `blockIssues` does not report it, so a stored loan
- * like that still loads and projects (debt #611).
+ * like that still loads and projects (accepted, ADR 0264).
  */
 export function instalmentBelowInterest(
   b: MortgageBlock,

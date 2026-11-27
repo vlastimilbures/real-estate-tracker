@@ -44,7 +44,7 @@ export interface ChainLink {
 }
 
 /** The chain of `blockChain` at `date`, each block with its successor: the one place the
- *  chain's block/successor pairs are built (#476). */
+ *  chain's block/successor pairs are built. */
 export function chainLinks(blocks: MortgageBlock[], date: Date): ChainLink[] {
   const chain = blockChain(blocks, date);
   return chain.map((block, i) => ({ block, next: chain[i + 1] }));

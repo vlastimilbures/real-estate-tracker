@@ -31,11 +31,7 @@ const CODE_SPAN = /`[^`\n]*`/g;
  * network): the pull request that closes one of these issues removes its number, and
  * the check then names every comment that still cites it.
  */
-export const CITED_OPEN_ISSUES = new Set([
-  476, // loan/blockChain.ts: the chain's block/successor pairs
-  482, // import/columns.ts: the CSV column list
-  611, // validate/loan.ts: a loan below its interest that still loads
-]);
+export const CITED_OPEN_ISSUES = new Set([]);
 
 /** The folders the check walks, and the files it reads at the top level. */
 const WALKED = ["src", "src-tauri/src", "docs", "ux-capture"];
