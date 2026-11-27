@@ -3,7 +3,8 @@
 # macOS 13+). Usage: scripts/release-macos.sh [--skip-checks]
 # Refuses a dirty tree, so the build is exactly the commit that gets tagged. Without
 # --skip-checks it runs `pnpm check:release` first (CONTRIBUTING.md#checks). Never
-# launches the app and never touches the database. See docs/release.md.
+# launches the app, never touches the database and never downloads the Rust target.
+# See docs/release.md.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -12,8 +13,13 @@ BUNDLE_DIR="src-tauri/target/$TARGET/release/bundle"
 
 step() { printf '\n==> %s\n' "$*"; }
 fail() { printf 'release: %s\n' "$*" >&2; exit 1; }
+# Lists installed targets only (exact line match); the owner installs the target once.
+require_target() { grep -qx "$TARGET" <<<"$(rustup target list --installed)" || fail "Rust target $TARGET is not installed. Run once: rustup target add $TARGET"; }
 
 [[ "$(uname -s)" == Darwin ]] || fail "macOS only"
+
+step "Rust target $TARGET installed (the release never downloads it)"
+require_target
 
 step "Version agreement (package.json is the single source; Cargo.toml must match)"
 pkg_version=$(node -p "require('./package.json').version")
@@ -33,7 +39,6 @@ if [[ "${1:-}" != "--skip-checks" ]]; then
 fi
 
 step "Build ($TARGET, ad-hoc signed per tauri.conf.json)"
-rustup target list --installed | grep -qx "$TARGET" || rustup target add "$TARGET"
 pnpm tauri build --target "$TARGET"
 
 APP=$(find "$BUNDLE_DIR/macos" -maxdepth 1 -name '*.app' | head -1)

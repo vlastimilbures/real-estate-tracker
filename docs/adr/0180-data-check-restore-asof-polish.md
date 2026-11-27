@@ -1,6 +1,7 @@
 # 0180. Data check, restore and as-of polish: stored columns, non-integers, a pick nobody made
 
 - Status: Accepted
+- Superseded in part by: [0275](0275-data-check-current-rule.md) (decision 4)
 - Date: 2026-10-11
 - Source: issues #263 (items 2, 3, 4, 6), #260 (items 1–6; owner, 2026-10-11: show decimals
   and report a non-integer as a finding), #265 (items 6, 7), #276 (item 3; owner, 2026-10-11:

@@ -1,6 +1,7 @@
 # 0264. A loan with a term must pay more than its first month's interest
 
 - Status: Accepted
+- Superseded in part by: [0275](0275-data-check-current-rule.md) (§4 except its bullet on the refusal keys; owner decisions 3 and 6 and the addendum on the two `dataCheck` keys)
 - Date: 2026-11-26
 - Source: issue #597 (found reviewing PR #596, #477 item 9; code review 2026-11, tracking
   #435); owner decisions 2026-11-25 on #597: (1) "Option A, refuse", (2) "existing stored
