@@ -103,6 +103,3 @@ product's positioning changes.
   JS `number` (ADR 0075).
 - **Tests.** The three optional Playwright smoke tests (two spec files, ADR 0006) run nightly and
   on manual dispatch (`e2e.yml`), not on every pull request.
-- **Row editor focus.** Adding a prepayment or maturity-change row does not move focus to
-  its date, and removing one leaves focus on the next row's button or the page (PR #100
-  review).

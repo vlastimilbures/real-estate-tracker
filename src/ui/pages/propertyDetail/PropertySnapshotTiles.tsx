@@ -10,7 +10,7 @@ import { NotOwnedPanel } from "./NotOwnedPanel";
 import { SnapshotTiles } from "./SnapshotTiles";
 
 /**
- * Snapshot KPI tiles (value / debt / equity / DSCR) + the two mini charts. A property not
+ * Snapshot KPI band (six cells, SnapshotTiles) + the two mini charts. A property not
  * owned yet on the date has no snapshot figures: a short purchase panel takes the tiles'
  * place, and the charts stay (ADR 0156).
  */

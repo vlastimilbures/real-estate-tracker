@@ -10,7 +10,7 @@
 - Amends: [0214](0214-panel-help-text.md) §2 and §4 (the "About this" disclosure is
   removed; definitions move from the body to an info icon in the head)
 - Related: [0203](0203-one-disclosure.md) (the shared disclosure, unchanged elsewhere),
-  [0199](0199-row-actions.md) (Escape hides a tooltip first, WCAG 1.4.13)
+  [0199](0199-icon-only-row-actions.md) (Escape hides a tooltip first, WCAG 1.4.13)
 
 ## Context
 
@@ -69,3 +69,6 @@ act ("Drop a CSV file on its row", "Tick up to 3 scenarios") are a different kin
   now names the icon instead of the disclosure.
 - The ux capture checks that an open popover sits inside the window at 1280 × 800 and at
   the 900 × 600 minimum.
+
+Note (2026-11-27): link corrected. Related linked ADR 0199 as `0199-row-actions.md`; the
+file is `0199-icon-only-row-actions.md`. Text only; the rule is unchanged.

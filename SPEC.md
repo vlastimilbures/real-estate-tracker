@@ -244,8 +244,9 @@ Labels name that basis (ADR 0088, `asOfView`): a projection year reads "projecti
 Y5 · 2031" with the Projections table's period, and the monthly block becomes "Monthly
 equivalent … (annual projection ÷ 12)"; Today keeps "current" with the hint "annualised run
 rate ÷ 12, leases in force on {date}"; any other date says "records in force on {date}". The
-As-of picker shows the mapping under the date (none at Today). The horizon tile names the
-last projection year ("Net worth in 2056 (30-yr horizon)") and does not follow the as-of date.
+As-of picker shows the mapping under the date (none at Today). The KPI band's horizon group
+names the last projection year in its caption ("In 2056 · 30-yr horizon · nominal", ADR 0222)
+and does not follow the as-of date.
 
 Selectors follow a consistent rule: "record in force at `asOf`" = latest `startDate/validFrom
 ≤ asOf` whose optional `endDate/validTo` is blank or `≥ asOf`. **Valuations** differ: the
@@ -786,7 +787,10 @@ price crash**, each with a legend and one line of help (ADR 0102).
   ≥ 0, levels finite, growth levels above −100 %, the reset rate 0–100 %, and with a shock
   the shocked reset rate 0–100 % and shocked inflation above −100 %, ADR 0128). A refused
   save writes nothing and shows the rule on its field (a level, the value crash, a shock's
-  delta) or above the buttons. Saving the assumptions refuses an edit that newly breaks a
+  delta) or above the buttons. On top of those rules, an add or save is refused when it
+  adds a shock lasting under 1 or over 100 years, or a crash year before 0 or after 100,
+  the scenario form's ranges; a stored value it leaves as it is still saves (ADR 0257).
+  Saving the assumptions refuses an edit that newly breaks a
   saved scenario's shocked level, naming the scenario on the level field; a scenario that
   broke the rule before the edit does not block it. A scenario that still breaks a rule (saved
   before this check, or restored) is left out of the compare and named in a notice above
@@ -829,16 +833,17 @@ price crash**, each with a legend and one line of help (ADR 0102).
     name lists the parts ("Mild: Rates +2pp for 3y · Price crash −10,0 %") (ADR 0104, ADR 0250).
   - A preset whose settings equal a saved scenario's, under any name, saves no second
     row: that scenario is ticked for compare and the toast names it (ADR 0093, ADR 0191).
-  - The panel has a **Show / Hide presets** button. When the page opens it is collapsed if
-    at least one scenario is saved, open otherwise; a manual Show or Hide wins for the app
-    session (in memory). Collapsed, it shows a one-line summary (ADR 0106).
+  - The presets sit in an **Add from preset** disclosure in the head of the Scenarios panel,
+    whose region is above the scenario list (ADR 0220). When the page opens it is closed if
+    at least one scenario is saved, open otherwise; a manual open or close holds for the app
+    session (in memory, ADR 0106).
 
 ## 8. Non-functional requirements
 
 - **Money precision:** compute money with `decimal.js` (the locked choice), persisted as
   TEXT decimal strings in SQLite. **No float arithmetic for currency.** Round only at display.
 - **Display formats** (Czech accounting conventions; round only here, see `src/lib/format.ts`):
-  money `#,##0 "Kč"`; millions `M Kč` on hero tiles / chart axes; percentages `0.0%`;
+  money `#,##0 "Kč"`; millions `M Kč` on the KPI band / chart axes; percentages `0.0%`;
   multiples `0.00x`; dates `dd.mm.yyyy`; negatives shown red and in parentheses. Excel
   export writes the rounded values the app displays (ADR 0010).
 - **Determinism:** engine is pure; base date is an input. Same inputs ⇒ same outputs.
@@ -875,13 +880,16 @@ price crash**, each with a legend and one line of help (ADR 0102).
 ## 9. Screens (UI)
 
 The app uses a left sidebar (`AppLayout.tsx`). Top-level nav items: **Dashboard, Properties,
-Projections, Scenarios, Import, Settings, Guide**. The Nominal/Real lens toggle lives in the
+Projections, Scenarios** at the top, and **Import, Settings, Guide** above the footer
+(ADR 0219). The Nominal/Real lens toggle lives in the
 topbar of pages that expose projections. The sidebar footer shows the engine base date, an
 offline badge, and controls for language and theme.
 
-1. **Dashboard** — hero KPI tiles (net worth today / at horizon, LTV, DSCR), nominal/real
-   toggle, charts (value vs debt vs equity, equity change, net cash flow, LTV, etc.), KPI
-   list, and a property filter. An **AsOfPicker** (Today / +1y / +5y presets, or any typed
+1. **Dashboard** — a KPI band of two captioned groups: **As of** (net worth, net cash flow
+   per month, LTV, DSCR) and **Horizon** (net worth at the horizon with its multiple,
+   levered IRR) (ADR 0200, ADR 0222); nominal/real toggle; six projection charts, two per
+   row (value vs debt vs equity first, then net cash flow, equity change, NOI vs debt
+   service, rent and LTV, ADR 0218); KPI list; and a property filter. An **AsOfPicker** (Today / +1y / +5y presets, or any typed
    date within the projection window) sets the snapshot date (§4.3). While the sample
    portfolio is active, a dismissable banner here and on Properties says so and offers
    **Clear sample and start my own** (ADR 0094). A compact **Financing &
@@ -889,18 +897,18 @@ offline badge, and controls for language and theme.
    1/3/5 years, total interest, the interest prepayments save (the total of the figures
    shown, with a per-property disclosure) and a fixation timeline: one row per loan with its
    next fixation end, time left and debt at reset, and the loan, completion and lease dates
-   of the same 1/3/5-year window on their property's row, each linking to its property
-   (ADR 0204).
+   of the same 1/3/5-year window on their property's row, each linking to its property;
+   a Table toggle shows the same dates as a table (ADR 0204).
    The 30-year value chart marks each year holding an upcoming fixation end with a dashed
    line and a diamond (a "Rate reset" legend entry); the year's tooltip lists property,
    date and nominal debt at reset (ADR 0210). Property detail's value chart does the same
    for its loan.
-   The KPI list shows only what the tiles do not (ADR 0208), in three groups side by side
+   The KPI list shows only what the band does not (ADR 0208), in three groups side by side
    at 1280 px: **Returns** (net-worth CAGR, net and gross yield, Cash invested), **Cash
    flow** (monthly inflow and outflow, cumulative cash to owner, first cash-flow-positive
    year) and **Debt** (weighted-average rate, Σ principal repaid, debt fully repaid); a note
-   names the basis of the yields and monthly figures. The horizon and IRR tiles carry their
-   exact value as a tooltip. **Cash invested** (ADR 0119 §9) is the recorded own cash of the
+   names the basis of the yields and monthly figures. The horizon net worth and IRR cells carry
+   their exact value as a tooltip. **Cash invested** (ADR 0119 §9) is the recorded own cash of the
    active properties in the filter, future buys included, shown only when every one of them
    has it; the real lens labels it nominal.
    A **Data check** panel (ADR 0118) lists, at the snapshot date, the inputs the engine
@@ -916,8 +924,9 @@ offline badge, and controls for language and theme.
    0206): a summary row with the two counts, then the findings grouped by problem, one line
    stating it once and a chip per affected property (its age, date or price) that links to the
    property section (or form) that fixes it; the own-cash chip opens the form with its
-   Acquisition section open. When something needs attention the filter bar shows "N to
-   review", which opens the panel and moves focus to it. The panel opens when something
+   Acquisition section open. When something needs attention the page title shows an amber
+   review pill with the count (named "N to review in the Data check"), which opens the panel and
+   moves focus to its heading (ADR 0218, ADR 0275). The panel opens when something
    needs attention; a property not yet purchased has no findings except the own-cash one.
 
 2. **Properties** — list with per-property summary and LTV/DSCR health bands, sorted by name in
@@ -930,7 +939,11 @@ offline badge, and controls for language and theme.
    actions; a deactivated property shows an "Inactive" badge and one not yet purchased a
    "Pending" badge with its purchase date and "—" in every figure column (ADR 0156)
    (activate/deactivate is on Property detail). Delete cascades to all
-   linked mortgages, valuations, leases, and holding costs (after confirmation).
+   linked mortgages, valuations, leases, and holding costs (after confirmation). With two or
+   more active properties a totals row shows net cash flow, LTV, DSCR, value, debt, equity
+   and NOI from the portfolio snapshot at the page's as-of basis, in nominal Kč; its label
+   says what it counts ("Total, active properties", "Total, owned active properties",
+   ADR 0205).
 
 3. **Property detail** — valuations, leases, mortgage blocks (including dev-loan tranche draws,
    completion date and the optional contract maturity date), holding costs (a read view of
@@ -940,18 +953,21 @@ offline badge, and controls for language and theme.
    due date, ADR 0164), and a health check
    (`amortizationHealth`, including the maturity and fixation-ended warnings). The **AsOfPicker** is
    available here too. Two **Excel export** buttons save the projection and amortization
-   schedule as `.xlsx` files. A **Deactivate / Activate** action takes the property out of
+   schedule as `.xlsx` files. The top bar shows a "Properties ›" breadcrumb before the
+   name and the snapshot is one band of six cells (ADR 0215, ADR 0222); while the stored
+   data is invalid the Nominal/Real switch is hidden, and the chosen lens is kept
+   (ADR 0265). A **Deactivate / Activate** action takes the property out of
    (or back into) all projections and KPIs (§4.5), after confirmation when deactivating.
    A deactivated property's page still shows its own figures as a preview and says so; it
    raises no loan warnings and has no Data check section (ADR 0155). A property not owned
    under the as-of basis (by the as-of date, or in a projection year by that year's end,
    ADR 0150) shows a "Not owned yet" panel (purchase date, price,
-   acquisition loan) in place of the snapshot tiles; the projection charts stay (ADR 0156). When every property
+   acquisition loan) in place of the snapshot band; the projection charts stay (ADR 0156). When every property
    is deactivated, the Dashboard and Projections say so with a link to Properties, and
    Scenarios shows that note in place of the comparison (ADR 0155).
-   The Financing section's **Loan outlook** (ADR 0116, ADR 0117) shows the modelled payoff,
-   the remaining term and the interest prepayments save, then every loan block, oldest
-   first, with its fixation end, the nominal balance at reset and a status: next rate reset,
+   The **Loan outlook** (ADR 0116, ADR 0117), in Overview right after the charts (ADR 0224),
+   opens with a figure row (next rate reset, debt at reset, modelled payoff, remaining term
+   and the interest prepayments save), then lists every loan block, oldest first, with its fixation end, the nominal balance at reset and a status: next rate reset,
    upcoming, passed, replaced by a later loan, repaid before the reset, or floating rate.
    The **Acquisition** section (ADR 0119 §9) lists the purchase price, transaction costs,
    initial works, uses, cash invested (own cash), the acquisition loan and sources, then the
@@ -960,8 +976,9 @@ offline badge, and controls for language and theme.
    cost, works, own cash or note is recorded, the section is one line instead (the price
    and the acquisition loan, if any, then "costs, works and own cash are not recorded")
    with **Record funding**, which opens the form at its Acquisition section (ADR 0209).
-   A section nav lists Overview, Data check (the property's own findings, ADR 0118),
-   Records, Financing, Acquisition, Holding costs, Projection and Amortization (ADR 0107).
+   A section nav lists Overview, Records, Financing, Acquisition, Holding costs, Projection,
+   Amortization and, last, Data check (the property's own findings, ADR 0118); the
+   current rule is ADR 0274.
    The mortgage form edits each block's prepayments (date, amount, effect, optional fee) and
    maturity changes (date, then a new maturity or a new instalment) as rows; saving replaces
    the stored events (ADR 0116 §11). An event the schedule clamps, ignores or drops (for
@@ -975,22 +992,25 @@ offline badge, and controls for language and theme.
    year has a non-zero value (ADR 0116 §12, ADR 0130),
    and an **Excel export** of the projection table.
 
-5. **Scenarios** — create, edit, duplicate, delete named scenarios; one-click stress presets;
-   2–3-way compare view showing KPIs and charts side by side.
+5. **Scenarios** — create, edit, duplicate, delete named scenarios; one-click stress presets
+   in an "Add from preset" disclosure (ADR 0220); 2–3-way compare view showing KPIs and
+   charts side by side.
 
 6. **Import** — one panel with a row per CSV file type (properties, valuations, rents,
    mortgages), each with its file picker, drop target and template button (ADR 0212). Parse
    errors shown per row; import blocked on any error. Upserts on re-import.
 
-7. **Settings** (tabbed, reached via sidebar or the native macOS menu):
+7. **Settings** (tabbed, reached via sidebar or the native macOS menu; the tabs and the
+   Assumptions Save and Discard sit in the top bar, ADR 0221):
    - **Assumptions** tab — editable global drivers (the dials), including the Projection
      start (`baseDate`).
    - **Backup / Restore** tab — Export writes the whole database to a versioned JSON file
      (`{ schemaVersion, exportedAt, tables: {...} }`) through a native save dialog; the file
      is written to a temporary name and moved into place. Restore opens a JSON backup (at
      most 20 MB), validates the schema version and every row (unknown columns, invalid
-     values, whole-number values outside the form bounds, and scenario rows the app
-     cannot read are refused before anything changes, ADR 0123), writes and verifies a
+     values and scenario rows the app cannot read are refused before anything changes,
+     ADR 0123; a value outside the form bounds, up to ten times the maximum, is listed in
+     the confirm step, which asks "Restore anyway", ADR 0148, §4.1), writes and verifies a
      safety backup first
      (ADR 0052), then replaces all tables in one transaction and reloads app state. The
      same transaction removes the sample markers, so restored data never shows as the
@@ -1000,8 +1020,8 @@ offline badge, and controls for language and theme.
      and says to keep a copy off this Mac. A sidebar reminder appears when the data
      changed since then and there is no backup or it is over 30 days old (ADR 0110).
 
-8. **Guide** — a static glossary / help screen (NOI, DSCR, LTV, fixation, annuity, etc.);
-   no data entry.
+8. **Guide** — a static glossary / help screen (NOI, DSCR, LTV, fixation, annuity, etc.)
+   with section links under its title, as on Property detail (ADR 0274); no data entry.
 
 ## 10. Out of scope / future
 

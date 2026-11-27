@@ -162,7 +162,7 @@ export function Dashboard() {
 
       <KpiListPanel view={v.kpiList} />
 
-      {/* Last on the page (ADR 0206 §1); the filter bar links to it. */}
+      {/* Last on the page (ADR 0206 §1); the review pill by the title opens it. */}
       <DataCheckPanel
         check={v.check}
         asOf={engine.snapshot.asOf}
