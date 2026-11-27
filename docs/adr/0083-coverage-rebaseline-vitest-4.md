@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-03
 - Amends: the per-folder coverage ratchet in `vite.config.ts`
+- Amended by: [0276](0276-coverage-floors-raised-nightly.md)
 
 ## Context
 
