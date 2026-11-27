@@ -136,7 +136,7 @@ describe("parseAdr", () => {
     expect(a.ids).toEqual(["#32"]);
   });
 
-  // ADR 0272: from 0272 on, a record names its Topic, Trigger and Likelihood.
+  // ADR 0272: from 0272 on, a record names its Trigger and Likelihood; Topic is optional.
   it("reads Topic, Trigger and Likelihood", () => {
     const a = parse("0272", "x", "X", [
       "- Status: Accepted",
@@ -172,16 +172,27 @@ describe("parseAdr", () => {
     }
   });
 
-  it("requires Topic, Trigger and Likelihood from 0272 on", () => {
+  it("requires Trigger and Likelihood from 0272 on", () => {
     const a = parse("0272", "x", "X", [
       "- Status: Accepted",
       "- Date: 2026-11-27",
     ]);
     expect(a.errors).toEqual([
-      "0272-x.md: no Topic line (required from ADR 0272 on)",
       "0272-x.md: no Trigger line (required from ADR 0272 on)",
       "0272-x.md: no Likelihood line (required from ADR 0272 on)",
     ]);
+  });
+
+  // Owner, 2026-11-27 (review of PR #710): Topic is optional; the column fills when present.
+  it("passes a record from 0272 on without a Topic line", () => {
+    const a = parse("0273", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-11-27",
+      "- Trigger: n/a",
+      "- Likelihood: n/a (adds no handling)",
+    ]);
+    expect(a.topic).toBe("");
+    expect(a.errors).toEqual([]);
   });
 
   it("rejects a likelihood outside the four levels and n/a", () => {

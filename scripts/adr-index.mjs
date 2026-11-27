@@ -1,8 +1,9 @@
 // Generates the ADR index table in docs/adr/README.md from the ADR headers and checks
 // the headers (ADR 0152): heading, Status, Date, links to existing ADRs, and both sides of
 // every Amends / Amended-by, Supersedes / Superseded-by and Supersedes in part /
-// Superseded in part by link. From ADR 0272 on, every record also names its Topic, Trigger and
-// Likelihood (ADR 0272); older records are not checked for them.
+// Superseded in part by link. From ADR 0272 on, every record also names its Trigger and
+// Likelihood (ADR 0272); older records are not checked for them. An optional Topic line
+// fills the index's Topic column.
 // `pnpm adr:index` writes the index; `pnpm adr:check` (CI) fails on errors or drift.
 import {
   readdirSync,
@@ -45,7 +46,7 @@ const KEYS = new Set([
   "Trigger",
   "Likelihood",
 ]);
-// ADR 0272: the first record that must carry Topic, Trigger and Likelihood.
+// ADR 0272: the first record that must carry Trigger and Likelihood.
 const FIRST_WITH_LIKELIHOOD = "0272";
 const LIKELIHOOD = /^(routine|plausible|rare|practically never|n\/a)\b/;
 
@@ -68,9 +69,9 @@ function headerFields(file, lines, errors) {
   return fields;
 }
 
-/** ADR 0272: Topic, Trigger and a Likelihood level (or n/a when the record adds no handling). */
+/** ADR 0272: Trigger and a Likelihood level (or n/a when the record adds no handling). */
 function checkLikelihood(file, values, errors) {
-  for (const key of ["Topic", "Trigger", "Likelihood"])
+  for (const key of ["Trigger", "Likelihood"])
     if (values(key).length === 0)
       errors.push(
         `${file}: no ${key} line (required from ADR ${FIRST_WITH_LIKELIHOOD} on)`,
