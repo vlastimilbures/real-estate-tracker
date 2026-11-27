@@ -19,7 +19,7 @@
 
 ## Context
 
-Line references are to main @ 9e7fe5ac.
+Line references are to main @ 375377ec.
 
 Since ADR 0270 a failed command reaches the webview as a `CommandError` with a stable
 `code` and Rust's `Display` text as `detail` (`src/platform/commandError.ts:53-69`). The
@@ -40,16 +40,17 @@ Seven translated messages put a Rust detail into a sentence, as a `detail` argum
 | Unreadable backup file      | `backup.errUnreadable`                                      | `restoreFailure.ts:59-60`                                             |
 | Upgrade stopped (startup)   | `dataErrors.MIGRATION_BACKUP_FAILED`, then the details list | `src/ui/components/BootFailure.tsx:101-113` (each detail in `<code>`) |
 
-The detail is copied as text at three places: `SafetyBackupError`
-(`src/data/backup/backupFiles.ts:118-127`), `BackupExportError` (`backupFiles.ts:27-36`) and
-`BackupReadError` (`backupFiles.ts:73-82`) keep `messageOf(cause)` as `detail`;
-`toActionError` passes only that string on (`src/state/actionError.ts:50-57`). A failed file
-save is a `SaveFileError` whose `detail` is the same text (`src/platform/saveFileTypes.ts:10-27`),
-and the Excel export and the CSV template take it with `saveFailureDetail`. The startup
-path keeps `[messageOf(e)]` as the `MIGRATION_BACKUP_FAILED` details
-(`src/data/migrations/index.ts:166-177`), and the store copies only `code`, `details` and
-`upgrade` into `StartupError` (`src/state/portfolio/store.ts:77-84`). The `CommandError`
-itself survives only as `cause`.
+The detail is copied as text in one place for the three Backup & Restore file steps:
+`FileStepError` (`src/data/errors.ts:151-164`), thrown with the step `export`, `read` or
+`safety` (`src/data/backup/backupFiles.ts:54`, `:82`, `:112`), keeps `messageOf(cause)` as
+`detail` (for `export`, `saveFailureDetail(cause)`); `toActionError` passes only that string
+on (`src/state/actionError.ts:55-56`). A failed file save is a `SaveFileError` whose
+`detail` is the same text (`src/platform/saveFileTypes.ts:10-27`), and the Excel export and
+the CSV template take it with `saveFailureDetail`. The startup path keeps `[messageOf(e)]`
+as the `MIGRATION_BACKUP_FAILED` details (`src/data/migrations/index.ts:166-177`), and the
+store copies only `code`, `details` and `upgrade` into `StartupError`
+(`src/state/portfolio/store.ts:78-85`). The `CommandError` itself survives only as
+`cause`.
 
 Which codes reach which message (from the Rust that raises them):
 
@@ -58,7 +59,7 @@ Which codes reach which message (from the Rust that raises them):
   `NO_FOLDER` (`fs_atomic.rs:41-43`), `NO_FILE_NAME` (`fs_atomic.rs:44-47`) and
   `SAVED_FILE_MISMATCH` (`fs_atomic.rs:83-85`). Its other failures are
   `INVALID_BACKUP_NAME` and `IO`.
-- **Upgrade stopped** (`db_backup` → `backup_to`, `src-tauri/src/db.rs:198-227`, `:274-288`):
+- **Upgrade stopped** (`db_backup` → `backup_to`, `src-tauri/src/db.rs:198-228`, `:272-288`):
   `BACKUP_EXISTS`, `BACKUP_PATH_NOT_UTF8`, `BACKUP_FAILED` (SQLite's text, or the OS text when
   the folder cannot be made, `db.rs:281`), `BACKUP_UNREADABLE` (sqlx's text),
   `BACKUP_CORRUPT` (`PRAGMA integrity_check` output) and `BACKUP_MISMATCH`. Also
@@ -67,12 +68,12 @@ Which codes reach which message (from the Rust that raises them):
   this screen.
 - **A file save: backup export, Excel export, CSV template** (`save_file`,
   `src-tauri/src/commands/dialogs.rs:64-90`): no `BACKUP_*` code. `atomic_write`
-  (`dialogs.rs:85`) raises `NO_FOLDER`, `NO_FILE_NAME` and `SAVED_FILE_MISMATCH` as above.
+  (`dialogs.rs:84`) raises `NO_FOLDER`, `NO_FILE_NAME` and `SAVED_FILE_MISMATCH` as above.
   The rest is `IO`, `OTHER` or one of the request codes (`EXPECTED_RAW_BODY`,
   `MISSING_HEADER`, `INVALID_PERCENT_ESCAPE`).
-- **Unreadable file** (`open_backup_file`, `dialogs.rs:113-125`): no covered code reaches
+- **Unreadable file** (`open_backup_file`, `dialogs.rs:103-127`): no covered code reaches
   the message. `BACKUP_TOO_LARGE` is already matched by code and shown as
-  `backup.errTooLarge` (`backupFiles.ts:107`); the rest is `OTHER` or `IO`.
+  `backup.errTooLarge` (`backupFiles.ts:81`); the rest is `OTHER` or `IO`.
 - **Show data folder** (`reveal_data_dir`, `src-tauri/src/commands/reveal.rs:15`): can
   raise `NO_FOLDER`, but its failure is shown as the fixed `boot.revealFailed` with no
   detail (`OutcomeRegions.tsx:39-40`, `BootFailure.tsx:163`, `:203`), so nothing changes
@@ -138,11 +139,11 @@ it stays out of this ADR (resolved question 1).
    the folder is "the backups folder", which `backup.folderHint` and Show data folder
    already name (ADR 0175 point 6), and a full path shows the user's home folder name on
    screen. The name comes from the webview, which chose it: `writeSafetyBackup`'s
-   `filename` (`backupFiles.ts:142`) and the migration's `${label}.sqlite` (`db.rs:282`,
+   `filename` (`backupFiles.ts:104`) and the migration's `${label}.sqlite` (`db.rs:282`,
    label from `src/data/migrations/index.ts:199-202`). The data layer keeps that name next
-   to the error (on `SafetyBackupError`, and on the `MIGRATION_BACKUP_FAILED` `DataError` and
-   `StartupError`), so nothing parses Rust's detail and the wire shape of ADR 0270 does not
-   change. `NO_FOLDER` and `NO_FILE_NAME` show no path or name: in a save the user may have
+   to the error (on the `FileStepError` of the `safety` step, and on the
+   `MIGRATION_BACKUP_FAILED` `DataError` and `StartupError`), so nothing parses Rust's
+   detail and the wire shape of ADR 0270 does not change. `NO_FOLDER` and `NO_FILE_NAME` show no path or name: in a save the user may have
    renamed the file in the dialog, so the webview does not know the name Rust was given.
 5. **Library text in a detail is not shown.** `BACKUP_FAILED`, `BACKUP_UNREADABLE` and
    `BACKUP_CORRUPT` carry SQLite's, sqlx's or the OS's English text. The screen shows the
@@ -161,38 +162,42 @@ it stays out of this ADR (resolved question 1).
 Only for a failure with one of the nine codes. Every other failure, the unreadable-file
 message and Show data folder included, looks as today.
 
-| Message                                                                                       | Before (en, cs, ru)                                                                                                                                 | After, en                                                                | After, cs and ru                                                    |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `backup.safetyBackupFailed`, `sample.safetyBackupFailed` with `BACKUP_EXISTS`                 | The translated sentence, then in brackets Rust's English code and the full path (`BACKUP_EXISTS: /Users/…/backups/portfolio-before-restore-….json`) | The sentence, then `commandErrors.BACKUP_EXISTS` with the file name only | The same, wholly in the user's language once the texts are approved |
-| The same two, with `SAVED_FILE_MISMATCH`, `NO_FOLDER` or `NO_FILE_NAME`                       | The sentence, then Rust's English sentence (`the saved file does not match`, `no folder for /Users/…`)                                              | The sentence, then the `commandErrors` text, with no path                | The same, in the user's language                                    |
-| `backup.exportFailed`, `xlsx.exportFailed`, `importPage.templateFailed` with one of the three | The sentence, then Rust's English sentence, for `NO_FOLDER` and `NO_FILE_NAME` with the full path the user picked                                   | The sentence, then the `commandErrors` text, with no path                | The same, in the user's language                                    |
-| Startup screen, `dataErrors.MIGRATION_BACKUP_FAILED` with a covered `BACKUP_*` code           | The translated message, then under `boot.detailsOther` Rust's English line in monospace (for example `BACKUP_FAILED: database or disk is full`)     | The message, then the `commandErrors` text as a plain list item          | The same, in the user's language                                    |
-| `backup.errUnreadable`, `boot.revealFailed`                                                   | Unchanged (no covered code reaches the first; the second shows no detail)                                                                           | Unchanged                                                                | Unchanged                                                           |
+| Message                                                                                       | Before (en, cs, ru)                                                                                                                                 | After, en                                                                | After, cs and ru                        |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------- |
+| `backup.safetyBackupFailed`, `sample.safetyBackupFailed` with `BACKUP_EXISTS`                 | The translated sentence, then in brackets Rust's English code and the full path (`BACKUP_EXISTS: /Users/…/backups/portfolio-before-restore-….json`) | The sentence, then `commandErrors.BACKUP_EXISTS` with the file name only | The same, wholly in the user's language |
+| The same two, with `SAVED_FILE_MISMATCH`, `NO_FOLDER` or `NO_FILE_NAME`                       | The sentence, then Rust's English sentence (`the saved file does not match`, `no folder for /Users/…`)                                              | The sentence, then the `commandErrors` text, with no path                | The same, in the user's language        |
+| `backup.exportFailed`, `xlsx.exportFailed`, `importPage.templateFailed` with one of the three | The sentence, then Rust's English sentence, for `NO_FOLDER` and `NO_FILE_NAME` with the full path the user picked                                   | The sentence, then the `commandErrors` text, with no path                | The same, in the user's language        |
+| Startup screen, `dataErrors.MIGRATION_BACKUP_FAILED` with a covered `BACKUP_*` code           | The translated message, then under `boot.detailsOther` Rust's English line in monospace (for example `BACKUP_FAILED: database or disk is full`)     | The message, then the `commandErrors` text as a plain list item          | The same, in the user's language        |
+| `backup.errUnreadable`, `boot.revealFailed`                                                   | Unchanged (no covered code reaches the first; the second shows no detail)                                                                           | Unchanged                                                                | Unchanged                               |
 
 - An English user also sees a change: the code (`BACKUP_FAILED:`) and the library text
   leave the screen, and a full path becomes a file name or goes.
-- Three messages that are live-region announcements change their text (the outcome
-  banner, ADR 0154: the safety backup at restore, the backup export and the Excel export),
-  which is why this is an ADR and not a wording-log entry (ADR 0152).
+- Five messages that are live-region announcements change their text: three in the
+  outcome banner (ADR 0154: the safety backup at restore, the backup export and the Excel
+  export), the Clear sample dialog's error (`role="alert"`,
+  `src/ui/components/ClearSampleDialog.tsx:67`) and the startup screen
+  (`role="alert"`, `BootFailure.tsx:198`); only the CSV template's message is not
+  announced (`src/ui/pages/ImportPanels.tsx:253-254`). That is why this is an ADR and not
+  a wording-log entry (ADR 0152).
 - The log does not change. Computed numbers, stored data, exports and the layout do not
   change, apart from the startup screen's list item for a covered code (point 6).
 
 ## Czech and Russian texts
 
-**Draft, owner to approve in the implementation PR.** Each text is recorded in
-`docs/decisions/wording.md` (ADR 0152) when it lands, with the owner's approval.
+Approved by the owner on 2026-11-27 (comment on PR #694). Each text is recorded in
+`docs/decisions/wording.md` (ADR 0152) when it lands, with that approval.
 
-| Key                                  | cs (draft)                                                                            | ru (draft)                                                                                        |
-| ------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `commandErrors.BACKUP_EXISTS(file)`  | `Ve složce záloh už je soubor ${file}, proto nebyl nahrazen.`                         | `В папке резервных копий уже есть файл ${file}, поэтому он не заменён.`                           |
-| `commandErrors.BACKUP_PATH_NOT_UTF8` | `Cesta ke složce záloh obsahuje znaky, kvůli kterým do ní databáze nemůže zapisovat.` | `Путь к папке резервных копий содержит символы, из-за которых база данных не может в неё писать.` |
-| `commandErrors.BACKUP_FAILED`        | `Kopii se nepodařilo zapsat do složky záloh.`                                         | `Не удалось записать копию в папку резервных копий.`                                              |
-| `commandErrors.BACKUP_UNREADABLE`    | `Kopie byla zapsána, ale nepodařilo se ji otevřít a zkontrolovat.`                    | `Копия записана, но её не удалось открыть для проверки.`                                          |
-| `commandErrors.BACKUP_CORRUPT`       | `Kopie byla zapsána, ale neprošla kontrolou integrity.`                               | `Копия записана, но не прошла проверку целостности.`                                              |
-| `commandErrors.BACKUP_MISMATCH`      | `Kopie byla zapsána, ale neobsahuje stejný počet záznamů jako vaše data.`             | `Копия записана, но число записей в ней не совпадает с вашими данными.`                           |
-| `commandErrors.SAVED_FILE_MISMATCH`  | `Soubor byl zapsán, ale při zpětném načtení neodpovídal, proto nebyl ponechán.`       | `Файл записан, но при обратном чтении не совпал, поэтому он не сохранён.`                         |
-| `commandErrors.NO_FOLDER`            | `Chybí složka, do které by se soubor uložil.`                                         | `Нет папки, в которую можно сохранить файл.`                                                      |
-| `commandErrors.NO_FILE_NAME`         | `Chybí název, pod kterým by se soubor uložil.`                                        | `Нет имени, под которым можно сохранить файл.`                                                    |
+| Key                                  | cs                                                                                    | ru                                                                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `commandErrors.BACKUP_EXISTS(file)`  | `Ve složce záloh už je soubor ${file}, proto nebyl nahrazen.`                         | `В папке резервных копий уже есть файл ${file}, поэтому он не заменён.`                                      |
+| `commandErrors.BACKUP_PATH_NOT_UTF8` | `Cesta ke složce záloh obsahuje znaky, kvůli kterým do ní databáze nemůže zapisovat.` | `Путь к папке резервных копий содержит символы, из-за которых база данных не может записывать в неё данные.` |
+| `commandErrors.BACKUP_FAILED`        | `Kopii se nepodařilo zapsat do složky záloh.`                                         | `Не удалось записать копию в папку резервных копий.`                                                         |
+| `commandErrors.BACKUP_UNREADABLE`    | `Kopie byla zapsána, ale nepodařilo se ji otevřít a zkontrolovat.`                    | `Копия записана, но её не удалось открыть для проверки.`                                                     |
+| `commandErrors.BACKUP_CORRUPT`       | `Kopie byla zapsána, ale neprošla kontrolou integrity.`                               | `Копия записана, но не прошла проверку целостности.`                                                         |
+| `commandErrors.BACKUP_MISMATCH`      | `Kopie byla zapsána, ale neobsahuje stejný počet záznamů jako vaše data.`             | `Копия записана, но число записей в ней не совпадает с вашими данными.`                                      |
+| `commandErrors.SAVED_FILE_MISMATCH`  | `Soubor byl zapsán, ale neodpovídal zapsaným datům, proto nebyl uložen.`              | `Файл записан, но при проверке после записи не совпал, поэтому не сохранён.`                                 |
+| `commandErrors.NO_FOLDER`            | `Chybí složka, do které by se soubor uložil.`                                         | `Нет папки, в которую можно сохранить файл.`                                                                 |
+| `commandErrors.NO_FILE_NAME`         | `Chybí název souboru, pod kterým by se uložil.`                                       | `Нет имени, под которым можно сохранить файл.`                                                               |
 
 The words follow the dictionaries: "složka záloh" and "папка резервных копий" as in
 `boot.copyAt`, "kontrola integrity" and "проверка целостности" as in
@@ -226,8 +231,8 @@ Written first; each fails on main:
 - **The startup screen** (`src/ui/__tests__/BootFailure.test.tsx`): a covered code renders
   as a plain list item without `<code>`, and an uncovered one keeps `<code>`.
 - **The data layer** (`src/data/__tests__/backupFiles.test.ts`, `migrations.test.ts`):
-  `SafetyBackupError` and the `MIGRATION_BACKUP_FAILED` `DataError` carry the file name the
-  webview chose.
+  the `FileStepError` of the `safety` step and the `MIGRATION_BACKUP_FAILED` `DataError`
+  carry the file name the webview chose.
 - **Coverage of the codes** (`src/i18n/__tests__/dictionaries.test.ts`): every `BACKUP_*`
   code in `COMMAND_ERROR_CODES` except `BACKUP_TOO_LARGE`, and `SAVED_FILE_MISMATCH`,
   `NO_FOLDER` and `NO_FILE_NAME`, has a `commandErrors` entry in en, cs and ru.
@@ -269,5 +274,7 @@ The owner answered on 2026-11-27 (comment on PR #694).
    shape from ADR 0270 does not change (point 4).
 4. **The English texts.** The six texts are accepted as written. The three new ones are
    drafted in the same style (point 3).
-5. **The Czech and Russian texts.** Drafted here; the owner approves them in the
-   implementation PR, and each gets a `docs/decisions/wording.md` entry.
+5. **The Czech and Russian texts.** Approved on 2026-11-27 (comment on PR #694) as
+   drafted here, with four changes: the Czech `SAVED_FILE_MISMATCH` and `NO_FILE_NAME`
+   and the Russian `BACKUP_PATH_NOT_UTF8` and `SAVED_FILE_MISMATCH` ("Czech and Russian
+   texts" shows the approved texts). Each gets a `docs/decisions/wording.md` entry.
