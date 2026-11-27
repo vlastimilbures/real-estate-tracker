@@ -24,6 +24,7 @@ import {
   fileName,
   isPartial,
   refusedWriteLabels,
+  startupDetails,
 } from "../model/bootFailure";
 
 /** The message, then what the upgrade left behind or the next step, if any. */
@@ -104,10 +105,8 @@ function StartupText({
             {records ? t.dataErrors.detailsHeading : t.boot.detailsOther}
           </span>
           <ul>
-            {error.details.map((d) => (
-              <li key={d}>
-                <code>{d}</code>
-              </li>
+            {startupDetails(t, error).map(({ text, code }) => (
+              <li key={text}>{code ? <code>{text}</code> : text}</li>
             ))}
           </ul>
         </div>

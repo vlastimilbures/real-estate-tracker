@@ -201,6 +201,26 @@ describe("migration safety: abort paths leave the database unchanged", () => {
     expect(snapshot(sql)).toBe(before);
     // Only before the first commit, so never a partial upgrade (ADR 0153).
     expect(e.upgrade).toBeUndefined();
+    // Not a failed command, so nothing to translate by code (ADR 0271).
+    expect(e.failedCommand).toBeUndefined();
+  });
+
+  it("a copy Rust refused keeps its code and the file the webview named (ADR 0271)", async () => {
+    const sql = await v8WithData();
+    sql.backup = () =>
+      Promise.reject(
+        new CommandError("BACKUP_EXISTS", "BACKUP_EXISTS: /b/x.sqlite"),
+      );
+
+    const e = await rejection(migrate(sql, { now: NOW }));
+
+    expect(e.code).toBe("MIGRATION_BACKUP_FAILED");
+    // The log keeps Rust's detail (ADR 0270 point 7).
+    expect(e.details).toEqual(["BACKUP_EXISTS: /b/x.sqlite"]);
+    expect(e.failedCommand).toEqual({
+      code: "BACKUP_EXISTS",
+      file: `pre-migration-v8-to-v${HEAD}-20261001T073512Z.sqlite`,
+    });
   });
 
   // ADR 0270 point 7: the startup log line names the Rust code behind the stop.

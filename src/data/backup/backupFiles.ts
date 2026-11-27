@@ -109,7 +109,7 @@ export async function writeSafetyBackup(
     // Verified temp file + rename in `<app config>/backups` (src-tauri/src/commands/backup.rs).
     await writeAppBackup(filename, json);
   } catch (e) {
-    throw new FileStepError("safety", e);
+    throw new FileStepError("safety", e, filename);
   }
   return filename;
 }

@@ -5,14 +5,18 @@
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import { openMemorySql } from "../../data/__tests__/betterSqlite";
-import { migrate } from "../../data/migrations";
+import { schemaAt } from "../../data/__tests__/support/schemaAt";
+import { migrate, MIGRATIONS, stamp } from "../../data/migrations";
 import { exportBackup, writeSafetyBackup } from "../../data/backup";
-import { dbTransaction } from "../../platform/dbCommands";
+import { clearSample } from "../../data/seed";
+import { dbBackup, dbTransaction } from "../../platform/dbCommands";
 import { saveFile } from "../../platform/saveFile";
 import { chooseRestoreFile } from "../../state/backup";
 import { toActionError } from "../../state/actionError";
+import { toStartupError } from "../../state/portfolio/startupError";
 import { toWriteError } from "../../state/writeError";
 import { backupFailureText } from "../components/restoreFailure";
+import { startupDetails } from "../model/bootFailure";
 import { describeWriteError } from "../model/writeError";
 import { loadDictionary, type Dictionary, type Language } from "../../i18n";
 
@@ -60,12 +64,13 @@ describe.each(["en", "cs", "ru"] as const)(
       expect(shown(t, e)).toBe(t.backup.errTooLarge(20));
     });
 
-    it("a failed safety backup names Rust's detail", async () => {
+    it("a safety backup the disk refused names the OS text", async () => {
+      // ADR 0271: IO has no text of its own, so its detail is shown as before.
       const t = dicts[lang];
       const sql = openMemorySql();
       await migrate(sql);
-      const detail = "BACKUP_EXISTS: /app-config/backups/x.json";
-      rustFails("BACKUP_EXISTS", detail);
+      const detail = "No space left on device (os error 28)";
+      rustFails("IO", detail);
       const e = await caught(writeSafetyBackup(sql));
       expect(shown(t, e)).toBe(t.backup.safetyBackupFailed(detail));
       sql.db.close();
@@ -113,6 +118,132 @@ describe.each(["en", "cs", "ru"] as const)(
       expect(shown(t, e)).toBe(
         `other: ${describeWriteError(t, { kind: "other", message: "database is locked" }).message}`,
       );
+    });
+  },
+);
+
+const NOW = new Date(Date.UTC(2026, 10, 27, 9, 30, 0));
+const HEAD = Math.max(...MIGRATIONS.map((m) => m.version));
+/** The three fixed file-write codes and Rust's text for each (src-tauri/src/error.rs). */
+const FILE_WRITE = [
+  ["SAVED_FILE_MISMATCH", "the saved file does not match"],
+  ["NO_FOLDER", "no folder for /Users/me/x"],
+  ["NO_FILE_NAME", "no file name in /Users/me/.."],
+] as const;
+
+describe.each(["en", "cs", "ru"] as const)(
+  "a backup or save failure in %s is shown by its code (ADR 0271)",
+  (lang) => {
+    it("a safety backup that already exists names the file in the user's language", async () => {
+      const t = dicts[lang];
+      const sql = openMemorySql();
+      await migrate(sql);
+      rustFails(
+        "BACKUP_EXISTS",
+        "BACKUP_EXISTS: /Users/me/backups/portfolio-before-restore-x.json",
+      );
+      const e = await caught(writeSafetyBackup(sql, NOW));
+      const name = `portfolio-before-restore-${stamp(NOW)}.json`;
+      const text = shown(t, e);
+      expect(text).toBe(
+        t.backup.safetyBackupFailed(t.commandErrors.BACKUP_EXISTS(name)),
+      );
+      expect(text).not.toContain("BACKUP_");
+      expect(text).not.toContain("/");
+      sql.db.close();
+    });
+
+    it("the same for the safety backup of Clear sample", async () => {
+      const t = dicts[lang];
+      const sql = openMemorySql();
+      await migrate(sql);
+      rustFails("BACKUP_EXISTS", "BACKUP_EXISTS: /Users/me/backups/x.json");
+      const e = await caught(clearSample(sql, NOW));
+      const name = `portfolio-before-clear-sample-${stamp(NOW)}.json`;
+      const text = backupFailureText(t, toActionError(e), {
+        safety: t.sample.safetyBackupFailed,
+        other: t.sample.clearFailed,
+      }).text;
+      expect(text).toBe(
+        t.sample.safetyBackupFailed(t.commandErrors.BACKUP_EXISTS(name)),
+      );
+      expect(text).not.toContain("/");
+      sql.db.close();
+    });
+
+    it.each(FILE_WRITE)(
+      "a safety backup that failed with %s shows its text",
+      async (code, detail) => {
+        const t = dicts[lang];
+        const sql = openMemorySql();
+        await migrate(sql);
+        rustFails(code, detail);
+        const e = await caught(writeSafetyBackup(sql, NOW));
+        expect(shown(t, e)).toBe(
+          t.backup.safetyBackupFailed(t.commandErrors[code]),
+        );
+        sql.db.close();
+      },
+    );
+
+    it.each(FILE_WRITE)(
+      "a backup export that failed with %s shows its text, with no path",
+      async (code, detail) => {
+        const t = dicts[lang];
+        const sql = openMemorySql();
+        await migrate(sql);
+        rustFails(code, detail);
+        const e = await caught(
+          exportBackup(sql, { now: NOW, today: "2026-11-27", save: saveFile }),
+        );
+        const text = shown(t, e);
+        expect(text).toBe(t.backup.exportFailed(t.commandErrors[code]));
+        expect(text).not.toContain("/");
+        sql.db.close();
+      },
+    );
+
+    it.each([
+      [
+        "BACKUP_FAILED",
+        "BACKUP_FAILED: database or disk is full",
+        (t: Dictionary) => t.commandErrors.BACKUP_FAILED,
+      ],
+      [
+        "BACKUP_EXISTS",
+        "BACKUP_EXISTS: /Users/me/backups/pre-migration-x.sqlite",
+        (t: Dictionary) =>
+          t.commandErrors.BACKUP_EXISTS(
+            `pre-migration-v8-to-v${HEAD}-${stamp(NOW)}.sqlite`,
+          ),
+      ],
+    ] as const)(
+      "a stopped upgrade whose copy failed with %s shows its text",
+      async (code, detail, expected) => {
+        const t = dicts[lang];
+        const sql = await schemaAt(8);
+        sql.backup = dbBackup;
+        rustFails(code, detail);
+        const e = await caught(migrate(sql, { now: () => NOW }));
+        const startup = toStartupError(e);
+        expect(startup?.code).toBe("MIGRATION_BACKUP_FAILED");
+        expect(startupDetails(t, startup!)).toEqual([
+          { text: expected(t), code: false },
+        ]);
+        sql.db.close();
+      },
+    );
+
+    it("a stopped upgrade whose copy failed with SQL keeps Rust's line", async () => {
+      const t = dicts[lang];
+      const sql = await schemaAt(8);
+      sql.backup = dbBackup;
+      rustFails("SQL", "database is locked");
+      const e = await caught(migrate(sql, { now: () => NOW }));
+      expect(startupDetails(t, toStartupError(e)!)).toEqual([
+        { text: "database is locked", code: true },
+      ]);
+      sql.db.close();
     });
   },
 );

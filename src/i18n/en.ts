@@ -202,6 +202,26 @@ export const en = {
       "Details are in the app log: ~/Library/Logs/com.bures.realestate-tracker/app.log",
   },
 
+  // A failed app command, keyed by its Rust code (ADR 0271): shown in place of Rust's
+  // English detail inside a backup, safety backup, save or upgrade message. Only these
+  // codes; any other shows its detail.
+  commandErrors: {
+    BACKUP_EXISTS: (file: string) =>
+      `A file named ${file} is already in the backups folder, so it was not replaced.`,
+    BACKUP_PATH_NOT_UTF8:
+      "The path of the backups folder holds characters the database cannot write to.",
+    BACKUP_FAILED: "The copy could not be written to the backups folder.",
+    BACKUP_UNREADABLE:
+      "The copy was written, but it could not be opened to check it.",
+    BACKUP_CORRUPT: "The copy was written, but it failed its integrity check.",
+    BACKUP_MISMATCH:
+      "The copy was written, but it does not hold the same number of records as your data.",
+    SAVED_FILE_MISMATCH:
+      "The file was written, but it did not read back the same, so it was not kept.",
+    NO_FOLDER: "There is no folder to save the file in.",
+    NO_FILE_NAME: "There is no file name to save the file under.",
+  },
+
   // The startup error screen (ADR 0153).
   boot: {
     partialFailed: (reached: number, stoppedAt: number) =>

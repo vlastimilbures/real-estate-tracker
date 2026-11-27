@@ -16,6 +16,7 @@ import { Button } from "./Button";
 import { ErrorBanner } from "./layout";
 import { IssueTable } from "./RestoreConfirm";
 import { backupFailureText } from "./restoreFailure";
+import { commandFailureText } from "../model/commandErrorText";
 
 /** A failed action as text, translated now (the failure was logged when caught). */
 function failureText(
@@ -35,16 +36,17 @@ function failureText(
     case "import":
       return backupFailureText(t, e, { other: t.importPage.importFailed }).text;
     case "xlsxExport":
-      return t.xlsx.exportFailed(saveDetail(e));
+      return t.xlsx.exportFailed(saveDetail(t, e));
     case "revealFolder":
       return t.boot.revealFailed;
   }
 }
 
-/** A failed export's text (ADR 0193): the export button stores it as `saveFailed`; an
- *  untyped failure set elsewhere gives its message. */
-function saveDetail(e: ActionError): string {
-  if (e.kind === "saveFailed") return e.detail;
+/** A failed export's text (ADR 0193): the export button stores it as `saveFailed`, shown
+ *  by its code's text when it has one (ADR 0271); an untyped failure set elsewhere gives
+ *  its message. */
+function saveDetail(t: Dictionary, e: ActionError): string {
+  if (e.kind === "saveFailed") return commandFailureText(t, e);
   return e.kind === "other" ? e.message : "";
 }
 
