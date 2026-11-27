@@ -25,8 +25,9 @@
   [0103](0103-financing-exposure.md) (upcoming lease ends),
   [0119](0119-acquisition-funding.md) (own cash and the derived down payment),
   [0129](0129-loan-schedule-edge-cases.md) §4 (the refix gap),
-  [0150](0150-one-asof-resolver.md) §1 (the as-of date), [0152](0152-wording-log-and-generated-index.md)
-  (copy changes), [0157](0157-accessibility-batch.md) (loan warnings as a status),
+  [0150](0150-one-asof-resolver.md) §1 (the as-of date),
+  [0152](0152-wording-log-and-generated-index.md) (copy changes),
+  [0157](0157-accessibility-batch.md) (loan warnings as a status),
   [0162](0162-floating-block-rate.md) §4 (a floating block),
   [0199](0199-icon-only-row-actions.md) §2 (the Edit property label),
   [0203](0203-one-disclosure.md)
@@ -37,7 +38,9 @@
   (thresholds as text arguments), [0257](0257-shock-years-merged-rows-range-checked.md)
   (stored shock years are not flagged), [0259](0259-one-range-message.md) §4 (the Data
   check's range keys unchanged), [0258](0258-leftover-block-hint.md) (invalid stored
-  data), [0268](0268-one-chip-shape.md) (the chip look), [0269](0269-requests-travel-with-the-visit.md)
+  data), [0268](0268-one-chip-shape.md) (the chip look),
+  [0274](0274-sections-current-rule.md) (the section order, the pill and an inactive
+  property on Property detail), [0269](0269-requests-travel-with-the-visit.md)
   (the fix link's request), [0272](0272-current-rule-likelihood-ui-rounds.md) (why this
   record exists)
 - Topic: Data check
@@ -70,7 +73,7 @@ the wording itself lives in the dictionaries and `docs/decisions/wording.md` (AD
    `leaseEndWithoutFollowOn`, `renewedLease` and the loan warnings (ADR 0118 §1),
    `overlappingLeases` (ADR 0163 §1, §5) and the instalment rule's predicate (ADR 0264 §4).
    Stored values out of range come from the range check that restore also uses, which is
-   not an engine rule: the engine itself is open-ended (ADR 0148 §2; ADR 0180 §2;
+   not an engine rule: the engine itself is open-ended (ADR 0148 §1, §2; ADR 0180 §2;
    ADR 0236, Consequences).
 3. There is no completeness score or grade. Each finding states its effect and where to
    fix it. An effect is stated only where it is true for both the snapshot and the
@@ -220,9 +223,9 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
    record follows the later records.
 3. **Property detail:** its own property, when active. An inactive property has no Data
    check section or section-nav entry and is left out of every computation; its values are
-   listed once it is reactivated (ADR 0155 §3; ADR 0180 §4). The restore confirm step names
-   the record either way, and its warning that "the Data check lists" the values means
-   these places together; that warning's text does not change (ADR 0180 §4).
+   listed once it is reactivated (ADR 0155 §3; ADR 0180 §4; ADR 0274 §2.6). The restore
+   confirm step names the record either way, and its warning that "the Data check lists" the
+   values means these places together; that warning's text does not change (ADR 0180 §4).
 4. With stored data that breaks an engine rule, the page shows the invalid-data notice
    instead of the figures, and the Data check does not render (ADR 0258, Context).
 5. A valuation source field is not part of the Data check (roadmap, ADR 0118 §8).
@@ -236,8 +239,8 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
    the panel head, its state kept in the UI store for the session (ADR 0203 §1–§3; ADR 0223
    §1).
 2. **Property detail.** The Data check is a section of the page, listed in the section nav
-   (ADR 0118 §6); it is the last section (ADR 0223 §5). Only the Dashboard's panel has a
-   Show / Hide (ADR 0223 §1).
+   (ADR 0118 §6); it is the last section (ADR 0223 §5; ADR 0274 §2.1). Only the
+   Dashboard's panel has a Show / Hide (ADR 0223 §1).
 3. **One look on both pages** (ADR 0223 §1–§4):
    - **Counts.** Two counts sit as pills on their own line directly under the panel head,
      visible while the panel is collapsed too: the warn count `dataCheck.needAttention`
@@ -262,8 +265,9 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
      note stays behind the info icon (ADR 0223 §4).
 4. **Dashboard rows are grouped by problem** (`dataCheckGroups`, ADR 0206 §4): one line
    states the problem and its effect once, with one chip per affected property, holding
-   that property's detail, as the row's action on the right (ADR 0206 §4; ADR 0223 §3). Groups keep the order in which each problem first appears,
-   so portfolio rows come first (ADR 0206 §4).
+   that property's detail, as the row's action on the right (ADR 0206 §4; ADR 0223 §3).
+   Groups keep the order in which each problem first appears, so portfolio rows come first
+   (ADR 0206 §4).
    - Stale valuation: `dataCheck.valuationStaleGroup`; chip detail the age and the
      valuation date.
    - No valuation: `dataCheck.noValuationGroup`; detail the purchase price and date.
@@ -280,16 +284,17 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
    (ADR 0206 §6), and the action is the fix link, described by its row (ADR 0223 §3). Its
    label is `dataCheck.goTo` with the section's name for a section,
    `properties.editProperty` for the property form (ADR 0199 §2) and
-   `dataCheck.recordFunding` for own cash (ADR 0118 §7; ADR 0209 §2). Property detail has no count sentence of its own: the pills carry
-   the counts (ADR 0223 §6).
-6. **The title's review pill** (ADR 0218 §1; ADR 0223 §5):
+   `dataCheck.recordFunding` for own cash (ADR 0118 §7; ADR 0209 §2). Property detail has
+   no count sentence of its own: the pills carry the counts (ADR 0223 §6).
+6. **The title's review pill** (ADR 0218 §1; ADR 0223 §5; ADR 0274 §2.5):
    - When at least one finding needs attention, a compact amber pill follows the page
      title: a warning icon and the number. Its accessible name and tooltip are the full
      sentence `dataCheck.reviewPill(n)`. It is absent when nothing needs attention;
      defaults never show it (ADR 0206 §2; ADR 0218 §1).
    - On the Dashboard a click opens the Data check, scrolls it to the top and moves focus
      to its heading (ADR 0206 §2; ADR 0218 §1, "the same jump as before"). Property
-     detail shows the same pill, which moves focus to its Data check heading (ADR 0223 §5).
+     detail shows the same pill, which moves focus to its Data check heading (ADR 0223 §5;
+     ADR 0274 §2.5).
    - The filter bar holds filters only: it has no review link, and the as-of picker has no
      lead slot (ADR 0218 §1).
 
@@ -307,8 +312,7 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
 3. On the Dashboard the chip is the link. Its accessible name is the chip text followed by
    the problem line; its description and tooltip name the destination (ADR 0206 §4). A
    portfolio chip reads its fix as its text, `dataCheck.goTo` with
-   `settings.tabs.assumptions` (ADR 0206 §4; ADR 0180, Consequences), and so has no
-   separate description (ADR 0206 §4).
+   `settings.tabs.assumptions` (ADR 0206 §4; ADR 0180, Consequences).
 4. **Accessible-name text.** On Property detail a finding's sentence is its fix link's
    description, not its accessible name (ADR 0181 §4; ADR 0223 §3). On the Dashboard every
    line is part of each chip's accessible name (ADR 0206 §4), so every `dataCheck` key that
@@ -318,10 +322,11 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
    (`noLease`, `leaseOverlap`, `instalmentBelowInterest`, `zeroRateZeroInstalment`, the
    `outOfRange*` keys, `sizeDecimals`, the `growth*` keys, `costDefaults` and the
    `fundingUnknown*` keys).
-5. **Live regions.** The Data check's own lists are `role="list"`, not live regions, and no
-   `dataCheck` key is announced (ADR 0264 §4). The fixation-ended text is shared with
-   Property detail's loan warning, which renders in Financing as a status banner
-   (`role="status"`, ADR 0157).
+5. **Live regions.** The Data check's own lists are `role="list"`, not live regions
+   (ADR 0264 §4). Outside the Data check, `dataCheck.goTo` labels the Financing button of
+   Property detail's invalid-data notice, a `role="alert"` region (ADR 0258 §2). The
+   fixation-ended text is shared with Property detail's loan warning, which renders in
+   Financing as a status banner (`role="status"`, ADR 0157).
 
 ## Consequences
 
