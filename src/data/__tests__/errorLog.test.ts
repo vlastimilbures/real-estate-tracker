@@ -114,6 +114,45 @@ describe("error log lines", () => {
     );
   });
 
+  // ADR 0270 point 7: a DataError that wraps a failed command (the startup upgrade's
+  // MIGRATION_* errors) also logs the Rust code, so an upgrade failure is diagnosable.
+  it("a DataError wrapping a failed command logs its Rust code first", () => {
+    const rust = new CommandError("BACKUP_FAILED", "verify failed");
+    const e = new DataError(
+      "MIGRATION_BACKUP_FAILED",
+      "msg",
+      ["verify failed"],
+      {
+        cause: rust,
+      },
+    );
+    expect(describeFailure("STARTUP", e)).toEqual({
+      code: "MIGRATION_BACKUP_FAILED",
+      context: "BACKUP_FAILED: STARTUP: verify failed",
+    });
+  });
+
+  it("finds the command error below a DataError's cause chain", () => {
+    const rust = new CommandError("SQL", "no such table");
+    const e = new DataError("MIGRATION_FAILED", "msg", ["no such table"], {
+      cause: new Error("step", { cause: rust }),
+    });
+    expect(describeFailure("STARTUP", e)).toEqual({
+      code: "MIGRATION_FAILED",
+      context: "SQL: STARTUP: no such table",
+    });
+  });
+
+  it("a DataError without a failed command logs as before", () => {
+    const e = new DataError("MIGRATION_FAILED", "msg", ["boom"], {
+      cause: new Error("boom"),
+    });
+    expect(describeFailure("STARTUP", e)).toEqual({
+      code: "MIGRATION_FAILED",
+      context: "STARTUP: boom",
+    });
+  });
+
   it("stops on a cause chain that loops", () => {
     const a = new Error("a");
     const b = new Error("b", { cause: a });
