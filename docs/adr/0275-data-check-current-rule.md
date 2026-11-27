@@ -9,6 +9,9 @@
 - Supersedes: [0118](0118-data-check.md), [0206](0206-data-check-grouped.md)
 - Supersedes in part: [0122](0122-valuation-persists-past-valid-to.md) (decision 5),
   [0148](0148-restore-rules-vs-stored-data.md) (decision 2),
+  [0155](0155-lifecycle-states-on-the-pages.md) (decision 3: its Data check clause),
+  [0156](0156-pending-purchase-display.md) (decision 5: the clause that a pending
+  property's Data check has only the own-cash finding),
   [0163](0163-leases-never-overlap.md) (decision 5),
   [0180](0180-data-check-restore-asof-polish.md) (decision 4),
   [0181](0181-purchase-price-fallback-grows.md) (decision 4: the `dataCheck.noValuation`
@@ -19,20 +22,21 @@
   [0264](0264-loan-term-instalment-above-interest.md) (§4 except its bullet on the refusal
   keys; owner decisions 3 and 6 and the addendum on the two `dataCheck` keys)
 - Related: [0080](0080-close-out.md) (the renewed last lease),
-  [0102](0102-scenario-form-groups.md) (a property's own rate wins),
   [0103](0103-financing-exposure.md) (upcoming lease ends),
   [0119](0119-acquisition-funding.md) (own cash and the derived down payment),
   [0129](0129-loan-schedule-edge-cases.md) §4 (the refix gap),
-  [0150](0150-one-asof-resolver.md) (the as-of date), [0152](0152-wording-log-and-generated-index.md)
-  (copy changes), [0155](0155-lifecycle-states-on-the-pages.md) §3 (an inactive property),
-  [0156](0156-pending-purchase-display.md) §5 (a pending property keeps its Data check),
-  [0162](0162-floating-block-rate.md) §4 (a floating block), [0203](0203-one-disclosure.md)
+  [0150](0150-one-asof-resolver.md) §1 (the as-of date), [0152](0152-wording-log-and-generated-index.md)
+  (copy changes), [0157](0157-accessibility-batch.md) (loan warnings as a status),
+  [0162](0162-floating-block-rate.md) §4 (a floating block),
+  [0199](0199-icon-only-row-actions.md) §2 (the Edit property label),
+  [0203](0203-one-disclosure.md)
   (the disclosure button), [0207](0207-holding-costs-read-view.md) §4 (the Holding costs
   landing), [0209](0209-acquisition-empty-state.md) §2 ("Record funding"),
   [0217](0217-info-tip.md) (the info icon), [0232](0232-dates-before-1900-entry-only.md)
   (dates before 1900 are not looked for), [0250](0250-wording-limits-flags-crash-labels.md)
   (thresholds as text arguments), [0257](0257-shock-years-merged-rows-range-checked.md)
-  (stored shock years are not flagged), [0258](0258-leftover-block-hint.md) (invalid stored
+  (stored shock years are not flagged), [0259](0259-one-range-message.md) §4 (the Data
+  check's range keys unchanged), [0258](0258-leftover-block-hint.md) (invalid stored
   data), [0268](0268-one-chip-shape.md) (the chip look), [0269](0269-requests-travel-with-the-visit.md)
   (the fix link's request), [0272](0272-current-rule-likelihood-ui-rounds.md) (why this
   record exists)
@@ -44,10 +48,11 @@
 
 ADR 0118 added the Data check: a list of the inputs behind a property's numbers that are
 stale, missing, left at a portfolio default, or stored with a value the forms no longer
-accept. Six later records amended it, others changed it without saying so, and two of those
-(0206, 0148) were amended again. ADR 0272 asks for one record that states the rule as it is
+accept. Seven later records amended it, others changed it without saying so, and two of
+those (0206, 0148) were amended again. ADR 0272 asks for one record that states the rule as it is
 now. This is that record. It changes no behaviour: every statement below comes from an
-accepted record, named in brackets after it. Where the code and the records disagree, the
+accepted record, named in brackets after it. Where two records disagree, it follows the
+later one and says so (5.2, 3.4). Where the code and the records disagree, the
 disagreement is listed on the pull request for the owner and not settled here.
 
 The superseded records keep their context, examples and measurements. Read them for why a
@@ -63,13 +68,17 @@ the wording itself lives in the dictionaries and `docs/decisions/wording.md` (AD
 2. It calls the engine's own selectors and checks, so a finding appears exactly when the
    engine falls back or the stored value breaks a rule: `selectValuation`, `leaseInForce`,
    `leaseEndWithoutFollowOn`, `renewedLease` and the loan warnings (ADR 0118 §1),
-   `overlappingLeases` (ADR 0163 §1, §5), the instalment rule's predicate (ADR 0264 §4) and
-   the range check that restore shares (ADR 0180 §2; ADR 0236, Consequences).
+   `overlappingLeases` (ADR 0163 §1, §5) and the instalment rule's predicate (ADR 0264 §4).
+   Stored values out of range come from the range check that restore also uses, which is
+   not an engine rule: the engine itself is open-ended (ADR 0148 §2; ADR 0180 §2;
+   ADR 0236, Consequences).
 3. There is no completeness score or grade. Each finding states its effect and where to
    fix it. An effect is stated only where it is true for both the snapshot and the
    projection, or the text says how they differ (ADR 0118 §1).
 4. **The as-of date** is the page's snapshot date: the picked date, else today, never
-   before the base date, the same date as the numbers on screen (ADR 0118 §2).
+   before the base date, the same date as the numbers on screen (ADR 0118 §2). The one
+   as-of resolver moves it into the window from the base date to the base date plus the
+   horizon (ADR 0150 §1).
 5. Findings fall in two lists: **"Needs attention"**, which is counted, and **"Using
    portfolio defaults"**, which is listed but not counted, because those defaults are often
    deliberate (ADR 0118 §3, §4).
@@ -83,7 +92,7 @@ These are evaluated at the as-of date, for a property purchased by then (5.2).
    months. Exactly 12 months is not stale. The age is shown in whole months. A valuation
    that only starts later is used by the engine and is not flagged (ADR 0118 §3). A closed
    last valuation is still the valuation in use, so it is flagged once it is more than 12
-   months old; its "Valid to" is not read (ADR 0122 §5). The text is
+   months old (ADR 0122 §5); its "Valid to" is not read (ADR 0122 §1). The text is
    `dataCheck.valuationStale`; it says that value, equity and LTV start from the valuation
    as entered and that the time between its date and the projection start is not grown.
    The sentence holds at any as-of date, since after the projection start the value does
@@ -123,9 +132,11 @@ save them, so the owner fixes them there (ADR 0148 §2).
 1. **Out of range.** A property's size (fix: the property form), a mortgage's fixation or
    loan term (fix: Financing), and on the Dashboard the projection horizon as a portfolio
    row (fix: Settings → Assumptions), each with the value and the range (ADR 0148 §2).
-   - A whole-number field that is not whole counts as out of range. Only the size can reach
-     this: the engine refuses a non-integer horizon, fixation or loan term, and that engine
-     error is the one reported (ADR 0180 §2).
+   - A value finer than its field accepts counts as well: for the horizon, fixation and
+     loan term a number that is not whole (ADR 0180 §2), for the size one with two or more
+     decimals (next bullet). Only the size reaches the Data check this way: the engine
+     refuses a non-integer horizon, fixation or loan term, and that engine error is the one
+     reported (ADR 0180 §2).
    - The size takes one decimal place: a stored size with one decimal is not listed, one
      with two or more is (`dataCheck.sizeDecimals` inside the range,
      `dataCheck.outOfRangeSize` outside it) (ADR 0236 §3 and Consequences).
@@ -147,7 +158,9 @@ save them, so the owner fixes them there (ADR 0148 §2).
      (ADR 0264 §4).
    - It is listed for every stored block of the property that fails the rule, replaced
      past blocks included, not only from the block in force onward (ADR 0264 §4; owner
-     decision 3).
+     decision 3). A block with another problem on its principal, rate, instalment or term
+     is not checked against this rule: that problem is reported first (ADR 0264 §1,
+     "Guard").
    - Its fix link is Financing. Its sentence holds per-loan values, so on the Dashboard it
      is its own line with no chip detail (ADR 0264 §4).
    - Text: `dataCheck.instalmentBelowInterest`, and `dataCheck.zeroRateZeroInstalment` for a
@@ -162,8 +175,10 @@ save them, so the owner fixes them there (ADR 0148 §2).
      restores and projects as before, with the unpaid interest left out until the next
      rate reset (ADR 0264 §3, §5); the clamp stays pinned as today's behaviour, and the Data
      check finding is the one handling. No change of figures is planned.
-4. **Not looked for:** a stored date before 1900, the stored base date included
-   (ADR 0232 §2, §4), and a stored scenario shock year outside its range (ADR 0257).
+4. **Not looked for:** a stored date before 1900 (ADR 0232 §2, §4), and a stored scenario
+   shock year outside its range (ADR 0257). The Dashboard's portfolio rows are the
+   projection horizon only. ADR 0180 §4 also named the base date, whose only check was the
+   early-date finding that ADR 0232 §4 removed; this record follows ADR 0232.
 
 ### 4. "Using portfolio defaults"
 
@@ -199,8 +214,10 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
 2. **A property not yet purchased** at the as-of date has none of the dated findings of
    section 2 and none of the growth or holding-cost defaults. It keeps the own-cash
    finding, because a future purchase's own cash is its down payment in the projection and
-   is worth recording before the purchase date (ADR 0118 §5; ADR 0156 §5), and the stored
-   values of section 3 (ADR 0163 §5; ADR 0264 §4).
+   is worth recording before the purchase date (ADR 0118 §5; ADR 0156 §5). It also lists
+   the stored values of section 3: ADR 0163 §5 and ADR 0264 §4 list them "at any as-of
+   date", which widens the "own-cash finding only" of ADR 0118 §5 and ADR 0156 §5; this
+   record follows the later records.
 3. **Property detail:** its own property, when active. An inactive property has no Data
    check section or section-nav entry and is left out of every computation; its values are
    listed once it is reactivated (ADR 0155 §3; ADR 0180 §4). The restore confirm step names
@@ -244,8 +261,8 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
      green check and `dataCheck.attentionNone`: no pills, no toggle, no blocks. The as-of
      note stays behind the info icon (ADR 0223 §4).
 4. **Dashboard rows are grouped by problem** (`dataCheckGroups`, ADR 0206 §4): one line
-   states the problem and its effect once, and under it is one chip per affected property
-   with that property's detail. Groups keep the order in which each problem first appears,
+   states the problem and its effect once, with one chip per affected property, holding
+   that property's detail, as the row's action on the right (ADR 0206 §4; ADR 0223 §3). Groups keep the order in which each problem first appears,
    so portfolio rows come first (ADR 0206 §4).
    - Stale valuation: `dataCheck.valuationStaleGroup`; chip detail the age and the
      valuation date.
@@ -260,15 +277,18 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
    - The 12-month and 3-month thresholds reach the group texts as arguments, so a change
      to them changes the text in every language (ADR 0250).
 5. **Property detail rows** keep one sentence per finding, with no property-name prefix
-   (ADR 0206 §6), and the action is a "Go to …" link (`dataCheck.goTo`), described by its
-   row (ADR 0223 §3). Property detail has no count sentence of its own: the pills carry
+   (ADR 0206 §6), and the action is the fix link, described by its row (ADR 0223 §3). Its
+   label is `dataCheck.goTo` with the section's name for a section,
+   `properties.editProperty` for the property form (ADR 0199 §2) and
+   `dataCheck.recordFunding` for own cash (ADR 0118 §7; ADR 0209 §2). Property detail has no count sentence of its own: the pills carry
    the counts (ADR 0223 §6).
 6. **The title's review pill** (ADR 0218 §1; ADR 0223 §5):
    - When at least one finding needs attention, a compact amber pill follows the page
      title: a warning icon and the number. Its accessible name and tooltip are the full
      sentence `dataCheck.reviewPill(n)`. It is absent when nothing needs attention;
      defaults never show it (ADR 0206 §2; ADR 0218 §1).
-   - A click opens the Data check and moves focus to its heading (ADR 0218 §1). Property
+   - On the Dashboard a click opens the Data check, scrolls it to the top and moves focus
+     to its heading (ADR 0206 §2; ADR 0218 §1, "the same jump as before"). Property
      detail shows the same pill, which moves focus to its Data check heading (ADR 0223 §5).
    - The filter bar holds filters only: it has no review link, and the as-of picker has no
      lead slot (ADR 0218 §1).
@@ -285,20 +305,29 @@ Listed below "Needs attention", not counted (ADR 0118 §4):
    with that navigation and is dropped when the visit ends, handled or not (ADR 0269 §1,
    §2).
 3. On the Dashboard the chip is the link. Its accessible name is the chip text followed by
-   the problem line; its description and tooltip name the destination. A portfolio chip
-   reads its destination (the Assumptions tab's name, `settings.tabs.assumptions`) as its
-   text (ADR 0206 §4; ADR 0180, Consequences).
-4. On Property detail a finding's sentence is its fix link's description, not its
-   accessible name (ADR 0181 §4; ADR 0223 §3). On the Dashboard a group's line is part of
-   each chip's accessible name (ADR 0206 §4), so the group texts count as accessible-name
-   text for a copy change (ADR 0250; ADR 0152). No Data check text is a live-region
-   announcement (ADR 0264 §4).
+   the problem line; its description and tooltip name the destination (ADR 0206 §4). A
+   portfolio chip reads its fix as its text, `dataCheck.goTo` with
+   `settings.tabs.assumptions` (ADR 0206 §4; ADR 0180, Consequences), and so has no
+   separate description (ADR 0206 §4).
+4. **Accessible-name text.** On Property detail a finding's sentence is its fix link's
+   description, not its accessible name (ADR 0181 §4; ADR 0223 §3). On the Dashboard every
+   line is part of each chip's accessible name (ADR 0206 §4), so every `dataCheck` key that
+   words a line counts as accessible-name text for a copy change (ADR 0152; ADR 0250): the
+   group keys (`valuationStaleGroup`, `noValuationGroup`, `leaseEndedGroup`,
+   `leaseEndingGroup`, `fixationEndedGroup`) and the sentences that serve as lines
+   (`noLease`, `leaseOverlap`, `instalmentBelowInterest`, `zeroRateZeroInstalment`, the
+   `outOfRange*` keys, `sizeDecimals`, the `growth*` keys, `costDefaults` and the
+   `fundingUnknown*` keys).
+5. **Live regions.** The Data check's own lists are `role="list"`, not live regions, and no
+   `dataCheck` key is announced (ADR 0264 §4). The fixation-ended text is shared with
+   Property detail's loan warning, which renders in Financing as a status banner
+   (`role="status"`, ADR 0157).
 
 ## Consequences
 
-- ADRs 0118 and 0206 are superseded by this record. ADRs 0122, 0148, 0163, 0180, 0181,
-  0218, 0223, 0236 and 0264 are superseded in the parts named in the header; their other
-  decisions stand.
+- ADRs 0118 and 0206 are superseded by this record. ADRs 0122, 0148, 0155, 0156, 0163,
+  0180, 0181, 0218, 0223, 0236 and 0264 are superseded in the parts named in the header;
+  their other decisions stand.
 - A change to the Data check amends this record, not the superseded ones (ADR 0272 §1).
 - The sample portfolio shows no "Needs attention" finding at its base date, and the growth
   defaults and the own-cash finding for all three properties (ADR 0118, Consequences). At

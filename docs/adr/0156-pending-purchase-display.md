@@ -1,6 +1,7 @@
 # 0156. A pending purchase shows no figures before it is owned
 
 - Status: Accepted
+- Superseded in part by: [0275](0275-data-check-current-rule.md) (decision 5: the clause that a pending property's Data check has only the own-cash finding)
 - Date: 2026-10-08
 - Source: issue #126 item 1 (2026-10 code review, finding G2-1-02); owner decision D10
   item 1 (2026-10-08: option A, UI only; the Dashboard with only pending purchases active
