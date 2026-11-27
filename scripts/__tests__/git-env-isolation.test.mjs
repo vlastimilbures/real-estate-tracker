@@ -27,6 +27,8 @@ const SELF = "scripts/__tests__/git-env-isolation.test.mjs";
 const GIT_SUITES = ["scripts/__tests__/changelog-check.test.mjs"];
 // Tests that import a script that runs git but call only its pure functions: no git runs.
 const PURE_IMPORTS = {
+  "scripts/__tests__/depcruise-baseline.test.mjs":
+    "check-depcruise-baseline's pure functions; its git runs only from main()",
   "scripts/__tests__/size-baseline.test.mjs":
     "check-size-baseline's pure functions; its git runs only from main()",
 };
