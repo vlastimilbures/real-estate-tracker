@@ -363,13 +363,14 @@ export const CI_STEP_IFS = {
   "size-baseline": [PR_ONLY],
   "menu-macos": [MENU_CHANGED],
 };
-// What can change the built menu: the menu, its test and pin, the tauri / muda / objc2
+// What can change the built menu: the menu, its Settings icon, its test and pin, the tauri / muda / objc2
 // versions, the toolchain, and the workflow that holds the job.
 export const MENU_PATHS = [
   ".github/workflows/ci.yml",
   "rust-toolchain.toml",
   "src-tauri/Cargo.lock",
   "src-tauri/Cargo.toml",
+  "src-tauri/icons/menu-settings@2x.rgba",
   "src-tauri/src/menu.rs",
   "src-tauri/tests/menu_built.rs",
   "src-tauri/tests/menu_built.txt",

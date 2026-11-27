@@ -728,6 +728,7 @@ describe("the macOS menu job runs its test only when the menu can change", () =>
       "rust-toolchain.toml",
       "src-tauri/Cargo.lock",
       "src-tauri/Cargo.toml",
+      "src-tauri/icons/menu-settings@2x.rgba",
       "src-tauri/src/menu.rs",
       "src-tauri/tests/menu_built.rs",
       "src-tauri/tests/menu_built.txt",
