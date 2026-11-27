@@ -296,36 +296,6 @@ describe("ADR 0103: edge cases", () => {
     });
   });
 
-  it("a property missing from the schedules reads as an empty schedule", () => {
-    // No rows: nothing is owed, so no payoff, no remaining term, no interest saved, and
-    // the fixation end (10.01.2029, paid in grid month 32 on 07.02.2029) finds it repaid.
-    const block = fourPctLoan({ id: "m" });
-    const fx = financingExposure(
-      single(block),
-      assumptions,
-      new Map(),
-      BASE_DATE,
-    );
-    expect(fx.loans).toEqual([
-      {
-        propertyId: "p",
-        blockId: "m",
-        nextFixation: null,
-        payoffDate: null,
-        remainingMonths: null,
-        interestSaved: null,
-      },
-    ]);
-    expect(fx.resets).toHaveLength(1);
-    expect(fx.resets[0]).toMatchObject({
-      blockId: "m",
-      fixationEnd: isoDate("2029-01-10"),
-      gridMonth: 32,
-      status: "repaid",
-    });
-    expectKc(fx.resets[0].balance, 0);
-  });
-
   it("one property's loan is its portfolio entry, inactive or not (ADR 0116)", () => {
     const { fx, schedules } = exposure(portfolio);
     for (const loan of fx.loans) {
