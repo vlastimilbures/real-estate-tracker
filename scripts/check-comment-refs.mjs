@@ -10,6 +10,7 @@
 // README) are read whole; the append-only history (ADRs, the wording log, review records,
 // the changelog) is not. Tests are out of scope: their comments name cases, not
 // decisions. The reference models and the capture harness are read for ids and ADRs.
+import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, realpathSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -202,6 +203,20 @@ function walk(dir) {
   });
 }
 
+/** `paths` (relative to `root`) without the ones git ignores: local notes never reach CI,
+ *  so a local run must not fail on them either. */
+function notIgnored(root, paths) {
+  const r = spawnSync("git", ["check-ignore", "--stdin"], {
+    cwd: root,
+    input: paths.join("\n"),
+    encoding: "utf8",
+  });
+  // 0: some ignored, 1: none ignored; anything else (no git, no repo) ignores nothing.
+  if (r.status !== 0) return paths;
+  const ignored = new Set(r.stdout.split("\n").filter(Boolean));
+  return paths.filter((p) => !ignored.has(p));
+}
+
 /** The ADR numbers with a file in docs/adr. */
 export function adrNumbers(root = ROOT) {
   return new Set(
@@ -214,12 +229,15 @@ export function adrNumbers(root = ROOT) {
 /** Every in-scope file of the repository (`paths`) and its refused references. */
 export function check(root = ROOT) {
   const adrs = adrNumbers(root);
-  const paths = [
-    ...WALKED.flatMap((d) => walk(join(root, d))),
-    ...TOP_FILES.map((f) => join(root, f)),
-  ]
-    .map((p) => relative(root, p).split(sep).join("/"))
-    .filter(inScope);
+  const paths = notIgnored(
+    root,
+    [
+      ...WALKED.flatMap((d) => walk(join(root, d))),
+      ...TOP_FILES.map((f) => join(root, f)),
+    ]
+      .map((p) => relative(root, p).split(sep).join("/"))
+      .filter(inScope),
+  );
   const problems = paths.flatMap((f) =>
     problemsIn(readFileSync(join(root, f), "utf8"), f, adrs),
   );
