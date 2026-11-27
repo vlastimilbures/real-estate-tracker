@@ -52,7 +52,7 @@ type CostField =
   | "otherYr";
 
 /**
- * @internal Each entity's fields an error can name (ADR 0251 §4), exported for tests.
+ * Each entity's fields an error can name (ADR 0251 §4), exported for tests.
  * The assumptions name a default both bare (NON_FINITE_NUMBER) and as `defaults.<key>`
  * (its range): two spellings of one field, so both are listed. One spelling would change
  * the field an error names, which the UI reads to place its message, so it needs a
