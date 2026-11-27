@@ -152,6 +152,9 @@ real** terms. Everything runs and stays on your Mac.
 - KPIs: LTV, DSCR, gross/net yield, net-worth multiple and CAGR, **levered IRR**,
   first cash-flow-positive year, debt-free year
 - **As-of lens** — view the portfolio on any date in the projection window
+- **Fixation timeline** — each loan's next rate reset, with the payoffs, development
+  completions and lease ends in the coming 1, 3 or 5 years, and every upcoming fixation end
+  marked on the value charts
 - **Scenarios** — named assumption overrides, temporary rate and inflation shocks, value
   haircuts, one-click stress presets and side-by-side comparison
 
