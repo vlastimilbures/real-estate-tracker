@@ -110,7 +110,7 @@ what it is; read this record for what the rule is.
    it. At 900 × 600 the actions sit as one row under the title (ADR 0215 §2).
 3. **The Nominal / Real switch** is hidden while the property's stored data is invalid,
    that is while the page has no figures. Hiding it does not change the chosen lens: other
-   pages keep showing it, and when the data is fixed the switch comes back with the same
+   pages keep showing the chosen lens, and when the data is fixed the switch comes back with the same
    choice (ADR 0265 §1, §2). An inactive property keeps its figures, so it keeps the
    switch (ADR 0265, "Out of scope").
 4. The section links are the top bar's last row (1.1).
@@ -149,3 +149,6 @@ what it is; read this record for what the rule is.
 - A change to the section navigation, Property detail's section order or top bar, or how
   the amortization schedule collapses amends this record, not the superseded ones (ADR 0272 §1).
 - No behaviour, layout, dictionary entry, parity target or golden-master value changes.
+
+Note (2026-11-27): wording corrected. §3.3 said other pages keep showing "it", which
+could be read as the switch; it is the chosen lens. Text only; the rule is unchanged.
