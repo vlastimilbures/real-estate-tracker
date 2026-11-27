@@ -497,8 +497,8 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "        if: github.event_name == 'pull_request'\n        run: pnpm test:coverage\n",
     ],
     [
-      "fewer axe shards than the run's /4",
-      "shard: [1, 2, 3, 4]",
+      "fewer axe shards than the run's /6",
+      "shard: [1, 2, 3, 4, 5, 6]",
       "shard: [1, 2]",
     ],
   ])("fails a weakened step: %s", (_, from, to) => {
@@ -572,8 +572,8 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ],
     [
       "the Frontend check skipped, not failed, when a job fails",
-      "    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n",
-      "    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      success() &&\n",
+      "    needs: [frontend-checks, frontend-tz-negative, frontend-tz-positive]\n    if: >-\n      !cancelled() &&\n",
+      "    needs: [frontend-checks, frontend-tz-negative, frontend-tz-positive]\n    if: >-\n      success() &&\n",
       "job frontend runs only if `success() && (",
     ],
     [
@@ -626,14 +626,14 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ],
     [
       "an axe shard excluded",
-      "        shard: [1, 2, 3, 4]\n",
-      "        shard: [1, 2, 3, 4]\n        exclude:\n          - shard: 4\n",
+      "        shard: [1, 2, 3, 4, 5, 6]\n",
+      "        shard: [1, 2, 3, 4, 5, 6]\n        exclude:\n          - shard: 6\n",
       "job axe-shard has a matrix exclude, which this check cannot read",
     ],
     [
       "a matrix include",
-      "        shard: [1, 2, 3, 4]\n",
-      "        shard: [1, 2, 3, 4]\n        include:\n          - shard: 1\n            UX_LANG: cs\n",
+      "        shard: [1, 2, 3, 4, 5, 6]\n",
+      "        shard: [1, 2, 3, 4, 5, 6]\n        include:\n          - shard: 1\n            UX_LANG: cs\n",
       "job axe-shard has a matrix include, which this check cannot read",
     ],
     [
@@ -656,8 +656,8 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ],
     [
       "the frontend aggregate loses !cancelled()",
-      `    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
-      `    needs: [frontend-checks, frontend-time-zones]\n${DRAFT_IF}`,
+      `    needs: [frontend-checks, frontend-tz-negative, frontend-tz-positive]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
+      `    needs: [frontend-checks, frontend-tz-negative, frontend-tz-positive]\n${DRAFT_IF}`,
       "job frontend runs only if `github.event_name == 'push' || !github.event.pull_request.draft`, not `!cancelled() && (",
     ],
     [
@@ -668,15 +668,15 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
     ],
     [
       "the frontend aggregate loses its if",
-      `    needs: [frontend-checks, frontend-time-zones]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
-      "    needs: [frontend-checks, frontend-time-zones]\n",
+      `    needs: [frontend-checks, frontend-tz-negative, frontend-tz-positive]\n    if: >-\n      !cancelled() &&\n      (github.event_name == 'push' || !github.event.pull_request.draft)\n`,
+      "    needs: [frontend-checks, frontend-tz-negative, frontend-tz-positive]\n",
       "job frontend runs only if `success()`, not `!cancelled() && (",
     ],
     [
       "the frontend aggregate stops checking one job's result",
-      '          [[ "${{ needs.frontend-time-zones.result }}" == success ]]\n',
+      '          [[ "${{ needs.frontend-tz-positive.result }}" == success ]]\n',
       "",
-      'job frontend does not check `[[ "${{ needs.frontend-time-zones.result }}" == success ]]`',
+      'job frontend does not check `[[ "${{ needs.frontend-tz-positive.result }}" == success ]]`',
     ],
     [
       "the axe aggregate accepts a failed shard",
