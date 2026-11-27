@@ -128,7 +128,9 @@ baseline (ADR 0081, 0174).
   dictionary entries, except text used as an accessible name or a live-region announcement)
   needs the owner's OK and a failing test written first, but an entry in
   `docs/decisions/wording.md` instead of an ADR (ADR 0152). ADRs cite dictionary keys, not translated strings. Refactors are
-  behaviour-neutral.
+  behaviour-neutral. A round of layout or styling adjustments that changes no rule, limit,
+  stored data or export shares one ADR with numbered items (ADR 0272). A record that adds
+  handling states its Trigger and Likelihood; practically-never cases get a refusal or nothing.
 - **ADR index** is generated: run `pnpm adr:index`, never edit the table by hand; numbers are
   the next free on `origin/main` and open PRs (ADR 0152).
 - **Dependencies** (ADR 0002): dev-only tools are fine; a new runtime dependency needs a
