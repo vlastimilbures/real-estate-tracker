@@ -160,6 +160,7 @@ runPath.ts             where ux:diff and ux:axe-check find a run (name or absolu
 flows.ts               app-driving helpers: edited backups, startup faults, loan events, forms
 layout/                the layout assertions (common, dashboard, pages)
 layoutScreens.ts       the screens CI also captures in Czech and Russian (`@layout-i18n`)
+shardOrder.ts          the order the tests are declared in, so the CI shards even out
 flakeReport.ts         reporter: regressions vs flaky captures
 screens/define.ts      defineScreen(id, desc, run)
 screens/<area>.ts      the screens of one area, in flow order
