@@ -10,9 +10,9 @@
   [0137](0137-agreed-instalment-pays-interest.md),
   [0179](0179-shorten-term-next-payment-rate.md)
 - Supersedes in part: [0116](0116-prepayments-ui-and-review-fixes.md) (decisions 1 to 10,
-  12, 13 and 15), [0129](0129-loan-schedule-edge-cases.md) (decisions 1 and 5, and the
-  late-window items of "What stays"), [0130](0130-interest-saved-refinance.md) (decisions
-  1, 2 and 5), [0161](0161-cash-to-owner.md) (decision 2 as it applies to prepayments and
+  12, 13 and 15), [0129](0129-loan-schedule-edge-cases.md) (decisions 1 and 5, and all
+  three "What stays" items), [0130](0130-interest-saved-refinance.md) (decisions 1 and 2, and
+  decision 5 for the Prepaid, Prepayment fee and Drawn columns), [0161](0161-cash-to-owner.md) (decision 2 as it applies to prepayments and
   their fees, and decision 4, the Guide sentence, restated in full; decisions 1 and 3 stand),
   [0235](0235-opening-balance-replayed.md) (decision 1 whole, and the decision 5 sentence on
   interest saved)
@@ -35,9 +35,12 @@
 ADR 0109 added loan prepayments and recasts. Eight later records changed its rule, and six
 of those were amended again. ADR 0272 asks for one record that states the rule as it is now.
 This is that record for prepayments and recasts. It changes no behaviour: every statement
-below comes from an accepted record, named in brackets after it. Where the code and the
-records disagree, the disagreement is listed on the pull request for the owner and not
-settled here.
+below comes from an accepted record, named in brackets after it, with two exceptions. A
+recast after payoff being reported (§6.1) and a recast in a payment period the successor
+replaces being reported as replaced (§9.3) are rules of the code that no earlier record
+decides; once the owner accepts this record, it is the record that decides them. Where the
+code and the records disagree, the disagreement is listed on the pull request for the owner
+and not settled here.
 
 The superseded records keep their context, examples and measurements. Read them for why a
 rule is what it is; read this record for what the rule is.
@@ -147,9 +150,6 @@ Terms used below:
 10. The reference example is Javorová prepaying 500,000 Kč on 2031-01-17: 183 payments after
     payment 120, last payment 303, payoff 2046-04-17, instalment from the reset
     6,701.9254 Kč (ADR 0179, Consequences).
-11. The independent mortgage reference model (`reference/mortgageReference.ts`) follows the
-    wording of these rules, written apart from the engine, and the cross-checks compare the
-    two (ADR 0120 §5, ADR 0136 §4, ADR 0137 §5, ADR 0179 §5; the layers are ADR 0174).
 
 ### 4. Recasts
 
@@ -191,6 +191,10 @@ Terms used below:
 8. The message for a rejected recast maturity states the real limits: at most 50 years
    after the loan start, or the contract term when that is longer, and after a development
    loan's completion (ADR 0116 §5).
+9. **The reference model.** The independent mortgage reference model
+   (`reference/mortgageReference.ts`) follows the wording of the prepayment and recast rules
+   in §2 to §4, written apart from the engine, and the cross-checks compare the two
+   (ADR 0120 §5, ADR 0136 §4, ADR 0137 §5, ADR 0179 §5; the layers are ADR 0174).
 
 ### 5. The maturity in force
 
@@ -270,7 +274,7 @@ event date or recast maturity, the amount and sign codes, `INVALID_RECAST` and
 3. Cash to owner (net cash flow minus the cash outside it) and the levered IRR subtract
    prepaid + fee, as they do for acquisitions (ADR 0109 §11, ADR 0161 §1, §2). The Guide's
    mortgages section says prepayments are "kept outside net cash flow and DSCR, but counted
-   in cash to owner and the IRR" (ADR 0161 §4).
+   in cash to owner and the IRR" (`guide.mortgagesProse3`; ADR 0161 §4).
 4. A loan that runs before a future purchase counts its prepaid principal and fees as owner
    cash out in the years before the turn-on year (ADR 0124 §2).
 5. The row and projection `principal` stay scheduled principal only. The KPI
