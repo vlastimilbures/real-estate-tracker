@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Superseded in part by: [0275](0275-data-check-current-rule.md) (decision 3: its Data check clause)
+- Superseded in part by: [0274](0274-sections-current-rule.md) (decision 3)
 - Date: 2026-10-08
 - Source: issue #127 (2026-10 code review, findings G2-1-05, G2-1-07, G2-1-09, G2-1-12);
   owner decision D11 (2026-10-08: option A; on Scenarios the notice replaces only the

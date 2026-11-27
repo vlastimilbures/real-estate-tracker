@@ -360,11 +360,28 @@ export const CI_SETUP = [
 ];
 // The `if:` a gate step may carry, by gate: only the baseline checks, which need a base
 // branch, run on pull requests alone.
+// The macOS menu test runs when its job's path check says a menu input changed: on a
+// pull request, one of `MENU_PATHS`; on a push to main, always (owner, 2026-11-27). The
+// job itself always runs, so its required check always reports.
 const PR_ONLY = "github.event_name == 'pull_request'";
+export const MENU_CHANGED = "steps.menu-paths.outputs.changed == 'true'";
 export const CI_STEP_IFS = {
   "depcruise-baseline": [PR_ONLY],
   "size-baseline": [PR_ONLY],
+  "menu-macos": [MENU_CHANGED],
 };
+// What can change the built menu: the menu, its Settings icon, its test and pin, the tauri / muda / objc2
+// versions, the toolchain, and the workflow that holds the job.
+export const MENU_PATHS = [
+  ".github/workflows/ci.yml",
+  "rust-toolchain.toml",
+  "src-tauri/Cargo.lock",
+  "src-tauri/Cargo.toml",
+  "src-tauri/icons/menu-settings@2x.rgba",
+  "src-tauri/src/menu.rs",
+  "src-tauri/tests/menu_built.rs",
+  "src-tauri/tests/menu_built.txt",
+];
 // The `if:` a job carries, by role. A work job: the draft guard (a draft PR runs
 // nothing), or none. An aggregate (a job with `needs`): exactly the same behind
 // `!cancelled()`, so a failed job fails the required check instead of skipping it (a

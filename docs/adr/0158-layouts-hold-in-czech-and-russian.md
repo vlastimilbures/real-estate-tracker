@@ -1,6 +1,7 @@
 # 0158. Layouts hold in Czech and Russian at the minimum window
 
 - Status: Accepted
+- Superseded in part by: [0274](0274-sections-current-rule.md) (the "Section nav" item of the decision and the section-nav part of its "Checks" item)
 - Date: 2026-10-08
 - Source: issue #134 (2026-10 code review, findings G2-3-01, G2-3-03, G2-3-04); owner
   decision D13 (2026-10-08: option A, layouts that do not depend on string length, plus a

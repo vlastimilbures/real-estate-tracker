@@ -1,6 +1,6 @@
 # 0107. Property detail: section navigation and a collapsed amortization schedule
 
-- Status: Accepted
+- Status: Superseded by 0274
 - Date: 2026-10-03
 - Source: issue #23 (pre-release review 2026-10, finding A07 and F6)
 - Amended by: [0224](0224-loan-outlook-figure-row.md) (the Loan outlook moves to the

@@ -1,6 +1,7 @@
 # 0224. Loan outlook: after the charts, as a figure row
 
 - Status: Accepted
+- Superseded in part by: [0274](0274-sections-current-rule.md) (decision 1)
 - Date: 2026-11-16
 - Source: issue #423 (UX/UI review 2026-11, round 2, tracking #425); direction approved
   by the owner on 2026-11-16 (point 6 of the round-2 plan); acceptance delegated by the
