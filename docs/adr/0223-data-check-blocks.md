@@ -1,6 +1,7 @@
 # 0223. Data check: counts in the head, two blocks of rows, last on both pages
 
 - Status: Accepted
+- Superseded in part by: [0274](0274-sections-current-rule.md) (decision 5)
 - Date: 2026-11-16
 - Source: issue #422 (UX/UI review 2026-11, round 2, tracking #425); direction approved
   by the owner on 2026-11-16 (points 4 and 5 of the round-2 plan); acceptance delegated
