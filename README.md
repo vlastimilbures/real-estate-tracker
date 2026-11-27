@@ -23,7 +23,7 @@ and costs, and see where the portfolio is heading over the next 30 years.**
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png">
-  <img src="docs/screenshots/dashboard-light.png" alt="Dashboard: net worth, LTV, DSCR, yield and cash-flow tiles for a three-flat sample portfolio">
+  <img src="docs/screenshots/dashboard-light.png" alt="Dashboard: a KPI band with net worth, net cash flow, LTV, DSCR, net worth at the horizon and levered IRR above the 30-year projection charts, for a three-flat sample portfolio">
 </picture>
 
 <sub>All figures in the screenshots come from the built-in fictional sample portfolio.</sub>
@@ -176,7 +176,7 @@ real** terms. Everything runs and stays on your Mac.
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/property-detail-dark.png">
-        <img src="docs/screenshots/property-detail-light.png" alt="Property detail with value, debt, equity and DSCR tiles and projection charts">
+        <img src="docs/screenshots/property-detail-light.png" alt="Property detail with a band of market value, debt, equity, LTV, DSCR and net cash flow, projection charts marking the next rate reset, and the loan outlook">
       </picture>
       <p align="center"><b>Property detail</b> — value, debt and cash flow over time</p>
     </td>
