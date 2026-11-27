@@ -9,7 +9,8 @@ or corrupt a database through a crafted CSV or backup file.
 
 Please **do not open a public issue**. Report it privately through
 [GitHub security advisories](https://github.com/vlastimilbures/real-estate-tracker/security/advisories/new)
-with steps to reproduce and the app version (Settings → About).
+with steps to reproduce and the app version (menu **Real Estate Tracker → About Real Estate
+Tracker**).
 
 You can expect an acknowledgement within a week. Fixes ship in the next release, and the
 advisory is published once a fixed version is available.
