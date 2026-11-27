@@ -42,7 +42,7 @@ describe("comparableScenarios", () => {
 });
 
 // ADR 0128 §6: an assumptions edit is blocked only by the rules it newly breaks; a rule
-// the scenario already broke on another field, even with the same code, does not hide it.
+// the scenario already broke on another field does not hide it.
 describe("scenarioErrorsAddedBy", () => {
   const shock = (deltaPa: string) => ({
     deltaPa: rate(deltaPa),
