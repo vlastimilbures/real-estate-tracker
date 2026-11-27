@@ -1,7 +1,8 @@
 // Generates the ADR index table in docs/adr/README.md from the ADR headers and checks
 // the headers (ADR 0152): heading, Status, Date, links to existing ADRs, and both sides of
 // every Amends / Amended-by, Supersedes / Superseded-by and Supersedes in part /
-// Superseded in part by link.
+// Superseded in part by link. From ADR 0272 on, every record also names its Topic, Trigger and
+// Likelihood (ADR 0272); older records are not checked for them.
 // `pnpm adr:index` writes the index; `pnpm adr:check` (CI) fails on errors or drift.
 import {
   readdirSync,
@@ -40,7 +41,13 @@ const KEYS = new Set([
   "Extends",
   "Completes",
   "Implementation",
+  "Topic",
+  "Trigger",
+  "Likelihood",
 ]);
+// ADR 0272: the first record that must carry Topic, Trigger and Likelihood.
+const FIRST_WITH_LIKELIHOOD = "0272";
+const LIKELIHOOD = /^(routine|plausible|rare|practically never|n\/a)\b/;
 
 const unique = (xs) => [...new Set(xs)];
 
@@ -59,6 +66,20 @@ function headerFields(file, lines, errors) {
       fields[fields.length - 1].value += ` ${line.trim()}`;
   }
   return fields;
+}
+
+/** ADR 0272: Topic, Trigger and a Likelihood level (or n/a when the record adds no handling). */
+function checkLikelihood(file, values, errors) {
+  for (const key of ["Topic", "Trigger", "Likelihood"])
+    if (values(key).length === 0)
+      errors.push(
+        `${file}: no ${key} line (required from ADR ${FIRST_WITH_LIKELIHOOD} on)`,
+      );
+  const likelihood = values("Likelihood")[0];
+  if (likelihood !== undefined && !LIKELIHOOD.test(likelihood))
+    errors.push(
+      `${file}: Likelihood "${likelihood}" does not start with routine, plausible, rare, practically never or n/a`,
+    );
 }
 
 /** Parses one ADR file. `errors` holds problems local to the file. */
@@ -95,6 +116,8 @@ export function parseAdr(file, text) {
     if (values(key).length > 0 && refs(key).length === 0)
       errors.push(`${file}: "${key}" names no other ADR (NNNN)`);
 
+  if (number >= FIRST_WITH_LIKELIHOOD) checkLikelihood(file, values, errors);
+
   const followUps = [...text.matchAll(/^- \*\*(D-\d+)\*\*/gm)].map((m) => m[1]);
   const ids = unique([
     ...values("Source IDs").flatMap((v) => v.match(ID) ?? []),
@@ -108,6 +131,9 @@ export function parseAdr(file, text) {
     number,
     file,
     title: heading ? heading[2] : "",
+    topic: values("Topic")[0] ?? "",
+    trigger: values("Trigger")[0] ?? "",
+    likelihood: values("Likelihood")[0] ?? "",
     status: status ?? "",
     supersededBy: s?.[2] ?? null,
     amends: refs("Amends"),
@@ -199,11 +225,11 @@ export function renderIndex(adrs) {
       ]
         .filter(Boolean)
         .join(" · ");
-      return `| [${a.number}](${a.file}) | ${cell(a.title)} | ${status} | ${a.ids.join(", ")} |`;
+      return `| [${a.number}](${a.file}) | ${cell(a.title)} | ${cell(a.topic)} | ${status} | ${a.ids.join(", ")} |`;
     });
   return [
-    "| ADR | Title | Status | IDs |",
-    "| --- | --- | --- | --- |",
+    "| ADR | Title | Topic | Status | IDs |",
+    "| --- | --- | --- | --- | --- |",
     ...rows,
   ].join("\n");
 }

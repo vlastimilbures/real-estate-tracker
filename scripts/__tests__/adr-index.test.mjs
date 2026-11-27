@@ -136,6 +136,76 @@ describe("parseAdr", () => {
     expect(a.ids).toEqual(["#32"]);
   });
 
+  // ADR 0272: from 0272 on, a record names its Topic, Trigger and Likelihood.
+  it("reads Topic, Trigger and Likelihood", () => {
+    const a = parse("0272", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-11-27",
+      "- Topic: Loans: prepayments",
+      "- Trigger: the user enters a prepayment larger than the balance",
+      "- Likelihood: rare",
+    ]);
+    expect(a.topic).toBe("Loans: prepayments");
+    expect(a.trigger).toBe(
+      "the user enters a prepayment larger than the balance",
+    );
+    expect(a.likelihood).toBe("rare");
+    expect(a.errors).toEqual([]);
+  });
+
+  it("accepts each likelihood level and n/a for a record that adds no handling", () => {
+    for (const likelihood of [
+      "routine",
+      "plausible",
+      "rare (seen once in a bank statement)",
+      "practically never",
+      "n/a (adds no handling)",
+    ]) {
+      const a = parse("0300", "x", "X", [
+        "- Status: Proposed",
+        "- Date: 2026-11-27",
+        "- Topic: Process",
+        "- Trigger: n/a",
+        `- Likelihood: ${likelihood}`,
+      ]);
+      expect(a.errors).toEqual([]);
+    }
+  });
+
+  it("requires Topic, Trigger and Likelihood from 0272 on", () => {
+    const a = parse("0272", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-11-27",
+    ]);
+    expect(a.errors).toEqual([
+      "0272-x.md: no Topic line (required from ADR 0272 on)",
+      "0272-x.md: no Trigger line (required from ADR 0272 on)",
+      "0272-x.md: no Likelihood line (required from ADR 0272 on)",
+    ]);
+  });
+
+  it("rejects a likelihood outside the four levels and n/a", () => {
+    const a = parse("0273", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-11-27",
+      "- Topic: Loans",
+      "- Trigger: a draw after maturity",
+      "- Likelihood: unlikely",
+    ]);
+    expect(a.errors).toEqual([
+      '0273-x.md: Likelihood "unlikely" does not start with routine, plausible, rare, practically never or n/a',
+    ]);
+  });
+
+  it("does not require the new lines before 0272", () => {
+    const a = parse("0271", "x", "X", [
+      "- Status: Accepted",
+      "- Date: 2026-11-27",
+    ]);
+    expect(a.topic).toBe("");
+    expect(a.errors).toEqual([]);
+  });
+
   it("rejects a misspelt key and a header bullet without a colon", () => {
     const a = parse("0130", "x", "X", [
       "- Status: Accepted",
@@ -274,6 +344,7 @@ describe("renderIndex and replaceIndex", () => {
       "- Status: Superseded by 0081",
       "- Date: 2026-09-30",
       "- Source IDs: D-11",
+      "- Topic: Process | repo",
     ]),
     parse("0003", "czech", "Czech practice", [
       "- Status: Accepted",
@@ -290,13 +361,13 @@ describe("renderIndex and replaceIndex", () => {
     ]),
   ];
 
-  it("sorts by number, shows status and amendments, escapes pipes", () => {
+  it("sorts by number, shows topic, status and amendments, escapes pipes", () => {
     expect(renderIndex(adrs).split("\n")).toEqual([
-      "| ADR | Title | Status | IDs |",
-      "| --- | --- | --- | --- |",
-      "| [0003](0003-czech.md) | Czech practice | Accepted · amended by 0081, 0150 | D-03 |",
-      "| [0011](0011-private.md) | Private repo \\| real seed | Superseded by 0081 | D-11 |",
-      "| [0068](0068-branch.md) | No branch protection | Accepted · partly superseded by 0151 · amended by 0081 | D-68 |",
+      "| ADR | Title | Topic | Status | IDs |",
+      "| --- | --- | --- | --- | --- |",
+      "| [0003](0003-czech.md) | Czech practice |  | Accepted · amended by 0081, 0150 | D-03 |",
+      "| [0011](0011-private.md) | Private repo \\| real seed | Process \\| repo | Superseded by 0081 | D-11 |",
+      "| [0068](0068-branch.md) | No branch protection |  | Accepted · partly superseded by 0151 · amended by 0081 | D-68 |",
     ]);
   });
 
