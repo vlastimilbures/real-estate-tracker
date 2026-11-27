@@ -50,7 +50,7 @@ as-of resolver (#264, ADR 0150) and the lifecycle states (#275, ADR 0155) left s
    `default_<field>`; every other field keeps its snake-case name. A test pins every column
    restore can name to `BACKUP_COLUMNS`.
 2. **A whole-number field that is not whole is a value the forms do not accept** (amends 0148
-   §1 and §2). `outOfRangeFields` flags it as well as a value outside the range, so the Data
+   §1 and §2). `rangeProblems` flags it as well as a value outside the range, so the Data
    check lists it and restore asks about it (`OUT_OF_RANGE`, "Must be a whole number from …
    to …", "Restore anyway"). The Data check shows the stored value with every decimal
    (`fmtNumber`): "Size 10 000,4 m² is outside the range …"; a size inside the range reads with
@@ -103,3 +103,6 @@ as-of resolver (#264, ADR 0150) and the lifecycle states (#275, ADR 0155) left s
 - Tests added for the remaining gaps: a refusal before the rules run lists no out-of-range
   value (#260 item 6); a refused file's rows use the error colour; Property detail at a future
   base date and the tiles at a clamped horizon (#265 item 7).
+
+Note (2026-11-27): identifier corrected. The Consequences named `outOfRangeFields`; the
+range check is `rangeProblems` in `src/lib/rules.ts`. Text only; the rule is unchanged.
