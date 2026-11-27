@@ -311,6 +311,14 @@ delegates a run's decisions, recorded on its tracking issue, its ADRs ship as **
 - a new **runtime** dependency, with a written justification (ADR 0002). Dev-only tools are
   fine without one.
 
+A round of layout or styling adjustments that changes no rule, limit, stored data or export
+shares one ADR with numbered items; a change to a rule, limit, rejection, stored data or export
+still gets its own (ADR 0272). From ADR 0272 on, every record has `Topic`, `Trigger` (what the
+user must do to reach the case) and `Likelihood` (routine, plausible, rare or practically
+never; `n/a` for a record that adds no handling) lines. A practically-never case gets a refusal
+with a message, or nothing, never a model of the case. An ADR with three or more amenders is
+not amended again: one superseding record states the rule as it is now.
+
 A copy-only change (the text of existing dictionary entries, except text used as an
 accessible name or a live-region announcement) needs no ADR: the maintainer approves it in the
 PR, a failing test is written first, and it gets a dated entry in
@@ -321,8 +329,9 @@ Dependabot opens grouped weekly updates. Patch and minor upgrades of runtime dep
 pass on green CI; a major runtime upgrade gets the maintainer's review in its PR (ADR 0152).
 
 The ADR index in `docs/adr/README.md` is generated: run `pnpm adr:index` after adding or
-changing an ADR header. `pnpm adr:check` (in CI) fails on a stale index or a one-sided
-Amends / Amended-by link.
+changing an ADR header. `pnpm adr:check` (in CI) fails on a stale index, a one-sided
+Amends / Amended-by link, or a record from 0272 on without its Topic, Trigger and Likelihood
+lines.
 
 Refactors are behaviour-neutral and need no ADR.
 
