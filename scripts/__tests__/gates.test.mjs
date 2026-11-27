@@ -5,8 +5,11 @@ import { describe, expect, it } from "vitest";
 import { MAX_SLACK } from "../check-coverage-ratchet.mjs";
 import {
   CI_SETUP,
+  CI_STEP_IFS,
   GATES,
   LAYOUT_TAG,
+  MENU_CHANGED,
+  MENU_PATHS,
   ciDrift,
   ciSteps,
   command,
@@ -690,6 +693,18 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       "      - name: Every axe shard passed\n        continue-on-error: true\n",
       'job axe does not check `[[ "${{ needs.axe-shard.result }}" == success ]]`',
     ],
+    [
+      "the menu test switched off by its step if",
+      `        if: ${MENU_CHANGED}\n        run: |\n          set -o pipefail`,
+      "        if: false\n        run: |\n          set -o pipefail",
+      'menu-macos: the `cargo test --manifest-path src-tauri/Cargo.toml --test menu_built | tee "$log"` step runs only if `false`',
+    ],
+    [
+      "the menu job skipped at job level, which a required check must never be",
+      `    name: Rust menu on macOS (AppKit pin)\n${DRAFT_IF}`,
+      `    name: Rust menu on macOS (AppKit pin)\n    if: \${{ ${MENU_CHANGED} }}\n`,
+      "job rust-macos runs only if",
+    ],
   ])("fails a weakened job or workflow: %s", (_, from, to, problem) => {
     const problems = ciDrift(weaken(from, to));
     expect(
@@ -697,4 +712,53 @@ describe("ci.yml agrees with the list (read only; #459 owns the workflow)", () =
       problems.join("\n"),
     ).toBe(true);
   });
+});
+
+// The owner, 2026-11-27: the macOS menu job does its work only when the built menu can
+// change, and is a required check, so the job always runs and reports; its steps wait on
+// a path check, and a push to main always runs the test.
+describe("the macOS menu job runs its test only when the menu can change", () => {
+  const ci = read(".github/workflows/ci.yml");
+  const steps = workflowSteps(ci).filter((s) => s.job === "rust-macos");
+  const check = steps.find((s) => s.lines[0] === "paths=(");
+
+  it("pins the paths that can change the built menu", () => {
+    expect(MENU_PATHS).toEqual([
+      ".github/workflows/ci.yml",
+      "rust-toolchain.toml",
+      "src-tauri/Cargo.lock",
+      "src-tauri/Cargo.toml",
+      "src-tauri/src/menu.rs",
+      "src-tauri/tests/menu_built.rs",
+      "src-tauri/tests/menu_built.txt",
+    ]);
+  });
+
+  it("lets only the menu test wait on the path check", () => {
+    expect(MENU_CHANGED).toBe("steps.menu-paths.outputs.changed == 'true'");
+    expect(CI_STEP_IFS["menu-macos"]).toEqual([MENU_CHANGED]);
+    for (const [id, ifs] of Object.entries(CI_STEP_IFS))
+      if (id !== "menu-macos") expect(ifs, id).not.toContain(MENU_CHANGED);
+  });
+
+  it("checks exactly those paths, first, and gates every later step on it", () => {
+    expect(check, "the path check step").toBeDefined();
+    expect(check.keys).toEqual(["name", "id", "env", "run"]);
+    expect(check.if).toBeUndefined();
+    expect(check.env).toEqual({ EVENT: "${{ github.event_name }}" });
+    expect(check.lines.slice(1, MENU_PATHS.length + 2)).toEqual([
+      ...MENU_PATHS,
+      ")",
+    ]);
+    const [checkout, ...rest] = steps;
+    expect(checkout.keys).toEqual(["uses", "with"]);
+    expect(rest[0]).toBe(check);
+    expect(rest.length).toBeGreaterThan(1);
+    for (const s of rest.slice(1)) expect(s.if, s.lines[0]).toBe(MENU_CHANGED);
+    // HEAD^1 of the pull request's merge commit is the base branch.
+    const job = ci.split("\n  rust-macos:\n")[1].split("\n  # ──")[0];
+    expect(job).toContain("        with:\n          fetch-depth: 2\n");
+  });
+
+  // menu-paths.test.mjs runs the check itself.
 });

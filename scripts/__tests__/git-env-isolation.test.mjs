@@ -24,7 +24,10 @@ const VITEST = join(ROOT, "node_modules/vitest/vitest.mjs");
 const SELF = "scripts/__tests__/git-env-isolation.test.mjs";
 // Every test that starts git, or a script that runs git (checked below). Such a suite runs
 // its git, and the scripts it starts, with support/cleanGitEnv.mjs.
-const GIT_SUITES = ["scripts/__tests__/changelog-check.test.mjs"];
+const GIT_SUITES = [
+  "scripts/__tests__/changelog-check.test.mjs",
+  "scripts/__tests__/menu-paths.test.mjs",
+];
 // Tests that import a script that runs git but call only its pure functions: no git runs.
 const PURE_IMPORTS = {
   "scripts/__tests__/size-baseline.test.mjs":
