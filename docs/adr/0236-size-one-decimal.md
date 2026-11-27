@@ -1,6 +1,7 @@
 # 0236. A property's size may have one decimal place
 
 - Status: Accepted
+- Superseded in part by: [0275](0275-data-check-current-rule.md) (decision 3)
 - Date: 2026-11-16
 - Source: issue #455 (code review 2026-11, tracking #435), owner decision 2026-11-16,
   item 1 option A

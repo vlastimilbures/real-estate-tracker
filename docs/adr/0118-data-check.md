@@ -1,6 +1,6 @@
 # 0118. Data check: stale, defaulted and missing inputs
 
-- Status: Accepted
+- Status: Superseded by 0275
 - Date: 2026-10-04
 - Source: issue #35 (pre-release review 2026-10, §6 and F5); independent review of PR #179
 - Amended: 2026-10-04 (#178: the own-cash finding in decisions 4, 5, 7 and 8, decided by
