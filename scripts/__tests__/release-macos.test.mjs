@@ -1,9 +1,18 @@
 // scripts/release-macos.sh (ADR 0009, ADR 0063) read as text: a release build needs macOS,
 // Rust and Xcode tools, so this pins only what docs/release.md promises about it: strict
 // mode, network use only through the steps the doc names (the checks, with their
-// dependency audits, and the build), and each verification step.
+// dependency audits, and the build), and each verification step. The Rust target check
+// also runs for real, against a stub `rustup` on PATH (no git is involved).
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -16,6 +25,46 @@ const code = text
   .split("\n")
   .map((l) => l.trim())
   .filter((l) => l && !l.startsWith("#"));
+
+/** The installed-target check, as the script defines it: an exact line match, no download. */
+const REQUIRE_TARGET =
+  'require_target() { grep -qx "$TARGET" <<<"$(rustup target list --installed)" || fail "Rust target $TARGET is not installed. Run once: rustup target add $TARGET"; }';
+
+/** Runs the script's own `fail` and `require_target` lines with a stub `rustup` that
+ * lists `installed`, in a temp folder that is removed afterwards. */
+function runRequireTarget(installed) {
+  const dir = mkdtempSync(join(tmpdir(), "release-macos-"));
+  try {
+    const list = installed.map((t) => `'${t}'`).join(" ");
+    writeFileSync(
+      join(dir, "rustup"),
+      [
+        "#!/bin/sh",
+        '[ "$*" = "target list --installed" ] || { echo "unexpected: rustup $*" >&2; exit 9; }',
+        `printf '%s\\n' ${list}`,
+        "",
+      ].join("\n"),
+    );
+    chmodSync(join(dir, "rustup"), 0o755);
+    const fns = code.filter(
+      (l) => l.startsWith("fail()") || l.startsWith("require_target()"),
+    );
+    expect(fns).toHaveLength(2);
+    const snippet = [
+      "set -euo pipefail",
+      "TARGET=aarch64-apple-darwin",
+      ...fns,
+      "require_target",
+      "echo ok",
+    ].join("\n");
+    return spawnSync("bash", ["-c", snippet], {
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${dir}:${process.env.PATH ?? ""}` },
+    });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 describe("release-macos.sh", () => {
   it("is valid bash", () => {
@@ -57,10 +106,44 @@ describe("release-macos.sh", () => {
     const network =
       /\b(curl|wget|nc|ssh|scp|rsync|gh|npm|npx|xcrun|notarytool|altool|stapler)\b|\bgit\s+(push|fetch|pull|clone|remote)\b|\bpnpm\s+(install|add|publish|dlx)\b/;
     expect(code.filter((l) => network.test(l))).toEqual([]);
-    // Downloads the Rust target only when it is missing (not in docs/release.md).
-    expect(code.filter((l) => /\brustup\b/.test(l))).toEqual([
-      'rustup target list --installed | grep -qx "$TARGET" || rustup target add "$TARGET"',
+    // rustup only lists the installed targets; it never downloads one (docs/release.md).
+    expect(code.filter((l) => /\brustup\b/.test(l))).toEqual([REQUIRE_TARGET]);
+  });
+
+  it("never runs rustup target add", () => {
+    // Only the failure message names it, inside quotes, for the owner to run.
+    const runs = /(^|[;&|({]\s*)rustup\s+target\s+add\b/;
+    expect(code.filter((l) => runs.test(l))).toEqual([]);
+  });
+
+  it("stops on a missing Rust target before any build step", () => {
+    const defined = code.indexOf(REQUIRE_TARGET);
+    const call = code.indexOf("require_target");
+    const checks = code.indexOf("pnpm check:release");
+    const build = code.findIndex((l) => l.startsWith("pnpm tauri build"));
+    expect(defined).toBeGreaterThan(-1);
+    expect(call).toBeGreaterThan(defined);
+    expect(call).toBeLessThan(checks);
+    expect(call).toBeLessThan(build);
+  });
+
+  it("passes the target check when the target is installed", () => {
+    const r = runRequireTarget(["x86_64-apple-darwin", "aarch64-apple-darwin"]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toBe("ok\n");
+  });
+
+  it("fails the target check, naming the command to run, when it is missing", () => {
+    // A longer name that starts with the target is not a match: the line must equal it.
+    const r = runRequireTarget([
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin-extra",
     ]);
+    expect(r.status).toBe(1);
+    expect(r.stdout).toBe("");
+    expect(r.stderr).toBe(
+      "release: Rust target aarch64-apple-darwin is not installed. Run once: rustup target add aarch64-apple-darwin\n",
+    );
   });
 
   it("signs ad hoc only: no signing identity, no notarisation", () => {
