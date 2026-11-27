@@ -322,7 +322,7 @@ it.
 | [0268](0268-one-chip-shape.md)                                 | One chip shape; the findings count looks the same in the title and in the Data check          | Accepted                                                             | #495, #435                                         |
 | [0269](0269-requests-travel-with-the-visit.md)                 | A page's one-shot request travels with the navigation and ends with the visit                 | Accepted                                                             | #468, #435                                         |
 | [0270](0270-error-codes-from-rust.md)                          | Rust sends an error code with its text; TypeScript matches on the code                        | Accepted                                                             | #463, #435, #664                                   |
-| [0271](0271-backup-errors-translated-by-code.md)               | A backup failure from Rust is shown in the user's language, chosen by its code                | Proposed                                                             | #463, #664                                         |
+| [0271](0271-backup-errors-translated-by-code.md)               | A backup failure from Rust is shown in the user's language, chosen by its code                | Accepted                                                             | #463, #664                                         |
 
 <!-- adr-index:end -->
 
