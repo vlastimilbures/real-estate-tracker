@@ -153,7 +153,8 @@ work still to do is in the [roadmap](roadmap.md).
   ADR 0264 a loan with a term must pay more than its first month's interest. One saved
   before keeps loading: until its next rate reset its balance stays flat and the unpaid
   interest is neither paid nor added to the debt, so the cash flow is too high and the debt
-  too low (#611). The Data check lists it; raise the instalment to fix it.
+  too low (accepted as is, ADR 0275). The Data check lists it; raise the instalment to fix
+  it.
 
 ## Rent and leases
 

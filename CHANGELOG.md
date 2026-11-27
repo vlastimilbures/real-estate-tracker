@@ -13,6 +13,8 @@ None. While this list is not empty, do not tag a release (docs/release.md, check
 feature here when part of it is merged but it must not ship yet, for example schema and
 engine without the form, and remove it when the last part lands.
 
+## [1.6.0] - 2026-11-27
+
 ### Added
 
 - The Properties list has a **totals row** when it lists two or more active properties:
@@ -260,6 +262,8 @@ engine without the form, and remove it when the last part lands.
 
 ### Fixed
 
+- A request a page never handled (⌘N's Add form, a Guide term, a Data check target) no
+  longer fires on a later visit to that page: it ends with the visit (ADR 0269, #468).
 - The Russian line on the read-back error screen that introduces the changes not saved now
   agrees with its plural subject (ADR 0255, #564 review). The English and Czech texts are
   unchanged.
@@ -1393,6 +1397,7 @@ tracker with 30-year nominal/real projections, charts, KPIs, and what-if scenari
 \* _"To the cent" meant within the ±1 Kč parity tolerance (±0.0001 for ratios), not to the
 haléř. Note added 2026-10 (#30)._
 
-[Unreleased]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/vlastimilbures/real-estate-tracker/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/vlastimilbures/real-estate-tracker/releases/tag/v1.4.0
