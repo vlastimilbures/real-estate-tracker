@@ -12,7 +12,12 @@ import sqlWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import type { ExecuteResult, Sql, SqlStatement } from "../data/sql";
 
 export async function openBrowserSql(): Promise<Sql> {
-  const SQL = await initSqlJs({ locateFile: () => sqlWasmUrl });
+  // Standard SQLite maths functions, as in the Tauri and better-sqlite3 builds; no query
+  // here uses either set, and the legacy set is deprecated upstream (sql.js PR 647).
+  const SQL = await initSqlJs({
+    locateFile: () => sqlWasmUrl,
+    useOldExtensionFunctions: false,
+  });
   const db: Database = new SQL.Database();
   db.run("PRAGMA foreign_keys = ON;");
   const sql: Sql = {
