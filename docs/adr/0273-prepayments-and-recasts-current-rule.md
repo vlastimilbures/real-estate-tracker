@@ -1,6 +1,6 @@
 # 0273. Loan prepayments and recasts: the current rule
 
-- Status: Accepted (delegated, owner review pending)
+- Status: Accepted
 - Date: 2026-11-27
 - Source: issue #498 (owner decision 2026-11-27: implement ADR 0272, then one current-rule
   record each for prepayments, sections and the Data check)
@@ -16,6 +16,8 @@
   their fees, and decision 4, the Guide sentence, restated in full; decisions 1 and 3 stand),
   [0235](0235-opening-balance-replayed.md) (decision 1 whole, and the decision 5 sentence on
   interest saved)
+- Amended by: [0278](0278-code-only-rules-in-current-rule-records.md) (decisions 1 to 9:
+  the rules only the code stated)
 - Related: [0024](0024-draw-timing.md) (tranches around baseDate),
   [0027](0027-one-active-block.md) (refinance chains), [0124](0124-pre-purchase-debt-service.md),
   [0138](0138-refinance-handover-edge-cases.md), [0160](0160-csv-import-and-stored-loan-events.md),
