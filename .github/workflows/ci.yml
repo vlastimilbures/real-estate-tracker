@@ -22,7 +22,8 @@ concurrency:
 
 jobs:
   # ── Frontend: TypeScript, lint, formatting, unit tests ────────────────────
-  # Two parallel jobs; the required check "Frontend (…)" below passes only if both pass.
+  # Three parallel jobs; the required check "Frontend (…)" below passes only if all three
+  # pass.
   # The aggregates run unless the run is cancelled: a skipped required check would count as
   # passed, so a failed job must fail them, not skip them.
   frontend-checks:
@@ -98,8 +99,10 @@ jobs:
           fi
           [[ $status == 1 ]]
 
-  frontend-time-zones:
-    name: Frontend tests in other time zones
+  # One job per zone, so the two run in parallel (#459). Dates are UTC by convention; a
+  # non-UTC zone catches local-time leaks.
+  frontend-tz-negative:
+    name: Frontend tests in UTC−11 (full suite)
     if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
 
@@ -109,15 +112,25 @@ jobs:
       - name: Set up pnpm, Node and dependencies
         uses: ./.github/actions/setup
 
-      # Dates are UTC by convention; a non-UTC zone (UTC−11) catches local-time leaks.
       - name: Tests (non-UTC time zone)
         run: pnpm test
         env:
           TZ: Pacific/Pago_Pago
 
-      # A local-versus-UTC day mix-up shows only on the side of midnight where the two days
-      # differ, which depends on the offset's sign: a positive zone (UTC+14) for the layers
-      # that read local time. The engine never does, and runs in UTC above (#119, ADR 0149).
+  # A local-versus-UTC day mix-up shows only on the side of midnight where the two days
+  # differ, which depends on the offset's sign: a positive zone (UTC+14) for the layers
+  # that read local time. The engine never does, and runs in UTC−11 above (#119, ADR 0149).
+  frontend-tz-positive:
+    name: Frontend tests in UTC+14 (UI layers)
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up pnpm, Node and dependencies
+        uses: ./.github/actions/setup
+
       - name: Tests (positive time zone, UI layers)
         run: pnpm vitest run src/lib src/ui src/state
         env:
@@ -125,7 +138,7 @@ jobs:
 
   frontend:
     name: Frontend (typecheck · lint · format · test)
-    needs: [frontend-checks, frontend-time-zones]
+    needs: [frontend-checks, frontend-tz-negative, frontend-tz-positive]
     if: >-
       !cancelled() &&
       (github.event_name == 'push' || !github.event.pull_request.draft)
@@ -134,23 +147,25 @@ jobs:
       - name: The frontend jobs passed
         run: |
           [[ "${{ needs.frontend-checks.result }}" == success ]]
-          [[ "${{ needs.frontend-time-zones.result }}" == success ]]
+          [[ "${{ needs.frontend-tz-negative.result }}" == success ]]
+          [[ "${{ needs.frontend-tz-positive.result }}" == success ]]
 
   # ── UI captures and axe: every captured screen (ADR 0078, ADR 0158) ──
   # Runs the ux:capture harness on the in-memory sample portfolio (no real data) and fails
   # on any axe WCAG 2.2 AA violation, or on a layout screen in Czech or Russian with a
   # string clipped or covered. Screenshots are a by-product.
-  # Split into 4 parallel shards (one shard on 2 workers took 20 min); the required check
-  # "UI captures and axe" below (ADR 0249) passes only if every shard passes.
+  # Split into 6 parallel shards (one shard on 2 workers took 20 min, four up to 7 min,
+  # #459); the required check "UI captures and axe" below (ADR 0249) passes only if every
+  # shard passes.
   axe-shard:
-    name: Axe shard ${{ matrix.shard }}/4
+    name: Axe shard ${{ matrix.shard }}/6
     if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -184,7 +199,7 @@ jobs:
 
       # English, light + dark, default and minimum window (owner, ADR 0078).
       - name: Capture screens with axe scans
-        run: pnpm ux:capture --shard ${{ matrix.shard }}/4
+        run: pnpm ux:capture --shard ${{ matrix.shard }}/6
         env:
           UX_RUN_ID: ci
           UX_LANG: en
@@ -198,7 +213,7 @@ jobs:
       # assert nothing is clipped or covered (ADR 0158). They carry the @layout-i18n tag
       # (ux-capture/layoutScreens.ts); a renamed one fails the run (#496).
       - name: Capture layout screens in Czech and Russian
-        run: pnpm ux:capture --shard ${{ matrix.shard }}/4 --grep @layout-i18n
+        run: pnpm ux:capture --shard ${{ matrix.shard }}/6 --grep @layout-i18n
         env:
           UX_RUN_ID: ci-i18n
           UX_LANG: cs,ru

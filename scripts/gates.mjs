@@ -220,10 +220,10 @@ export const GATES = [
     what: "axe scan of every captured screen: English, light and dark, two window sizes (ADR 0078)",
     where: "ci",
     ci: [
-      { run: "pnpm ux:capture --shard ${{ matrix.shard }}/4", env: AXE_EN },
+      { run: "pnpm ux:capture --shard ${{ matrix.shard }}/6", env: AXE_EN },
       { run: "pnpm ux:axe-check ci" },
     ],
-    why: "slow (four CI shards); run it after UI work",
+    why: "slow (six CI shards); run it after UI work",
     readme:
       "axe scan of every screen: English, light and dark, two window sizes",
   },
@@ -235,12 +235,12 @@ export const GATES = [
     where: "ci",
     ci: [
       {
-        run: `pnpm ux:capture --shard \${{ matrix.shard }}/4 --grep ${LAYOUT_TAG}`,
+        run: `pnpm ux:capture --shard \${{ matrix.shard }}/6 --grep ${LAYOUT_TAG}`,
         env: AXE_I18N,
       },
       { run: "pnpm ux:axe-check ci-i18n" },
     ],
-    why: "slow (four CI shards); run it after UI work",
+    why: "slow (six CI shards); run it after UI work",
     readme: "The layout screens in Czech and Russian, three window sizes",
   },
   {
