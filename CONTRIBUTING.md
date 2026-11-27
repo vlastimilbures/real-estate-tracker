@@ -52,7 +52,7 @@ test on a macOS runner, because the Linux run skips it.
 | `pnpm knip:prod`                                                                 | the shipped app only: an export only tests use is dead                                                            |
 | `pnpm adr:check`                                                                 | the ADR index is current, Amends / Supersedes links paired                                                        |
 | `pnpm test:coverage`                                                             | full suite + per-folder coverage floors (includes test:parity)                                                    |
-| `pnpm coverage:ratchet`                                                          | no floor more than 3 points below measured                                                                        |
+| `pnpm coverage:ratchet`                                                          | no folder's measured coverage below its floor                                                                     |
 | `cargo fmt --check --manifest-path src-tauri/Cargo.toml`                         | Rust formatting                                                                                                   |
 | `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` | Rust lints, warnings are errors                                                                                   |
 | `cargo test --manifest-path src-tauri/Cargo.toml`                                | Rust integration tests                                                                                            |
@@ -129,11 +129,17 @@ still describe it. Which document owns what is listed in
   `CONTRIBUTING.md`, `SPEC.md`, `docs/**/*.md` and `ux-capture/README.md`. The
   append-only history keeps its ids: the ADRs (`docs/adr`), `docs/decisions/wording.md`,
   the review records in `docs/reviews` and `CHANGELOG.md`.
-- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches). Never
-  lower one to pass. CI runs `pnpm coverage:ratchet` after `pnpm test:coverage` and fails when
-  a floor sits more than the slack (`MAX_SLACK` in `scripts/check-coverage-ratchet.mjs`, 3
-  points) below measured. Raise it then, to measured minus 1-2 points of headroom, so the
-  next small dip in coverage does not fail the floor.
+- **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches), the one
+  place Vitest and `scripts/check-coverage-ratchet.mjs` read them from. Never lower one to
+  pass. On a PR, `pnpm test:coverage` and `pnpm coverage:ratchet` fail only when a folder's
+  coverage drops below its floor (or a floor's glob matches no file); a PR that raises
+  coverage passes as it is (#499). The nightly run on main (`pnpm coverage:ratchet --raise`)
+  lists every floor more than the slack (`MAX_SLACK`, 3 points) below measured in one open
+  issue labelled `coverage-floors`, with each new value and the whole new file; it replaces
+  that issue's body on each run and closes it once nothing is left to raise. A new floor is
+  measured minus the headroom (`headroom()`: 2 points under `src/ui`, where new code lands
+  less covered, 1 elsewhere), rounded down, so the next small dip does not fail it. Raise
+  the floors from that issue in a PR of their own.
 - **Test refactors** (#458) prove that no test was dropped or weakened. Run the suite in
   each checkout (base and head), then compare from the head:
 

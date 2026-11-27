@@ -78,9 +78,9 @@ jobs:
       - name: Test with coverage thresholds
         run: pnpm test:coverage
 
-      # A floor more than MAX_SLACK points below measured must be raised
-      # (scripts/check-coverage-ratchet.mjs, #141).
-      - name: Coverage floors keep up
+      # Fails only on a broken floor or a floor whose glob matches nothing; the nightly run
+      # lists the floors to raise (scripts/check-coverage-ratchet.mjs, #499).
+      - name: Coverage floors hold
         run: pnpm coverage:ratchet
 
       # Only the production build exercises Rolldown chunking, `?url` asset imports and the
