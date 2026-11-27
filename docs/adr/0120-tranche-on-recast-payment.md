@@ -1,6 +1,6 @@
 # 0120. A tranche on an instalment recast's payment
 
-- Status: Accepted
+- Status: Superseded by 0273
 - Date: 2026-10-04
 - Source: issue #109 (2026-10 code review, finding R1-01)
 - Amends: [0109](0109-loan-prepayments-and-recasts.md) §6, [0024](0024-draw-timing.md) (a tranche on an agreed instalment's payment)

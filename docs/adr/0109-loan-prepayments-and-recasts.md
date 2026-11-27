@@ -1,6 +1,6 @@
 # 0109. Loan prepayments and recasts
 
-- Status: Accepted
+- Status: Superseded by 0273
 - Date: 2026-10-03
 - Source: issue #32 (pre-release review 2026-10, F3); design `docs/design/czech-mortgage-extensions.md` §1 (D-04)
 - Amends: [0004](0004-czech-features-design-notes-only.md) (prepayments are built)
