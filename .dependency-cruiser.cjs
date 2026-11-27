@@ -1,10 +1,10 @@
 // Architecture rules as code: the layer map in docs/adr/0072, amended by 0171 (first
-// written in P10 from ADR 0072, CLAUDE.md §3–§4). This file is the full map and runs in CI
+// written from ADR 0072, CLAUDE.md §3–§4). This file is the full map and runs in CI
 // (`pnpm depcruise`). The engine's layer list is shared with ESLint's engine import hint
 // (scripts/engine-layers.cjs): ESLint also lints the engine tests and bans a direct
 // decimal.js import; this file bans every npm package but decimal.js.
 //
-// .dependency-cruiser-known-violations.json is empty since P12 (ADR 0072). A new violation
+// .dependency-cruiser-known-violations.json is empty (ADR 0072). A new violation
 // fails CI; `pnpm depcruise:baseline-check` fails a PR whose baseline grows. Never grow it
 // to get a PR green.
 
@@ -137,7 +137,7 @@ module.exports = {
       name: "data-no-ui-lib",
       severity: "error",
       comment:
-        "data may use the decimal/finance lib, not the clock, display or file-save helpers (DR-046 zones); the store injects them (ADR 0072).",
+        "data may use the decimal/finance lib, not the clock, display or file-save helpers; the store injects them (ADR 0072).",
       from: { path: "^src/data/", pathNot: TESTS },
       to: {
         path: "^src/lib/(day|format)\\.ts$|^src/platform/saveFile\\.ts$",
@@ -206,7 +206,7 @@ module.exports = {
       name: "i18n-dictionaries-lazy",
       severity: "error",
       comment:
-        "Dictionaries load on demand through src/i18n/index.ts (DR-009): a value import elsewhere would put one back in the startup bundle.",
+        "Dictionaries load on demand through src/i18n/index.ts (ADR 0066): a value import elsewhere would put one back in the startup bundle.",
       from: { path: "^src/", pathNot: [TESTS, "^src/i18n/"] },
       to: {
         path: "^src/i18n/(en|cs|ru)\\.ts$",
@@ -226,7 +226,7 @@ module.exports = {
       name: "no-prod-to-dev-deps",
       severity: "error",
       comment:
-        "Shipped code may not import devDependencies (DR-011/DR-153): it hides runtime packages from `pnpm audit --prod`.",
+        "Shipped code may not import devDependencies (ADR 0068): it hides runtime packages from `pnpm audit --prod`.",
       from: { path: "^src/", pathNot: `${TESTS}|^src/e2e/browserSql\\.ts$` },
       to: { dependencyTypes: ["npm-dev"], dependencyTypesNot: ["type-only"] },
     },

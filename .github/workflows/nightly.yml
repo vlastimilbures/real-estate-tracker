@@ -4,7 +4,7 @@ name: Nightly (bench budgets, property runs; weekly mutation testing)
 # the weekly one (Sunday 03:47 UTC, its own minute) runs mutation testing only. A manual
 # run runs every job.
 #
-# Stryker on src/engine (J-09 → D-26, D-68), sharded (ADR 0239): seven matrix legs each
+# Stryker on src/engine (ADR 0026, ADR 0068), sharded (ADR 0239): seven matrix legs each
 # mutate part of the engine (scripts/mutation-shards.mjs) and report their own score; the
 # mutation-score job merges them and fails when the combined score drops below
 # thresholds.break in stryker.config.json, or a leg's report is missing. The bench job fails

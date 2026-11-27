@@ -1,4 +1,4 @@
-// The columns of the four CSV files (#482), one entry each, in template order. The parser
+// The columns of the four CSV files, one entry each, in template order. The parser
 // (csv.ts), the templates and the docs-columns test read them. Pure data: no IO.
 import { INT_RANGES, type IntRange } from "../lib/rules";
 

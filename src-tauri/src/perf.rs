@@ -1,4 +1,4 @@
-//! Startup and interaction timings (P9, D-66; ADR 0233). The webview reports a named mark
+//! Startup and interaction timings (ADR 0066, ADR 0233). The webview reports a named mark
 //! (and optionally a measured duration); this prints one line to stderr with the time
 //! since the app process started `run()`. Nothing is written to disk or sent anywhere: the
 //! line is visible only when the app binary is started from a terminal.

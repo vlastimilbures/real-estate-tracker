@@ -34,8 +34,8 @@ import {
   portfolio as seed,
 } from "./support/seed";
 import { devBlock, mixed } from "./support/mixed";
-import { mixedCashOutside, mixedWithRefi } from "./support/synthetic";
-import { withEvents } from "./support/events";
+import { mixedCashOutside } from "./support/synthetic";
+import { eventsWithRefi } from "./support/events";
 import { money } from "../brands";
 import { currentBalance } from "./support/closedForm";
 import { mortgageBlock } from "../loanBlock";
@@ -471,26 +471,6 @@ function fullRunV2(portfolio: Portfolio, a: Assumptions) {
     ),
   };
 }
-
-/** The loan events of ADR 0109 on the refinance fixture, plus Dubová's second recast
- *  in the instalment form (both recast forms run). */
-const eventsWithRefi: Portfolio = (() => {
-  const p = withEvents(mixedWithRefi);
-  return {
-    ...p,
-    mortgages: p.mortgages.map((m) =>
-      m.id === "m-dubova"
-        ? {
-            ...m,
-            recasts: [
-              ...(m.recasts ?? []),
-              { date: edate(m.startDate, 180), instalment: money("25000") },
-            ],
-          }
-        : m,
-    ),
-  };
-})();
 
 describe("golden master v2 (every field, per field; ADR 0174)", () => {
   it("the event fixture is not vacuous", () => {

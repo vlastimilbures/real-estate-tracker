@@ -1,7 +1,7 @@
 # UX capture
 
 Screenshots of every screen and state, plus an axe WCAG 2.2 AA scan of each one. Use it
-for UX reviews and for before/after evidence of UI changes. CI runs it too (four
+for UX reviews and for before/after evidence of UI changes. CI runs it too (six
 `axe-shard` jobs, gathered by the job `axe`: English, light + dark, 1280×800 + `min`; plus
 the layout screens in Czech and Russian, light, 1280×800, 1200×800 + `min`, ADR 0158) and
 fails on any axe violation or layout assertion (ADR 0078). On CI a failed screen is
@@ -74,8 +74,8 @@ every variant (#536: 22-property-mortgage-add-errors; 64b-settings-backup-refuse
 82-load-sample-loaded at `min`). Such a scene clicks with `clickInPlace()` (helpers.ts),
 which neither scrolls nor moves the pointer.
 
-PNG hashes cannot prove a no-op (DR-147). The capture emulates "Reduce motion" (charts
-skip their entry animation), turns CSS transitions off (DR-160), parks the mouse pointer
+PNG hashes cannot prove a no-op. The capture emulates "Reduce motion" (charts
+skip their entry animation), turns CSS transitions off, parks the mouse pointer
 at the window's top-left corner (the sidebar's padding, where nothing reacts to a hover)
 and waits until animations stop and the charts' SVG is stable before each shot. A scene
 that hovers or focuses on purpose for a tooltip passes `keepPointer: true` to

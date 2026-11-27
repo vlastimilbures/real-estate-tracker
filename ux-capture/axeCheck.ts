@@ -1,4 +1,4 @@
-// CI gate on the capture's axe scans (F-08, UX-077): print every violation and exit 1 if
+// CI gate on the capture's axe scans (ADR 0078): print every violation and exit 1 if
 // there is any. The capture itself only records them; this decides. Node built-ins only.
 //
 //   pnpm ux:axe-check <run>        # folder under ux-screens/, or an absolute path

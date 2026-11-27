@@ -1,0 +1,205 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden summary (rounded to the parity tolerances) > cash-outside prepayment on a future buy 1`] = `
+"KPIs
+net worth (nominal)              143 010 814
+net worth (real)                 68 179 360
+net-worth multiple               5.9060
+net-worth multiple (real)        2.8156
+CAGR (nominal)                   0.0610
+CAGR (real)                      0.0351
+cumulative cash to owner         15 538 766
+cumulative cash to owner (real)  7 131 644
+first year cash flow positive    2036
+debt-free year                   2056
+levered IRR (nominal)            0.0630
+levered IRR (real)               0.0371
+total principal repaid           18 424 759
+total interest                   11 049 647
+total interest (real)            8 776 155
+years
+2026 y0  | value  38 230 000 | debt 11 515 405 | equity  24 214 595 | NOI         0 | debt service         0 | net CF          0 | to owner          0 | DSCR    n/a
+2027 y1  | value  39 759 200 | debt 12 698 937 | equity  26 060 263 | NOI   594 018 | debt service   787 259 | net CF   -193 242 | to owner   -481 242 | DSCR 0.7545
+2028 y2  | value  47 690 885 | debt 17 236 137 | equity  30 454 747 | NOI   831 857 | debt service 1 207 042 | net CF   -375 186 | to owner -2 212 581 | DSCR 0.6892
+2029 y3  | value  49 598 520 | debt 16 698 123 | equity  32 900 397 | NOI 1 044 945 | debt service 1 236 617 | net CF   -191 671 | to owner   -191 671 | DSCR 0.8450
+2030 y4  | value  51 582 461 | debt 15 846 898 | equity  35 735 563 | NOI 1 076 816 | debt service 1 255 302 | net CF   -178 486 | to owner   -481 486 | DSCR 0.8578
+2031 y5  | value  53 645 759 | debt 15 508 503 | equity  38 137 257 | NOI 1 109 655 | debt service 1 266 267 | net CF   -156 612 | to owner     90 138 | DSCR 0.8763
+2032 y6  | value  55 791 590 | debt 14 899 905 | equity  40 891 684 | NOI 1 143 493 | debt service 1 284 490 | net CF   -140 998 | to owner   -140 998 | DSCR 0.8902
+2033 y7  | value  58 023 253 | debt 14 263 696 | equity  43 759 558 | NOI 1 178 359 | debt service 1 284 490 | net CF   -106 131 | to owner   -106 131 | DSCR 0.9174
+2034 y8  | value  60 344 183 | debt 13 598 619 | equity  46 745 564 | NOI 1 214 286 | debt service 1 284 490 | net CF    -70 204 | to owner    -70 204 | DSCR 0.9453
+2035 y9  | value  62 757 951 | debt 12 903 364 | equity  49 854 587 | NOI 1 251 305 | debt service 1 284 490 | net CF    -33 186 | to owner    -33 186 | DSCR 0.9742
+2036 y10 | value  65 268 269 | debt 12 177 701 | equity  53 090 568 | NOI 1 289 449 | debt service 1 286 010 | net CF      3 439 | to owner      3 439 | DSCR 1.0027
+2037 y11 | value  67 878 999 | debt 11 421 171 | equity  56 457 828 | NOI 1 328 753 | debt service 1 289 049 | net CF     39 703 | to owner     39 703 | DSCR 1.0308
+2038 y12 | value  70 594 159 | debt 10 629 887 | equity  59 964 272 | NOI 1 369 251 | debt service 1 289 049 | net CF     80 202 | to owner     80 202 | DSCR 1.0622
+2039 y13 | value  73 417 926 | debt  9 802 251 | equity  63 615 675 | NOI 1 410 980 | debt service 1 289 049 | net CF    121 931 | to owner    121 931 | DSCR 1.0946
+2040 y14 | value  76 354 643 | debt  8 936 594 | equity  67 418 049 | NOI 1 453 977 | debt service 1 289 049 | net CF    164 928 | to owner    164 928 | DSCR 1.1279
+2041 y15 | value  79 408 829 | debt  8 139 187 | equity  71 269 641 | NOI 1 498 281 | debt service 1 181 837 | net CF    316 444 | to owner    316 444 | DSCR 1.2678
+2042 y16 | value  82 585 182 | debt  7 459 812 | equity  75 125 370 | NOI 1 543 932 | debt service 1 031 740 | net CF    512 191 | to owner    512 191 | DSCR 1.4964
+2043 y17 | value  85 888 589 | debt  6 749 226 | equity  79 139 363 | NOI 1 590 969 | debt service 1 031 740 | net CF    559 228 | to owner    559 228 | DSCR 1.5420
+2044 y18 | value  89 324 133 | debt  6 005 996 | equity  83 318 137 | NOI 1 639 435 | debt service 1 031 740 | net CF    607 694 | to owner    607 694 | DSCR 1.5890
+2045 y19 | value  92 897 098 | debt  5 228 622 | equity  87 668 476 | NOI 1 689 374 | debt service 1 031 740 | net CF    657 633 | to owner    657 633 | DSCR 1.6374
+2046 y20 | value  96 612 982 | debt  4 415 535 | equity  92 197 446 | NOI 1 740 829 | debt service 1 031 740 | net CF    709 089 | to owner    709 089 | DSCR 1.6873
+2047 y21 | value 100 477 501 | debt  3 813 823 | equity  96 663 678 | NOI 1 793 848 | debt service   787 182 | net CF  1 006 666 | to owner  1 006 666 | DSCR 2.2788
+2048 y22 | value 104 496 601 | debt  3 235 340 | equity 101 261 261 | NOI 1 848 477 | debt service   738 270 | net CF  1 110 207 | to owner  1 110 207 | DSCR 2.5038
+2049 y23 | value 108 676 465 | debt  2 630 281 | equity 106 046 184 | NOI 1 904 766 | debt service   738 270 | net CF  1 166 495 | to owner  1 166 495 | DSCR 2.5800
+2050 y24 | value 113 023 524 | debt  1 997 427 | equity 111 026 097 | NOI 1 962 764 | debt service   738 270 | net CF  1 224 493 | to owner  1 224 493 | DSCR 2.6586
+2051 y25 | value 117 544 465 | debt  1 366 153 | equity 116 178 311 | NOI 2 022 523 | debt service   707 731 | net CF  1 314 792 | to owner  1 314 792 | DSCR 2.8578
+2052 y26 | value 122 246 243 | debt    968 929 | equity 121 277 314 | NOI 2 084 097 | debt service   448 695 | net CF  1 635 402 | to owner  1 635 402 | DSCR 4.6448
+2053 y27 | value 127 136 093 | debt    726 289 | equity 126 409 804 | NOI 2 147 541 | debt service   281 278 | net CF  1 866 263 | to owner  1 866 263 | DSCR 7.6349
+2054 y28 | value 132 221 537 | debt    472 502 | equity 131 749 034 | NOI 2 212 910 | debt service   281 278 | net CF  1 931 633 | to owner  1 931 633 | DSCR 7.8673
+2055 y29 | value 137 510 398 | debt    207 057 | equity 137 303 341 | NOI 2 280 265 | debt service   281 278 | net CF  1 998 987 | to owner  1 998 987 | DSCR 8.1068
+2056 y30 | value 143 010 814 | debt          0 | equity 143 010 814 | NOI 2 349 665 | debt service   210 958 | net CF  2 138 706 | to owner  2 138 706 | DSCR 11.1380"
+`;
+
+exports[`golden summary (rounded to the parity tolerances) > events with a refinance 1`] = `
+"KPIs
+net worth (nominal)              143 010 814
+net worth (real)                 68 179 360
+net-worth multiple               5.8695
+net-worth multiple (real)        2.7982
+CAGR (nominal)                   0.0608
+CAGR (real)                      0.0349
+cumulative cash to owner         16 673 542
+cumulative cash to owner (real)  7 768 609
+first year cash flow positive    2035
+debt-free year                   2056
+levered IRR (nominal)            0.0633
+levered IRR (real)               0.0373
+total principal repaid           18 565 734
+total interest                   10 056 507
+total interest (real)            8 038 960
+years
+2026 y0  | value  38 230 000 | debt 11 364 770 | equity  24 365 230 | NOI         0 | debt service         0 | net CF          0 | to owner          0 | DSCR    n/a
+2027 y1  | value  39 759 200 | debt 12 394 387 | equity  26 364 813 | NOI   594 018 | debt service   787 259 | net CF   -193 242 | to owner   -343 242 | DSCR 0.7545
+2028 y2  | value  47 690 885 | debt 17 177 907 | equity  30 512 978 | NOI   831 857 | debt service   967 042 | net CF   -135 186 | to owner -1 935 186 | DSCR 0.8602
+2029 y3  | value  49 598 520 | debt 16 392 899 | equity  33 205 621 | NOI 1 044 945 | debt service 1 234 655 | net CF   -189 709 | to owner   -441 709 | DSCR 0.8463
+2030 y4  | value  51 582 461 | debt 15 743 580 | equity  35 838 881 | NOI 1 076 816 | debt service 1 246 002 | net CF   -169 186 | to owner   -271 186 | DSCR 0.8642
+2031 y5  | value  53 645 759 | debt 15 522 032 | equity  38 123 727 | NOI 1 109 655 | debt service 1 251 755 | net CF   -142 100 | to owner    208 864 | DSCR 0.8865
+2032 y6  | value  55 791 590 | debt 14 804 023 | equity  40 987 567 | NOI 1 143 493 | debt service 1 282 851 | net CF   -139 358 | to owner   -241 358 | DSCR 0.8914
+2033 y7  | value  58 023 253 | debt 13 978 882 | equity  44 044 371 | NOI 1 178 359 | debt service 1 308 637 | net CF   -130 278 | to owner   -280 278 | DSCR 0.9004
+2034 y8  | value  60 344 183 | debt 13 182 378 | equity  47 161 806 | NOI 1 214 286 | debt service 1 301 474 | net CF    -87 188 | to owner   -189 188 | DSCR 0.9330
+2035 y9  | value  62 757 951 | debt 12 580 204 | equity  50 177 747 | NOI 1 251 305 | debt service 1 174 582 | net CF     76 723 | to owner     76 723 | DSCR 1.0653
+2036 y10 | value  65 268 269 | debt 11 693 721 | equity  53 574 547 | NOI 1 289 449 | debt service 1 182 197 | net CF    107 252 | to owner   -144 748 | DSCR 1.0907
+2037 y11 | value  67 878 999 | debt 10 994 996 | equity  56 884 003 | NOI 1 328 753 | debt service 1 210 648 | net CF    118 104 | to owner    118 104 | DSCR 1.0976
+2038 y12 | value  70 594 159 | debt 10 268 286 | equity  60 325 874 | NOI 1 369 251 | debt service 1 206 534 | net CF    162 717 | to owner    162 717 | DSCR 1.1349
+2039 y13 | value  73 417 926 | debt  9 425 188 | equity  63 992 737 | NOI 1 410 980 | debt service 1 189 391 | net CF    221 589 | to owner    119 589 | DSCR 1.1863
+2040 y14 | value  76 354 643 | debt  8 493 779 | equity  67 860 864 | NOI 1 453 977 | debt service 1 336 488 | net CF    117 489 | to owner    117 489 | DSCR 1.0879
+2041 y15 | value  79 408 829 | debt  7 530 472 | equity  71 878 357 | NOI 1 498 281 | debt service 1 325 638 | net CF    172 643 | to owner    172 643 | DSCR 1.1302
+2042 y16 | value  82 585 182 | debt  6 556 327 | equity  76 028 855 | NOI 1 543 932 | debt service 1 293 087 | net CF    250 844 | to owner    250 844 | DSCR 1.1940
+2043 y17 | value  85 888 589 | debt  5 826 539 | equity  80 062 050 | NOI 1 590 969 | debt service 1 009 552 | net CF    581 417 | to owner    581 417 | DSCR 1.5759
+2044 y18 | value  89 324 133 | debt  5 080 381 | equity  84 243 752 | NOI 1 639 435 | debt service   993 087 | net CF    646 348 | to owner    646 348 | DSCR 1.6508
+2045 y19 | value  92 897 098 | debt  4 299 944 | equity  88 597 153 | NOI 1 689 374 | debt service   993 087 | net CF    696 286 | to owner    696 286 | DSCR 1.7011
+2046 y20 | value  96 612 982 | debt  3 483 655 | equity  93 129 327 | NOI 1 740 829 | debt service   993 087 | net CF    747 742 | to owner    747 742 | DSCR 1.7529
+2047 y21 | value 100 477 501 | debt  2 756 587 | equity  97 720 914 | NOI 1 793 848 | debt service   867 076 | net CF    926 772 | to owner    926 772 | DSCR 2.0688
+2048 y22 | value 104 496 601 | debt  2 255 325 | equity 102 241 276 | NOI 1 848 477 | debt service   615 054 | net CF  1 233 423 | to owner  1 233 423 | DSCR 3.0054
+2049 y23 | value 108 676 465 | debt  1 731 035 | equity 106 945 431 | NOI 1 904 766 | debt service   615 054 | net CF  1 289 712 | to owner  1 289 712 | DSCR 3.0969
+2050 y24 | value 113 023 524 | debt  1 182 659 | equity 111 840 865 | NOI 1 962 764 | debt service   615 054 | net CF  1 347 710 | to owner  1 347 710 | DSCR 3.1912
+2051 y25 | value 117 544 465 | debt    688 074 | equity 116 856 390 | NOI 2 022 523 | debt service   536 365 | net CF  1 486 158 | to owner  1 486 158 | DSCR 3.7708
+2052 y26 | value 122 246 243 | debt    413 113 | equity 121 833 130 | NOI 2 084 097 | debt service   300 300 | net CF  1 783 797 | to owner  1 783 797 | DSCR 6.9401
+2053 y27 | value 127 136 093 | debt    164 700 | equity 126 971 393 | NOI 2 147 541 | debt service   261 193 | net CF  1 886 348 | to owner  1 886 348 | DSCR 8.2221
+2054 y28 | value 132 221 537 | debt    105 237 | equity 132 116 300 | NOI 2 212 910 | debt service    65 658 | net CF  2 147 253 | to owner  2 147 253 | DSCR 33.7036
+2055 y29 | value 137 510 398 | debt     43 042 | equity 137 467 356 | NOI 2 280 265 | debt service    65 658 | net CF  2 214 607 | to owner  2 214 607 | DSCR 34.7294
+2056 y30 | value 143 010 814 | debt          0 | equity 143 010 814 | NOI 2 349 665 | debt service    43 772 | net CF  2 305 893 | to owner  2 305 893 | DSCR 53.6796"
+`;
+
+exports[`golden summary (rounded to the parity tolerances) > mixed fixture 1`] = `
+"KPIs
+net worth (nominal)              143 010 814
+net worth (real)                 68 179 360
+net-worth multiple               5.9060
+net-worth multiple (real)        2.8156
+CAGR (nominal)                   0.0610
+CAGR (real)                      0.0351
+cumulative cash to owner         15 201 054
+cumulative cash to owner (real)  7 229 174
+first year cash flow positive    2036
+debt-free year                   2056
+levered IRR (nominal)            0.0636
+levered IRR (real)               0.0376
+total principal repaid           18 215 405
+total interest                   11 390 359
+total interest (real)            8 931 078
+years
+2026 y0  | value  38 230 000 | debt 11 515 405 | equity  24 214 595 | NOI         0 | debt service         0 | net CF          0 | to owner          0 | DSCR    n/a
+2027 y1  | value  39 759 200 | debt 12 698 937 | equity  26 060 263 | NOI   594 018 | debt service   787 259 | net CF   -193 242 | to owner   -193 242 | DSCR 0.7545
+2028 y2  | value  47 690 885 | debt 17 490 590 | equity  30 200 294 | NOI   831 857 | debt service   967 042 | net CF   -135 186 | to owner -1 935 186 | DSCR 0.8602
+2029 y3  | value  49 598 520 | debt 16 963 471 | equity  32 635 049 | NOI 1 044 945 | debt service 1 236 617 | net CF   -191 671 | to owner   -191 671 | DSCR 0.8450
+2030 y4  | value  51 582 461 | debt 16 424 658 | equity  35 157 803 | NOI 1 076 816 | debt service 1 255 302 | net CF   -178 486 | to owner   -178 486 | DSCR 0.8578
+2031 y5  | value  53 645 759 | debt 15 866 862 | equity  37 778 897 | NOI 1 109 655 | debt service 1 259 970 | net CF   -150 315 | to owner   -150 315 | DSCR 0.8807
+2032 y6  | value  55 791 590 | debt 15 292 225 | equity  40 499 365 | NOI 1 143 493 | debt service 1 265 598 | net CF   -122 105 | to owner   -122 105 | DSCR 0.9035
+2033 y7  | value  58 023 253 | debt 14 692 360 | equity  43 330 893 | NOI 1 178 359 | debt service 1 266 621 | net CF    -88 262 | to owner    -88 262 | DSCR 0.9303
+2034 y8  | value  60 344 183 | debt 14 069 029 | equity  46 275 154 | NOI 1 214 286 | debt service 1 271 735 | net CF    -57 449 | to owner    -57 449 | DSCR 0.9548
+2035 y9  | value  62 757 951 | debt 13 417 062 | equity  49 340 888 | NOI 1 251 305 | debt service 1 271 735 | net CF    -20 431 | to owner    -20 431 | DSCR 0.9839
+2036 y10 | value  65 268 269 | debt 12 735 144 | equity  52 533 125 | NOI 1 289 449 | debt service 1 271 735 | net CF     17 714 | to owner     17 714 | DSCR 1.0139
+2037 y11 | value  67 878 999 | debt 12 021 899 | equity  55 857 101 | NOI 1 328 753 | debt service 1 271 735 | net CF     57 017 | to owner     57 017 | DSCR 1.0448
+2038 y12 | value  70 594 159 | debt 11 275 887 | equity  59 318 272 | NOI 1 369 251 | debt service 1 271 735 | net CF     97 516 | to owner     97 516 | DSCR 1.0767
+2039 y13 | value  73 417 926 | debt 10 495 604 | equity  62 922 322 | NOI 1 410 980 | debt service 1 271 735 | net CF    139 245 | to owner    139 245 | DSCR 1.1095
+2040 y14 | value  76 354 643 | debt  9 679 474 | equity  66 675 168 | NOI 1 453 977 | debt service 1 271 735 | net CF    182 242 | to owner    182 242 | DSCR 1.1433
+2041 y15 | value  79 408 829 | debt  8 933 871 | equity  70 474 957 | NOI 1 498 281 | debt service 1 164 523 | net CF    333 758 | to owner    333 758 | DSCR 1.2866
+2042 y16 | value  82 585 182 | debt  8 308 679 | equity  74 276 503 | NOI 1 543 932 | debt service 1 014 427 | net CF    529 505 | to owner    529 505 | DSCR 1.5220
+2043 y17 | value  85 888 589 | debt  7 654 765 | equity  78 233 824 | NOI 1 590 969 | debt service 1 014 427 | net CF    576 542 | to owner    576 542 | DSCR 1.5683
+2044 y18 | value  89 324 133 | debt  6 970 811 | equity  82 353 322 | NOI 1 639 435 | debt service 1 014 427 | net CF    625 008 | to owner    625 008 | DSCR 1.6161
+2045 y19 | value  92 897 098 | debt  6 255 436 | equity  86 641 662 | NOI 1 689 374 | debt service 1 014 427 | net CF    674 947 | to owner    674 947 | DSCR 1.6653
+2046 y20 | value  96 612 982 | debt  5 507 196 | equity  91 105 785 | NOI 1 740 829 | debt service 1 014 427 | net CF    726 403 | to owner    726 403 | DSCR 1.7161
+2047 y21 | value 100 477 501 | debt  4 724 583 | equity  95 752 918 | NOI 1 793 848 | debt service 1 014 427 | net CF    779 422 | to owner    779 422 | DSCR 1.7683
+2048 y22 | value 104 496 601 | debt  3 906 017 | equity 100 590 585 | NOI 1 848 477 | debt service 1 014 427 | net CF    834 051 | to owner    834 051 | DSCR 1.8222
+2049 y23 | value 108 676 465 | debt  3 049 845 | equity 105 626 620 | NOI 1 904 766 | debt service 1 014 427 | net CF    890 339 | to owner    890 339 | DSCR 1.8777
+2050 y24 | value 113 023 524 | debt  2 154 342 | equity 110 869 182 | NOI 1 962 764 | debt service 1 014 427 | net CF    948 337 | to owner    948 337 | DSCR 1.9349
+2051 y25 | value 117 544 465 | debt  1 366 153 | equity 116 178 311 | NOI 2 022 523 | debt service   867 358 | net CF  1 155 165 | to owner  1 155 165 | DSCR 2.3318
+2052 y26 | value 122 246 243 | debt    968 929 | equity 121 277 314 | NOI 2 084 097 | debt service   448 695 | net CF  1 635 402 | to owner  1 635 402 | DSCR 4.6448
+2053 y27 | value 127 136 093 | debt    726 289 | equity 126 409 804 | NOI 2 147 541 | debt service   281 278 | net CF  1 866 263 | to owner  1 866 263 | DSCR 7.6349
+2054 y28 | value 132 221 537 | debt    472 502 | equity 131 749 034 | NOI 2 212 910 | debt service   281 278 | net CF  1 931 633 | to owner  1 931 633 | DSCR 7.8673
+2055 y29 | value 137 510 398 | debt    207 057 | equity 137 303 341 | NOI 2 280 265 | debt service   281 278 | net CF  1 998 987 | to owner  1 998 987 | DSCR 8.1068
+2056 y30 | value 143 010 814 | debt          0 | equity 143 010 814 | NOI 2 349 665 | debt service   210 958 | net CF  2 138 706 | to owner  2 138 706 | DSCR 11.1380"
+`;
+
+exports[`golden summary (rounded to the parity tolerances) > seed 1`] = `
+"KPIs
+net worth (nominal)              93 182 810
+net worth (real)                 44 424 223
+net-worth multiple               4.8496
+net-worth multiple (real)        2.3120
+CAGR (nominal)                   0.0540
+CAGR (real)                      0.0283
+cumulative cash to owner         15 020 597
+cumulative cash to owner (real)  8 515 771
+first year cash flow positive    2029
+debt-free year                   2052
+levered IRR (nominal)            0.0620
+levered IRR (real)               0.0361
+total principal repaid           9 515 405
+total interest                   5 203 003
+total interest (real)            4 172 467
+years
+2026 y0  | value  28 730 000 | debt  9 515 405 | equity  19 214 595 | NOI         0 | debt service         0 | net CF          0 | to owner          0 | DSCR    n/a
+2027 y1  | value  29 879 200 | debt  9 198 937 | equity  20 680 263 | NOI   620 155 | debt service   646 384 | net CF    -26 229 | to owner    -26 229 | DSCR 0.9594
+2028 y2  | value  31 074 368 | debt  8 870 668 | equity  22 203 700 | NOI   640 368 | debt service   646 384 | net CF     -6 016 | to owner     -6 016 | DSCR 0.9907
+2029 y3  | value  32 317 343 | debt  8 535 238 | equity  23 782 105 | NOI   659 820 | debt service   655 727 | net CF      4 093 | to owner      4 093 | DSCR 1.0062
+2030 y4  | value  33 610 036 | debt  8 196 884 | equity  25 413 153 | NOI   679 862 | debt service   674 412 | net CF      5 450 | to owner      5 450 | DSCR 1.0081
+2031 y5  | value  34 954 438 | debt  7 850 033 | equity  27 104 405 | NOI   700 511 | debt service   681 983 | net CF     18 528 | to owner     18 528 | DSCR 1.0272
+2032 y6  | value  36 352 615 | debt  7 499 799 | equity  28 852 816 | NOI   721 786 | debt service   696 320 | net CF     25 466 | to owner     25 466 | DSCR 1.0366
+2033 y7  | value  37 806 720 | debt  7 133 476 | equity  30 673 244 | NOI   743 706 | debt service   696 320 | net CF     47 386 | to owner     47 386 | DSCR 1.0681
+2034 y8  | value  39 318 989 | debt  6 750 324 | equity  32 568 665 | NOI   766 290 | debt service   696 320 | net CF     69 969 | to owner     69 969 | DSCR 1.1005
+2035 y9  | value  40 891 748 | debt  6 349 570 | equity  34 542 178 | NOI   789 558 | debt service   696 320 | net CF     93 238 | to owner     93 238 | DSCR 1.1339
+2036 y10 | value  42 527 418 | debt  5 930 406 | equity  36 597 013 | NOI   813 531 | debt service   696 320 | net CF    117 211 | to owner    117 211 | DSCR 1.1683
+2037 y11 | value  44 228 515 | debt  5 491 985 | equity  38 736 530 | NOI   838 231 | debt service   696 320 | net CF    141 911 | to owner    141 911 | DSCR 1.2038
+2038 y12 | value  45 997 656 | debt  5 033 423 | equity  40 964 233 | NOI   863 679 | debt service   696 320 | net CF    167 359 | to owner    167 359 | DSCR 1.2403
+2039 y13 | value  47 837 562 | debt  4 553 795 | equity  43 283 767 | NOI   889 898 | debt service   696 320 | net CF    193 578 | to owner    193 578 | DSCR 1.2780
+2040 y14 | value  49 751 064 | debt  4 052 132 | equity  45 698 932 | NOI   916 911 | debt service   696 320 | net CF    220 591 | to owner    220 591 | DSCR 1.3168
+2041 y15 | value  51 741 107 | debt  3 635 443 | equity  48 105 664 | NOI   944 743 | debt service   589 108 | net CF    355 635 | to owner    355 635 | DSCR 1.6037
+2042 y16 | value  53 810 751 | debt  3 354 275 | equity  50 456 477 | NOI   973 418 | debt service   439 011 | net CF    534 406 | to owner    534 406 | DSCR 2.2173
+2043 y17 | value  55 963 181 | debt  3 060 189 | equity  52 902 992 | NOI 1 002 961 | debt service   439 011 | net CF    563 950 | to owner    563 950 | DSCR 2.2846
+2044 y18 | value  58 201 708 | debt  2 752 594 | equity  55 449 115 | NOI 1 033 399 | debt service   439 011 | net CF    594 388 | to owner    594 388 | DSCR 2.3539
+2045 y19 | value  60 529 777 | debt  2 430 868 | equity  58 098 909 | NOI 1 064 759 | debt service   439 011 | net CF    625 747 | to owner    625 747 | DSCR 2.4254
+2046 y20 | value  62 950 968 | debt  2 094 361 | equity  60 856 607 | NOI 1 097 068 | debt service   439 011 | net CF    658 057 | to owner    658 057 | DSCR 2.4990
+2047 y21 | value  65 469 007 | debt  1 742 396 | equity  63 726 611 | NOI 1 130 357 | debt service   439 011 | net CF    691 345 | to owner    691 345 | DSCR 2.5748
+2048 y22 | value  68 087 767 | debt  1 374 261 | equity  66 713 506 | NOI 1 164 653 | debt service   439 011 | net CF    725 641 | to owner    725 641 | DSCR 2.6529
+2049 y23 | value  70 811 278 | debt    989 214 | equity  69 822 063 | NOI 1 199 987 | debt service   439 011 | net CF    760 976 | to owner    760 976 | DSCR 2.7334
+2050 y24 | value  73 643 729 | debt    586 479 | equity  73 057 250 | NOI 1 236 392 | debt service   439 011 | net CF    797 381 | to owner    797 381 | DSCR 2.8163
+2051 y25 | value  76 589 478 | debt    165 241 | equity  76 424 236 | NOI 1 273 899 | debt service   439 011 | net CF    834 888 | to owner    834 888 | DSCR 2.9017
+2052 y26 | value  79 653 057 | debt          0 | equity  79 653 057 | NOI 1 312 541 | debt service   167 417 | net CF  1 145 124 | to owner  1 145 124 | DSCR 7.8400
+2053 y27 | value  82 839 179 | debt          0 | equity  82 839 179 | NOI 1 352 354 | debt service         0 | net CF  1 352 354 | to owner  1 352 354 | DSCR    n/a
+2054 y28 | value  86 152 746 | debt          0 | equity  86 152 746 | NOI 1 393 371 | debt service         0 | net CF  1 393 371 | to owner  1 393 371 | DSCR    n/a
+2055 y29 | value  89 598 856 | debt          0 | equity  89 598 856 | NOI 1 435 631 | debt service         0 | net CF  1 435 631 | to owner  1 435 631 | DSCR    n/a
+2056 y30 | value  93 182 810 | debt          0 | equity  93 182 810 | NOI 1 479 169 | debt service         0 | net CF  1 479 169 | to owner  1 479 169 | DSCR    n/a"
+`;

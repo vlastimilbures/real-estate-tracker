@@ -23,7 +23,7 @@ pub fn reveal_args(dir: &Path) -> Result<Vec<OsString>, AppError> {
 }
 
 /// Show the app folder (database and `backups/`) in Finder, for the startup error screen
-/// (#115, ADR 0153). Takes nothing from the webview: the folder is the app's own. Async,
+/// (ADR 0153). Takes nothing from the webview: the folder is the app's own. Async,
 /// and `open` waits on a blocking worker, so the main thread never waits for Finder.
 #[tauri::command]
 pub async fn reveal_data_dir(app: AppHandle) -> Result<(), AppError> {

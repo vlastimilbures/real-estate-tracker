@@ -1,4 +1,4 @@
-//! UX-066: the menu shortcut ids map to the events App.tsx listens for.
+//! ADR 0064: the menu shortcut ids map to the events App.tsx listens for.
 
 use app_lib::menu::{
     label_updates, view_routes, webview_event, MenuLabels, Parent, ABOUT, ITEMS, MAX_LABEL_CHARS,
@@ -128,7 +128,7 @@ fn other_ids_are_not_ours() {
     }
 }
 
-// UX-076 (DR-155): the webview sends the labels of our menu items in the UI language.
+// ADR 0078: the webview sends the labels of our menu items in the UI language.
 
 fn labels(json: &str) -> Result<MenuLabels, serde_json::Error> {
     serde_json::from_str(json)

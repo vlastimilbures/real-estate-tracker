@@ -1,4 +1,4 @@
-# cargo audit configuration (P8, DR-002). Each ignore names a crate that appears in
+# cargo audit configuration (ADR 0064). Each ignore names a crate that appears in
 # Cargo.lock but is not compiled into the app on any target: `cargo tree -i <crate>
 # --target all -e all` prints nothing. Re-check when Cargo.lock changes.
 [advisories]

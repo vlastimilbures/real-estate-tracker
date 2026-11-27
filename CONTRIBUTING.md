@@ -72,8 +72,8 @@ CI also runs:
 | `status=0; grep -rlE 'sql-wasm\|initSqlJs' dist/assets \|\| status=$?; [ $status = 1 ]`                                                             | sql.js stays out of the bundle (no match passes; a match or no dist/assets fails)                      | needs the build; scripts/release-macos.sh checks its own bundle          |
 | `TZ=Pacific/Pago_Pago pnpm test`                                                                                                                    | the suite in UTC−11                                                                                    | a second full run of the suite                                           |
 | `TZ=Pacific/Kiritimati pnpm vitest run src/lib src/ui src/state`                                                                                    | the layers that read local time, in UTC+14                                                             | a second run of those tests                                              |
-| `UX_RUN_ID=ci UX_LANG=en UX_THEME=both UX_VIEWPORT=1280x800,min pnpm ux:capture && pnpm ux:axe-check ci`                                            | axe scan of every captured screen: English, light and dark, two window sizes (ADR 0078)                | slow (four CI shards); run it after UI work                              |
-| `UX_RUN_ID=ci-i18n UX_LANG=cs,ru UX_THEME=light UX_VIEWPORT=1280x800,1200x800,min pnpm ux:capture --grep @layout-i18n && pnpm ux:axe-check ci-i18n` | the layout screens in Czech and Russian: nothing clipped or covered, axe clean (ADR 0158)              | slow (four CI shards); run it after UI work                              |
+| `UX_RUN_ID=ci UX_LANG=en UX_THEME=both UX_VIEWPORT=1280x800,min pnpm ux:capture && pnpm ux:axe-check ci`                                            | axe scan of every captured screen: English, light and dark, two window sizes (ADR 0078)                | slow (six CI shards); run it after UI work                               |
+| `UX_RUN_ID=ci-i18n UX_LANG=cs,ru UX_THEME=light UX_VIEWPORT=1280x800,1200x800,min pnpm ux:capture --grep @layout-i18n && pnpm ux:axe-check ci-i18n` | the layout screens in Czech and Russian: nothing clipped or covered, axe clean (ADR 0158)              | slow (six CI shards); run it after UI work                               |
 | `bash scripts/check-vendored-sqlx-sqlite.sh`                                                                                                        | Cargo.lock uses the vendored sqlx-sqlite, crates.io 0.8.6 plus one line (ADR 0196)                     | downloads the published crate                                            |
 | `cargo build --manifest-path src-tauri/Cargo.toml`                                                                                                  | the Rust shell builds                                                                                  | the release builds the app anyway                                        |
 | `cargo test --manifest-path src-tauri/Cargo.toml --test menu_built`                                                                                 | the AppKit menu as built matches src-tauri/tests/menu_built.txt, on a macOS runner (fails if it skips) | `pnpm check` runs it on a Mac (cargo test); the Linux CI runner skips it |
@@ -116,13 +116,19 @@ still describe it. Which document owns what is listed in
   stylesheet reads them. A needed `!important` gets a
   `stylelint-disable-next-line … -- reason` comment.
 - **Comment references** (#457): `pnpm lint` runs `scripts/check-comment-refs.mjs`. A
-  comment in the app's source (`src/**/*.ts`, `.tsx`, `.css`; tests are out of scope)
-  cites a decision as `ADR nnnn`, which must have a file in `docs/adr`. Ids from the
-  retired refactor archive (`DR-nnn`, `UX-nnn`, `J-nn`, `Q-nn`, `D-nn`, phase ids such as
-  `P5b`) are refused: say the reason in words or cite the ADR. So is an issue number
-  (`#nnn`) unless the issue is open and on `CITED_OPEN_ISSUES` in the script; the pull
-  request that closes one of those removes it there. Only comments are read, so a string
-  or JSX text is never flagged.
+  comment in the app's source (`src/**/*.ts`, `.tsx`, `.css`, and `src-tauri/src/**/*.rs`
+  with `src-tauri/build.rs`; tests are out of scope) cites a decision as `ADR nnnn`, which
+  must have a file in `docs/adr`. Ids from the retired refactor archive (`DR-nnn`,
+  `UX-nnn`, `J-nn`, `Q-nn`, `D-nn`, the `C-nn` / `F-nn` / `H-nn` finding ids, phase ids
+  such as `P` plus a number) are refused: say the reason in words or cite the ADR. So is
+  an issue number (`#nnn`) unless the issue is open and on `CITED_OPEN_ISSUES` in the
+  script; the pull request that closes one of those removes it there. In code only
+  comments are read, so a string or JSX text is never flagged. The same id and ADR rules
+  (not the issue rule) cover the reference models in `src/engine/__tests__/reference`,
+  the `ux-capture` harness, and the living docs, read whole: `README.md`,
+  `CONTRIBUTING.md`, `SPEC.md`, `docs/**/*.md` and `ux-capture/README.md`. The
+  append-only history keeps its ids: the ADRs (`docs/adr`), `docs/decisions/wording.md`,
+  the review records in `docs/reviews` and `CHANGELOG.md`.
 - **Coverage floors** live in `coverage-floors.json` (per folder, lines and branches). Never
   lower one to pass. CI runs `pnpm coverage:ratchet` after `pnpm test:coverage` and fails when
   a floor sits more than the slack (`MAX_SLACK` in `scripts/check-coverage-ratchet.mjs`, 3
@@ -213,8 +219,8 @@ still describe it. Which document owns what is listed in
   CI runs them nightly and on manual dispatch, never as a merge check. They start their own
   Vite server on port 1440 (`E2E_PORT`), so a running `pnpm tauri dev` does not interfere.
 - **Rust integration tests** (`cargo test`) run in CI, locally and in
-  `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent H-14 probe
-  is `#[ignore]`d (ADR 0068, G-4); `cargo test -- --ignored` runs it.
+  `scripts/release-macos.sh` when run without `--skip-checks`. One timing-dependent pool probe
+  (ADR 0014) is `#[ignore]`d (ADR 0068, G-4); `cargo test -- --ignored` runs it.
 
 ### Architecture rules and the baseline
 
@@ -305,6 +311,15 @@ delegates a run's decisions, recorded on its tracking issue, its ADRs ship as **
 - a new **runtime** dependency, with a written justification (ADR 0002). Dev-only tools are
   fine without one.
 
+A round of layout or styling adjustments that changes no rule, limit, stored data or export
+shares one ADR with numbered items; a change to a rule, limit, rejection, stored data or export
+still gets its own (ADR 0272). From ADR 0272 on, every record has `Trigger` (what the user must
+do to reach the case) and `Likelihood` (routine, plausible, rare or practically never; `n/a`
+for a record that adds no handling) lines; an optional `Topic` line fills the index's Topic
+column. A practically-never case gets a refusal
+with a message, or nothing, never a model of the case. An ADR with three or more amenders is
+not amended again: one superseding record states the rule as it is now.
+
 A copy-only change (the text of existing dictionary entries, except text used as an
 accessible name or a live-region announcement) needs no ADR: the maintainer approves it in the
 PR, a failing test is written first, and it gets a dated entry in
@@ -315,8 +330,8 @@ Dependabot opens grouped weekly updates. Patch and minor upgrades of runtime dep
 pass on green CI; a major runtime upgrade gets the maintainer's review in its PR (ADR 0152).
 
 The ADR index in `docs/adr/README.md` is generated: run `pnpm adr:index` after adding or
-changing an ADR header. `pnpm adr:check` (in CI) fails on a stale index or a one-sided
-Amends / Amended-by link.
+changing an ADR header. `pnpm adr:check` (in CI) fails on a stale index, a one-sided
+Amends / Amended-by link, or a record from 0272 on without its Trigger and Likelihood lines.
 
 Refactors are behaviour-neutral and need no ADR.
 

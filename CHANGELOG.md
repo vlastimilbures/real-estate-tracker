@@ -37,10 +37,18 @@ engine without the form, and remove it when the last part lands.
 
 ### Changed
 
+- A **backup copy or a file save that Rust refused** with one of nine error codes is now
+  explained in the app's language instead of an English line from Rust or a library: a
+  safety backup before a restore or Clear sample, a backup or Excel export, a CSV
+  template, and the copy before a database upgrade on the startup screen. A file is named
+  by its file name only, never its full path, and the library text stays in the log. A
+  full disk (`IO`) still shows the system's text (ADR 0271, #463).
 - A line in the **local error log** for a failed app command now starts its context
   with the command's error code, for example `WRITE_FAILED IO: disk full at #` instead
-  of `WRITE_FAILED disk full at #` (ADR 0270, #463). The code comes from a closed list
-  and holds no personal data. Nothing on screen changes.
+  of `WRITE_FAILED disk full at #` (ADR 0270, #463). A database upgrade that stops at
+  startup names it too, for example
+  `MIGRATION_BACKUP_FAILED BACKUP_FAILED: STARTUP: disk full`. The code comes from a
+  closed list and holds no personal data. Nothing on screen changes.
 - The Data check's **"need attention" count** has the same amber border as the review pill
   by the page title, so the two read as one signal; before, its border was grey. Its text,
   colours and size do not change. The other counts, the fix links and the toggles look as

@@ -4,7 +4,7 @@
 // (`loan-event-invariants.test.ts`, #130 R1-07). Some prepayments fall just before
 // baseDate, so the late window (ADR 0116 §1) is covered. Loans start on the 7th or on the
 // 28th–31st, so their due dates clamp to short months and to February, leap years
-// included, and those clamped dates meet events too (DR-070, #130 G2-6-11).
+// included, and those clamped dates meet events too (ADR 0021, #130 G2-6-11).
 //
 // The risky shapes too (#130 R1-08): a development loan with no completion date (a recast
 // may then come before a tranche, the R1-01 shape) or one after the last tranche; up to
@@ -14,7 +14,7 @@
 // recast before a tranche, both after baseDate) comes up ~29 times in 1000, not ~10
 // (#232, measured with `fc.sample` over 4 seeds × 10,000). The price: dev loans drawn
 // or completed long before baseDate are about half as common as before (completed
-// before baseDate ~86 in 1000, was ~221); tranches near baseDate (D-41) are twice as
+// before baseDate ~86 in 1000, was ~221); tranches near baseDate (ADR 0024) are twice as
 // common. One late prepayment in four also gets a recast on payment o, so the #228 shape
 // (a late `shortenTerm` after a recast on payment o, ADR 0136) comes up ~18 times in
 // 1000, not ~1 (#237, measured the same way).

@@ -1,11 +1,15 @@
-// Comment references (#457, `pnpm lint`): a comment in the app's source cites a decision
-// as `ADR nnnn`, and that ADR has a file in docs/adr. Ids from the retired refactor
-// archive (DR-nnn, UX-nnn, J-nn, Q-nn, D-nn, phase ids such as P5b) point at documents
-// that are not in the repository, so they are refused, and so is an issue number
-// (`#nnn`) unless the issue is on CITED_OPEN_ISSUES: a closed issue's number tells the
-// reader nothing the sentence does not. Only comments are read: the TypeScript scanner
-// finds them in .ts/.tsx (strings, templates and JSX text are not comments), and
-// `/* … */` in .css. Tests are out of scope: their comments name cases, not decisions.
+// Comment references (#457, `pnpm lint`): a comment cites a decision as `ADR nnnn`, and
+// that ADR has a file in docs/adr. Ids from the retired refactor archive (DR-nnn, UX-nnn,
+// J-nn, Q-nn, D-nn, the C-/F-/H- finding ids, phase ids such as P5b) point at documents
+// that are not in the repository, so they are refused. In the app's source (src and
+// src-tauri/src), so is an issue number (`#nnn`) unless the issue is on
+// CITED_OPEN_ISSUES: a closed issue's number tells the reader nothing the sentence does
+// not. In code only comments are read: the TypeScript scanner finds them in .ts/.tsx
+// (strings, templates and JSX text are not comments), a small lexer in .rs, and
+// `/* … */` in .css. The living docs (SPEC, README, CONTRIBUTING, docs/ and the capture
+// README) are read whole; the append-only history (ADRs, the wording log, review records,
+// the changelog) is not. Tests are out of scope: their comments name cases, not
+// decisions. The reference models and the capture harness are read for ids and ADRs.
 import { readdirSync, readFileSync, realpathSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -14,7 +18,7 @@ import ts from "typescript";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 /** The retired id families, each as a whole word. */
-const ARCHIVE_ID = /\b(?:(?:DR|UX|J|Q|D)-\d+[a-z]?|P\d+[a-z]?)\b/g;
+const ARCHIVE_ID = /\b(?:(?:DR|UX|J|Q|D|C|F|H)-\d+[a-z]?|P\d+[a-z]?)\b/g;
 const ADR_CITE = /\bADR (\d{4})\b/g;
 /** `#nnn`, not an HTML entity (`&#123;`) or a digit-only hex colour (`#202427`). */
 const ISSUE_REF = /(?<![\w&#])#(\d{2,4})\b/g;
@@ -27,21 +31,50 @@ const CODE_SPAN = /`[^`\n]*`/g;
  * network): the pull request that closes one of these issues removes its number, and
  * the check then names every comment that still cites it.
  */
-export const CITED_OPEN_ISSUES = new Set([
-  476, // loan/blockChain.ts: the chain's block/successor pairs
-  482, // import/columns.ts: the CSV column list
-  611, // validate/loan.ts: a loan below its interest that still loads
-]);
+export const CITED_OPEN_ISSUES = new Set([]);
 
-/** App source under src: .ts, .tsx and .css, without tests and test support. */
-export function inScope(path) {
-  const parts = path.split(/[\\/]/);
+/** The folders the check walks, and the files it reads at the top level. */
+const WALKED = ["src", "src-tauri/src", "docs", "ux-capture"];
+const TOP_FILES = [
+  "README.md",
+  "CONTRIBUTING.md",
+  "SPEC.md",
+  "src-tauri/build.rs",
+];
+const IS_TEST = /\.test\.tsx?$/;
+/** The append-only history under docs: kept as written. */
+const DOC_HISTORY = /^docs\/(?:adr\/|reviews\/|decisions\/wording\.md$)/;
+
+/** App source: .ts, .tsx and .css under src and .rs under src-tauri/src, without tests
+ *  and test support. Every rule applies, the issue rule included. */
+function isAppSource(path) {
+  if (/^src-tauri\/(?:src\/.*\.rs|build\.rs)$/.test(path)) return true;
   return (
-    parts[0] === "src" &&
-    !parts.includes("__tests__") &&
+    path.startsWith("src/") &&
+    !path.includes("/__tests__/") &&
     /\.(ts|tsx|css)$/.test(path) &&
-    !/\.test\.tsx?$/.test(path)
+    !IS_TEST.test(path)
   );
+}
+
+/** Read for archive ids and ADR cites only: the living docs, the reference models
+ *  (their comments carry decisions, and name the issues their test shapes came from)
+ *  and the capture harness. */
+function isIdsOnly(path) {
+  if (TOP_FILES.includes(path) && path.endsWith(".md")) return true;
+  if (path === "ux-capture/README.md") return true;
+  if (path.startsWith("docs/"))
+    return path.endsWith(".md") && !DOC_HISTORY.test(path);
+  if (IS_TEST.test(path) || !path.endsWith(".ts")) return false;
+  return (
+    /^src\/engine\/__tests__\/reference\/[^/]+$/.test(path) ||
+    (path.startsWith("ux-capture/") && !path.includes("/__tests__/"))
+  );
+}
+
+/** Whether the check reads `path` (repository-relative, `/`-separated). */
+export function inScope(path) {
+  return isAppSource(path) || isIdsOnly(path);
 }
 
 const lineAt = (text, pos) => text.slice(0, pos).split("\n").length;
@@ -86,15 +119,54 @@ function cssComments(text) {
   }));
 }
 
-/** The comments of a source file, each with its first line. */
+/**
+ * One Rust token at a time: a line comment (group 1), the start of a block comment
+ * (group 2), a raw, byte or plain string, a char literal, or a run of other code. A
+ * lifetime (`'a`) is no char literal, so its quote falls to the last branch.
+ */
+const RUST_TOKEN =
+  /(\/\/[^\n]*)|(\/\*)|b?r(#*)"[\s\S]*?"\3|b?"(?:\\[\s\S]|[^"\\])*"|b?'(?:\\(?:u\{[0-9a-fA-F]+\}|[^\n])|[^'\\\n])'|[^/"'br]+|[\s\S]/gy;
+
+/** The end of the (nested) block comment that opens at `start`. */
+function blockCommentEnd(text, start) {
+  const delim = /\/\*|\*\//g;
+  delim.lastIndex = start + 2;
+  let depth = 1;
+  for (let m = delim.exec(text); m; m = delim.exec(text)) {
+    depth += m[0] === "/*" ? 1 : -1;
+    if (depth === 0) return delim.lastIndex;
+  }
+  return text.length;
+}
+
+/** Every comment in a .rs file, with the line it starts on: `//`, `///`, `//!` and
+ *  nested `/* … *\/`; strings, raw strings and char literals are code. */
+function rustComments(text) {
+  const out = [];
+  RUST_TOKEN.lastIndex = 0;
+  for (let m = RUST_TOKEN.exec(text); m; m = RUST_TOKEN.exec(text)) {
+    if (m[1]) out.push({ line: lineAt(text, m.index), body: m[1] });
+    if (!m[2]) continue;
+    const end = blockCommentEnd(text, m.index);
+    out.push({ line: lineAt(text, m.index), body: text.slice(m.index, end) });
+    RUST_TOKEN.lastIndex = end;
+  }
+  return out;
+}
+
+/** The text the check reads in a file, each part with its first line: the comments of
+ *  code, or the whole of a doc. */
 export function commentsOf(text, path) {
+  if (path.endsWith(".md")) return [{ line: 1, body: text }];
+  if (path.endsWith(".rs")) return rustComments(text);
   return path.endsWith(".css") ? cssComments(text) : codeComments(text, path);
 }
 
 /** The refused references in one file's comments. `adrs`: the numbers with a file;
- *  `open`: the issues a comment may cite. */
+ *  `open`: the issues a comment may cite (app source only). */
 export function problemsIn(text, path, adrs, open = CITED_OPEN_ISSUES) {
   const out = [];
+  const issues = !isIdsOnly(path);
   for (const { line, body } of commentsOf(text, path)) {
     body.split("\n").forEach((l, i) => {
       for (const m of l.matchAll(ARCHIVE_ID))
@@ -110,6 +182,7 @@ export function problemsIn(text, path, adrs, open = CITED_OPEN_ISSUES) {
             line: line + i,
             message: `ADR ${m[1]} has no file in docs/adr`,
           });
+      if (!issues) return;
       for (const m of l.replace(CODE_SPAN, "").matchAll(ISSUE_REF))
         if (!open.has(Number(m[1])))
           out.push({
@@ -138,16 +211,19 @@ export function adrNumbers(root = ROOT) {
   );
 }
 
-/** Every in-scope file under src and its refused references. */
+/** Every in-scope file of the repository (`paths`) and its refused references. */
 export function check(root = ROOT) {
   const adrs = adrNumbers(root);
-  const files = walk(join(root, "src"))
+  const paths = [
+    ...WALKED.flatMap((d) => walk(join(root, d))),
+    ...TOP_FILES.map((f) => join(root, f)),
+  ]
     .map((p) => relative(root, p).split(sep).join("/"))
     .filter(inScope);
-  const problems = files.flatMap((f) =>
+  const problems = paths.flatMap((f) =>
     problemsIn(readFileSync(join(root, f), "utf8"), f, adrs),
   );
-  return { files: files.length, problems };
+  return { files: paths.length, paths, problems };
 }
 
 function main() {

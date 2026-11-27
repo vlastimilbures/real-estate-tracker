@@ -1,5 +1,5 @@
 {
-  // Stricter check for production code (DR-052, ADR 0074): noUncheckedIndexedAccess on
+  // Stricter check for production code (ADR 0074): noUncheckedIndexedAccess on
   // every non-test file under src. Run by `pnpm typecheck`. Test files stay off: fixture
   // indexing would need ~640 guards for no safety gain.
   "extends": "./tsconfig.json",

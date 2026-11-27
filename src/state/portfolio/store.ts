@@ -2,10 +2,10 @@
 // action modules, sharing one write runner. Its opener and clock are injected.
 import { create } from "zustand";
 import type { Sql } from "../../data/sql";
-import { DataError } from "../../data/errors";
 import { logFailure } from "../../data/errorLog";
 import { loadState } from "../../data/loadState";
 import { toWriteError } from "../writeError";
+import { toStartupError } from "./startupError";
 import { createWriteRunner } from "./writeRunner";
 import { refusedOf, writesRefused } from "./status";
 import {
@@ -75,14 +75,7 @@ function lifecycleActions(
           status: {
             kind: "startupFailed",
             error: toWriteError(e),
-            startup:
-              e instanceof DataError
-                ? {
-                    code: e.code,
-                    details: e.details,
-                    ...(e.upgrade && { upgrade: e.upgrade }),
-                  }
-                : null,
+            startup: toStartupError(e),
           },
         });
       }

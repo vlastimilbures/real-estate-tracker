@@ -3,7 +3,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { matrixOf, VIEWPORTS } from "./ux-capture/matrix";
 
-// UX screenshot capture: `pnpm ux:capture` (CI runs its axe scan, F-08). Boots the Vite
+// UX screenshot capture: `pnpm ux:capture` (CI runs its axe scan, ADR 0078). Boots the Vite
 // frontend with VITE_E2E=1, so the app runs on the in-memory sql.js seed (synthetic
 // sample portfolio) — a real database is never opened. Its own port and no server reuse,
 // so it never attaches to a running `pnpm tauri dev`. See ux-capture/README.md.
@@ -47,7 +47,7 @@ const projects = langs.flatMap((lang) =>
         viewport: viewportOf(vp),
         deviceScaleFactor: Number(process.env.UX_SCALE ?? 1),
         colorScheme: theme as "light" | "dark",
-        // Charts skip their entry animation (UX-058), so shots never catch one mid-way.
+        // Charts skip their entry animation, so shots never catch one mid-way.
         reducedMotion: "reduce" as const,
       },
     })),

@@ -41,14 +41,14 @@ export default defineConfig({
     globals: true,
     environment: "node",
     // Node 25+ turns Web Storage on: its `localStorage` warns in every worker without
-    // --localstorage-file and hides jsdom's own storage. Off in test workers (DR-094).
+    // --localstorage-file and hides jsdom's own storage. Off in test workers.
     execArgv: ["--no-experimental-webstorage"],
     include: [
       "src/**/*.{test,spec}.{ts,tsx}",
       "ux-capture/**/*.test.ts",
       "scripts/**/*.test.mjs",
     ],
-    // The app loads only the active dictionary (DR-009); tests get all three up front.
+    // The app loads only the active dictionary (ADR 0066); tests get all three up front.
     // The jsdom file stubs scrollTo and matchMedia once for every jsdom test (#141).
     // stores.ts resets both stores before every ui/state test and mocks.ts mocks errorLog
     // and Tauri core for them; audit.ts records assertion counts when TEST_AUDIT=1; clock.ts
@@ -61,7 +61,7 @@ export default defineConfig({
       "src/__tests__/setup/audit.ts",
       "src/__tests__/setup/clock.ts",
     ],
-    // Engine benchmarks (P9, `pnpm bench`); git-ignored evidence benches stay out.
+    // Engine benchmarks (`pnpm bench`); git-ignored evidence benches stay out.
     benchmark: { include: ["src/**/*.bench.ts"] },
     // Coverage ratchet. Thresholds are per folder (coverage-floors.json) and only ever go
     // up: a raised floor is measured minus 1-2 points of headroom (2 for UI folders, where

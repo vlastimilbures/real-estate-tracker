@@ -7,6 +7,8 @@
 - Amends: [0001](0001-behaviour-change-gate.md) (where the sign-off for a copy change is
   recorded), [0002](0002-dependency-policy.md) (upgrades of runtime dependencies),
   [0070](0070-decision-records.md) (numbering and the index)
+- Amended by: [0272](0272-current-rule-likelihood-ui-rounds.md) (the template and the index
+  gain Topic, Trigger and Likelihood)
 - Related: [0081](0081-public-release.md) point 3 (CHANGELOG and ADRs),
   [0151](0151-ci-gates-after-going-public.md) (CI gates)
 - Amended: 2026-10-13 (#271: a new ADR that replaces only part of an old one says

@@ -4,6 +4,8 @@
 import type { DataErrorCode, UpgradeStop } from "../../data/errors";
 import type { Dictionary } from "../../i18n";
 import type { RefusedWrite } from "../../state/writeTargets";
+import type { StartupError } from "../../state/portfolioStore";
+import { commandErrorText } from "./commandErrorText";
 
 export interface BootView {
   /** Show Try again and the retry hint: the failure may not happen again. */
@@ -51,6 +53,25 @@ export function isPartial(upgrade: UpgradeStop | undefined): boolean {
 /** The last part of a path, for naming a file in the backups folder. */
 export function fileName(path: string): string {
   return path.split("/").pop() ?? path;
+}
+
+/** A startup detail as shown: `code` when it is Rust's or the driver's own text. */
+export interface StartupDetail {
+  text: string;
+  code: boolean;
+}
+
+/** The details of a startup failure: a copy Rust refused with a code that has its own
+ *  text shows that text, in plain type, instead of Rust's line (ADR 0271 point 6); any
+ *  other detail as it came, as code. */
+export function startupDetails(
+  t: Pick<Dictionary, "commandErrors">,
+  error: Pick<StartupError, "details" | "failedCommand">,
+): StartupDetail[] {
+  const failed = error.failedCommand;
+  const text = failed ? commandErrorText(t, failed.code, failed.file) : null;
+  if (text !== null) return [{ text, code: false }];
+  return error.details.map((d) => ({ text: d, code: true }));
 }
 
 /** The names of the writes refused after a failed read-back, in order, from existing

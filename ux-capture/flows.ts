@@ -169,13 +169,13 @@ export async function enterLoanEvents(ux: Ux) {
 /**
  * Property detail of the first property, then its loan's stored instalment set to 1 Kč,
  * below the interest (INSTALMENT_BELOW_INTEREST), and the store reloaded: the page then
- * shows the invalid-data notice (DR-146). The forms and a restore refuse such a loan, so
+ * shows the invalid-data notice. The forms and a restore refuse such a loan, so
  * the edit goes to the sample's in-memory database the store holds (`portfolioDb`, its
  * test seam); Vite serves the module by URL, so it is the app's own instance. Returns
  * the property's name.
  *
  * It relies on the sample loan having no term: the term is then derived from the
- * instalment (NPER), which 1 Kč can never repay (DR-014). A loan with a term and a low
+ * instalment (NPER), which 1 Kč can never repay (ADR 0017). A loan with a term and a low
  * instalment loads and projects (#597), so on such a loan this would no longer break it.
  */
 export async function breakFirstLoan(ux: Ux): Promise<string> {
