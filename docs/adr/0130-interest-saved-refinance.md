@@ -1,7 +1,7 @@
 # 0130. Interest saved only when a prepayment applied; refinance difference apart from draws
 
 - Status: Accepted
-- Superseded in part by: [0273](0273-prepayments-and-recasts-current-rule.md) (decisions 1 and 2)
+- Superseded in part by: [0273](0273-prepayments-and-recasts-current-rule.md) (decisions 1, 2 and 5)
 - Date: 2026-10-04
 - Source: issue #172 items 1 and 2 (2026-10 code review, findings R9-01, R1-05, R9-02);
   item 3 (R8-03) stays open in #172

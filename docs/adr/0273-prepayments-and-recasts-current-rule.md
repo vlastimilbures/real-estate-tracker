@@ -1,6 +1,6 @@
 # 0273. Loan prepayments and recasts: the current rule
 
-- Status: Accepted
+- Status: Accepted (delegated, owner review pending)
 - Date: 2026-11-27
 - Source: issue #498 (owner decision 2026-11-27: implement ADR 0272, then one current-rule
   record each for prepayments, sections and the Data check)
@@ -10,25 +10,29 @@
   [0137](0137-agreed-instalment-pays-interest.md),
   [0179](0179-shorten-term-next-payment-rate.md)
 - Supersedes in part: [0116](0116-prepayments-ui-and-review-fixes.md) (decisions 1 to 10,
-  12, 13 and 15), [0129](0129-loan-schedule-edge-cases.md) (decision 1 and its "What stays"
-  items), [0130](0130-interest-saved-refinance.md) (decisions 1 and 2),
-  [0161](0161-cash-to-owner.md) (how prepayments enter cash to owner),
-  [0235](0235-opening-balance-replayed.md) (the opening of a loan with past events)
+  12, 13 and 15), [0129](0129-loan-schedule-edge-cases.md) (decisions 1 and 5, and the
+  late-window items of "What stays"), [0130](0130-interest-saved-refinance.md) (decisions
+  1, 2 and 5), [0161](0161-cash-to-owner.md) (decision 2 as it applies to prepayments and
+  their fees, and decision 4, the Guide sentence, restated in full; decisions 1 and 3 stand),
+  [0235](0235-opening-balance-replayed.md) (decision 1 whole, and the decision 5 sentence on
+  interest saved)
 - Related: [0024](0024-draw-timing.md) (tranches around baseDate),
   [0027](0027-one-active-block.md) (refinance chains), [0124](0124-pre-purchase-debt-service.md),
   [0138](0138-refinance-handover-edge-cases.md), [0160](0160-csv-import-and-stored-loan-events.md),
+  [0164](0164-amortization-due-date.md) (the due date of a handover row with a prepayment),
+  [0174](0174-golden-master-loan-events-regression-layers.md) (the reference models),
+  [0264](0264-loan-term-instalment-above-interest.md) (an instalment above the interest),
   [0178](0178-display-follows-rounded-value.md), [0184](0184-data-layer-write-guards.md),
   [0226](0226-refuse-late-tranche-quick-refinance.md), [0244](0244-engine-reads-lib-rules.md),
   [0247](0247-invalid-loan-start-skips-event-checks.md),
   [0272](0272-current-rule-likelihood-ui-rounds.md) (why this record exists)
 - Topic: Loans: prepayments and recasts
-- Trigger: the owner enters a prepayment or a change of maturity or instalment (a recast) on
-  a loan block in the mortgage form
-- Likelihood: plausible (the owner's real loans include a prepayment and a recast, ADR 0226)
+- Trigger: n/a (restates handling; adds none)
+- Likelihood: n/a (adds no handling)
 
 ## Context
 
-ADR 0109 added loan prepayments and recasts. Eight later records changed its rule, and two
+ADR 0109 added loan prepayments and recasts. Eight later records changed its rule, and six
 of those were amended again. ADR 0272 asks for one record that states the rule as it is now.
 This is that record for prepayments and recasts. It changes no behaviour: every statement
 below comes from an accepted record, named in brackets after it. Where the code and the
@@ -102,8 +106,8 @@ Terms used below:
 ### 3. The effect of a prepayment
 
 1. The amount applied is `min(amount, balance)`. When one period has several prepayments,
-   the effect of the last one applies once, on the balance after all of them
-   (ADR 0109 §5).
+   the effect of the last applied one applies once, on the balance after all of them
+   (ADR 0109 §5, ADR 0179 §3).
 2. **`lowerInstalment`** keeps the maturity in force. The next payment is re-amortized over
    the remaining term (ADR 0109 §5).
 3. **`shortenTerm`** keeps an instalment and ends the loan after `ceil(NPER)` more payments.
@@ -130,7 +134,8 @@ Terms used below:
    prepayment only. It is not raised for an interest-only payment, for a prepayment that
    repays the loan, or for a prepayment kept on the payment a successor block takes over
    from; an earlier prepayment's warning stays (ADR 0179 §3). The property page shows it with
-   the other event warnings, in a `role="status"` banner (ADR 0179 §3).
+   the other event warnings, in a `role="status"` banner, under the dictionary key
+   `propertyDetail.eventIssue.PREPAYMENT_TERM_NOT_SHORTENED` in en, cs and ru (ADR 0179 §3).
 6. A re-amortization on `p+1` runs over the shortened term (constant maturity), so it pays
    at most the kept instalment, less by the NPER round-up (ADR 0179 §4).
 7. Later fixation resets re-amortize over the shortened remaining term (ADR 0109 §5).
@@ -142,6 +147,9 @@ Terms used below:
 10. The reference example is Javorová prepaying 500,000 Kč on 2031-01-17: 183 payments after
     payment 120, last payment 303, payoff 2046-04-17, instalment from the reset
     6,701.9254 Kč (ADR 0179, Consequences).
+11. The independent mortgage reference model (`reference/mortgageReference.ts`) follows the
+    wording of these rules, written apart from the engine, and the cross-checks compare the
+    two (ADR 0120 §5, ADR 0136 §4, ADR 0137 §5, ADR 0179 §5; the layers are ADR 0174).
 
 ### 4. Recasts
 
@@ -180,6 +188,9 @@ Terms used below:
    maturity-form recast is allowed there and applies at completion (ADR 0109 §6). Its
    maturity must fall after the payment the completion lands on (the first due on or after
    the completion date), or it is rejected as `INVALID_RECAST_MATURITY` (ADR 0116 §15).
+8. The message for a rejected recast maturity states the real limits: at most 50 years
+   after the loan start, or the contract term when that is longer, and after a development
+   loan's completion (ADR 0116 §5).
 
 ### 5. The maturity in force
 
@@ -200,8 +211,14 @@ Terms used below:
    - a prepayment above the balance is clamped and reported (`PREPAYMENT_EXCEEDS_BALANCE`)
      (ADR 0109 §9, ADR 0129, Context);
    - a prepayment after payoff applies nothing and charges no fee;
-   - a recast after payoff is reported;
+   - a recast after payoff is reported (no record decides this; ADR 0129 §1 describes the
+     check);
    - events after a successor block's start are dropped and reported.
+
+   An event's outcome keeps the entered fee internally. A warning shows the requested and
+   the applied amounts; the Fee column shows the fee charged; the form row shows the entered
+   fee (ADR 0116 §9).
+
 2. A clamped, ignored or dropped event shows as a loan warning on the property page. Saving
    is never rejected for it, because a stored event can become clamped later anyway
    (ADR 0116 §10).
@@ -218,8 +235,11 @@ fault (ADR 0129 §5, ADR 0116 §11):
 5. a recast maturity before the next payment, beyond the cap, or (development loan) on or
    before the payment the completion lands on (ADR 0109 §9, ADR 0116 §5, §15).
 
-A loan with an invalid start date checks only the event dates themselves; the checks that
-need the start are skipped, and the block reports its start (ADR 0247).
+A loan with an invalid start date reports its start. Only the event checks that need the
+start are skipped: `EVENT_BEFORE_START`, `EVENT_AFTER_SCHEDULE_END` and
+`INVALID_RECAST_MATURITY` (ADR 0247 §1, §2). Every other event check still runs: an invalid
+event date or recast maturity, the amount and sign codes, `INVALID_RECAST` and
+`RECAST_INSTALMENT_BEFORE_COMPLETION` (ADR 0247 §3).
 
 ### 8. History before the projection start
 
@@ -238,7 +258,9 @@ need the start are skipped, and the block reports its start (ADR 0247).
    fee (ADR 0116 §3, ADR 0109 §10). That balance includes the tranches the old loan drew in
    the handover month (ADR 0138 §1).
 3. A recast in a payment period the successor replaces no longer applies and is reported,
-   like an event dated after the successor's start (ADR 0109 §9, ADR 0160 §2).
+   like an event dated after the successor's start. No record decides this; ADR 0160 §2
+   describes it ("a maturity change in the handover month"), and ADR 0109 §9 decides it
+   only for events dated after the successor's start.
 
 ### 10. Cash flow and KPIs
 
@@ -246,7 +268,9 @@ need the start are skipped, and the block reports its start (ADR 0247).
    columns (`prepaid`, `prepaymentFees`) (ADR 0109 §11).
 2. Net cash flow, debt service and DSCR stay operating-only (ADR 0109 §11).
 3. Cash to owner (net cash flow minus the cash outside it) and the levered IRR subtract
-   prepaid + fee, as they do for acquisitions (ADR 0109 §11, ADR 0161 §1, §2).
+   prepaid + fee, as they do for acquisitions (ADR 0109 §11, ADR 0161 §1, §2). The Guide's
+   mortgages section says prepayments are "kept outside net cash flow and DSCR, but counted
+   in cash to owner and the IRR" (ADR 0161 §4).
 4. A loan that runs before a future purchase counts its prepaid principal and fees as owner
    cash out in the years before the turn-on year (ADR 0124 §2).
 5. The row and projection `principal` stay scheduled principal only. The KPI
@@ -263,11 +287,13 @@ need the start are skipped, and the block reports its start (ADR 0247).
    the base-case assumptions and is not net of fees (ADR 0116 §9).
 2. It is null unless some prepayment of the chain repaid principal (ADR 0130 §1).
 3. The engine keeps the sign. The display hides null and 0, shows a positive figure, and
-   shows the note "n/a: a recast depends on the prepayment" for a negative one. The
-   Dashboard total sums only the figures shown (ADR 0130 §2).
+   shows a note instead of an amount for a negative one (`propertyDetail.interestSavedNa`,
+   `dashboard.financingInterestSavedNa`). The Dashboard total sums only the figures shown.
+   A property with the note is listed after the others, with the note. When no property has
+   a figure, the total shows the note too (ADR 0130 §2).
 4. It is shown on the property page and in the Dashboard financing panel, never as a KPI;
-   the panel shows the portfolio total and each property in a disclosure, nominal in the
-   real lens too (ADR 0116 §9). Its Dashboard label names the window: the loans' remaining
+   the panel shows the portfolio total and each property in a disclosure. It stays nominal
+   in the real lens too, and it is labelled so (ADR 0116 §9). Its Dashboard label names the window: the loans' remaining
    life (ADR 0144 §2).
 5. A successor's own interest does not change, because its principal is an input
    (ADR 0116 §9). For a plain loan whose instalment cannot repay it by its explicit term,
@@ -281,7 +307,8 @@ need the start are skipped, and the block reports its start (ADR 0247).
    non-zero; screen and Excel export share the rule (ADR 0116 §12, ADR 0130 §5,
    ADR 0178 §1).
 2. The as-of snapshot reports the instalment in force after a month's prepayment: the next
-   row's, when that row is at the same rate and draws nothing. An interest-only month, a
+   row's, when that row is at the same rate and draws nothing; the rate stays the month's
+   own. An interest-only month, a
    reset or a tranche in the next row, or a recast alone keeps the month's own instalment
    (ADR 0116 §6). Every snapshot reads the schedule; there is no fallback without one
    (ADR 0116 §13).

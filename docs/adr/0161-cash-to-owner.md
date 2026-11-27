@@ -1,7 +1,7 @@
 # 0161. Cash to owner: the row the cumulative cash flow tile sums
 
 - Status: Accepted
-- Superseded in part by: [0273](0273-prepayments-and-recasts-current-rule.md) (how prepayments enter cash to owner)
+- Superseded in part by: [0273](0273-prepayments-and-recasts-current-rule.md) (decision 2 as it applies to prepayments and their fees, and decision 4, the Guide sentence, restated in full; decisions 1 and 3 stand)
 - Date: 2026-10-09
 - Source: issue #117 (2026-10 code review, finding R8-04; R2-17 done in PR #287); owner
   decision D2 (2026-10-08: option A, the projection carries the row); Track 11 PR 11.12
