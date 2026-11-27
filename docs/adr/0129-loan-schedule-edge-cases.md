@@ -1,6 +1,7 @@
 # 0129. Loan schedule edge cases: late tranches, interest-only date, last draw, refix gap
 
 - Status: Accepted
+- Superseded in part by: [0273](0273-prepayments-and-recasts-current-rule.md) (decisions 1 and 5, and all three "What stays" items)
 - Date: 2026-10-04
 - Source: issue #135 (2026-10 code review, findings R1-03, R1-04, R1-11, G2-1-08; R1-13 is
   a fix without a behaviour change)
